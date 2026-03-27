@@ -1,0 +1,11 @@
+{
+  "servers": {
+    "backlog": {
+      "command": "backlog",
+      "args": ["mcp", "start"],
+      "env": {
+        "BACKLOG_CWD": "/home/simock/kafka-lab"
+      }
+    }
+  }
+}

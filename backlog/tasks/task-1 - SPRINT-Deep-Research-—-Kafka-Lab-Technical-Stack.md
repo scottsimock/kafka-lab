@@ -1,11 +1,11 @@
 ---
 id: TASK-1
-title: 'EPIC: Deep Research — Kafka Lab Technical Stack'
+title: 'SPRINT: Deep Research — Kafka Lab Technical Stack'
 status: In Progress
 assignee: []
 created_date: '2026-03-27 20:43'
 labels:
-  - epic
+  - sprint
   - research
 dependencies: []
 priority: high
@@ -14,7 +14,7 @@ priority: high
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-Pre-implementation research epic covering all technology areas required to design and build the Kafka Lab resilience testing environment.
+Pre-implementation research sprint covering all technology areas required to design and build the Kafka Lab resilience testing environment.
 
 ## Context
 

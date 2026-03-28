@@ -53,16 +53,16 @@ If the human asks for a status update at any point, summarize what phase you are
 
 Delegate to the **Product Owner** sub-agent. Provide it with:
 - Confirmation that a new sprint is starting
-- The instruction to read the last completed epic and derive the next one
+- The instruction to read the last completed sprint and derive the next one
 - A reminder to check that all TASK-1 research sub-tasks are Done before proceeding
 
 Wait for the Product Owner to report back. It will return:
-- The new epic ID and title
+- The new sprint ID and title
 - A list of all tasks created with IDs and summaries
 - The dependency order
 - Any technical debt or risks noted
 
-If the Product Owner reports that the research prerequisite is not met (Epic 1 tasks not all Done), **stop the sprint and report to the human**:
+If the Product Owner reports that the research prerequisite is not met (Sprint 1 tasks not all Done), **stop the sprint and report to the human**:
 
 > "Sprint cannot start: the following TASK-1 research tasks are not yet complete: [list]. Complete them first, then say 'start new sprint' again."
 
@@ -70,7 +70,7 @@ If the Product Owner reports that the research prerequisite is not met (Epic 1 t
 
 ### Phase 2 — Sprint Review (Scrum Master)
 
-Delegate to the **Scrum Master** sub-agent. Provide it with the epic ID from Phase 1.
+Delegate to the **Scrum Master** sub-agent. Provide it with the sprint ID from Phase 1.
 
 The Scrum Master will either:
 
@@ -91,17 +91,17 @@ Report each loop iteration to the human:
 
 ### Phase 3 — Git Branch Setup
 
-Before any coding begins, create the epic branch:
+Before any coding begins, create the sprint branch:
 
-1. Determine the next epic number from the epic ID (e.g., TASK-2 → epic number 2).
-2. Create a short slug from the epic title (lowercase, hyphens, max 5 words).
-3. Branch name format: `dev-epic{N}-{slug}` (e.g., `dev-epic2-azure-networking-foundation`).
+1. Determine the next sprint number from the sprint ID (e.g., TASK-2 → sprint number 2).
+2. Create a short slug from the sprint title (lowercase, hyphens, max 5 words).
+3. Branch name format: `dev-sprint{N}-{slug}` (e.g., `dev-sprint2-azure-networking-foundation`).
 4. Create the branch from `main`:
 
 ```bash
 git checkout main
 git pull origin main
-git checkout -b dev-epic2-azure-networking-foundation
+git checkout -b dev-sprint2-azure-networking-foundation
 ```
 
 Report the branch name to the human.
@@ -118,7 +118,7 @@ Use the dependency information from the Scrum Master's approval report to build 
 
 Report the execution plan to the human before starting any coding:
 
-> "Execution plan for EPIC-2 (12 tasks):
+> "Execution plan for SPRINT-2 (12 tasks):
 > - Round 1 (parallel): TASK-2.1, TASK-2.2, TASK-2.5
 > - Round 2 (parallel, after TASK-2.1 and TASK-2.2): TASK-2.3, TASK-2.4
 > - Round 3 (sequential, after TASK-2.3): TASK-2.6
@@ -138,7 +138,7 @@ For each executable task:
 1. Mark the task as `In Progress` using `backlog-task_edit`.
 2. Delegate to a **Coder** sub-agent in **background mode**. Provide:
    - The task ID
-   - The epic branch name (so the Coder knows the context)
+   - The sprint branch name (so the Coder knows the context)
    - Instruction to append a `## Coder Handoff` section and report back when done
 
 Launch **all currently executable tasks simultaneously** — do not wait for one Coder to finish before starting others. True parallelism is required.
@@ -177,15 +177,15 @@ Repeat 5a–5c until all tasks are `Done`.
 
 ### Phase 6 — Sprint Close
 
-Once all tasks in the epic are marked `Done`:
+Once all tasks in the sprint are marked `Done`:
 
 #### 6a — Commit All Work
 
-Stage and commit all changes on the epic branch:
+Stage and commit all changes on the sprint branch:
 
 ```bash
 git add -A
-git commit -m "feat: complete {epic-title}
+git commit -m "feat: complete {sprint-title}
 
 {brief summary of what was built across all tasks}
 
@@ -197,7 +197,7 @@ Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
 #### 6b — Push the Branch
 
 ```bash
-git push origin dev-epic{N}-{slug}
+git push origin dev-sprint{N}-{slug}
 ```
 
 #### 6c — Open a Pull Request
@@ -207,14 +207,14 @@ Use the GitHub CLI to open a PR:
 ```bash
 gh pr create \
   --base main \
-  --head dev-epic{N}-{slug} \
-  --title "feat: {epic-title}" \
+  --head dev-sprint{N}-{slug} \
+  --title "feat: {sprint-title}" \
   --body "$(cat <<'EOF'
 ## Sprint Summary
 
-**Epic:** {epic-ID} — {epic-title}
+**Sprint:** {sprint-ID} — {sprint-title}
 **Tasks completed:** {count}
-**Branch:** dev-epic{N}-{slug}
+**Branch:** dev-sprint{N}-{slug}
 
 ## What Was Built
 
@@ -252,10 +252,10 @@ Post a sprint summary to the human:
 
 > "✅ Sprint complete.
 >
-> **Epic:** TASK-2 — Azure Networking Foundation
+> **Sprint:** TASK-2 — Azure Networking Foundation
 > **Tasks completed:** 8/8
 > **All scores ≥ 90%**
-> **Branch:** `dev-epic2-azure-networking-foundation`
+> **Branch:** `dev-sprint2-azure-networking-foundation`
 > **PR:** [link]
 >
 > Please review the PR and merge when ready. The next sprint will build on [next logical area]."
@@ -289,7 +289,7 @@ Wait for the human's response before taking further action on the affected task.
 
 - Do not start Phase 5 before the Scrum Master has approved the sprint (Phase 2 complete).
 - Do not merge the PR — that is the human's responsibility.
-- Do not skip the epic branch setup (Phase 3) and commit directly to `main`.
+- Do not skip the sprint branch setup (Phase 3) and commit directly to `main`.
 - Do not mark a task as Done until the Tester gives it a score of 90 or above.
 - Do not run Coders serially when tasks can be run in parallel — parallelism is a requirement, not an optimization.
 - When a Coder finishes, immediately route to the Tester — do not batch multiple completed tasks before testing.

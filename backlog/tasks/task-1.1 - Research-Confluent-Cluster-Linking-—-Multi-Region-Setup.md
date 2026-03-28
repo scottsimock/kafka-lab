@@ -1,10 +1,10 @@
 ---
 id: TASK-1.1
 title: 'Research: Confluent Cluster Linking — Multi-Region Setup'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-27 20:43'
-updated_date: '2026-03-28 18:13'
+updated_date: '2026-03-28 18:23'
 labels:
   - research
   - confluent
@@ -46,12 +46,12 @@ Research Confluent Cluster Linking to understand how to replicate topics between
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Cluster Linking configuration requirements documented
-- [ ] #2 Offset sync and failover/failback procedures outlined
-- [ ] #3 Network requirements between clusters identified
-- [ ] #4 RTO/RPO characteristics documented
-- [ ] #5 Differences from MirrorMaker 2 noted
-- [ ] #6 Research doc created in backlog/docs covering: summary, key findings, architecture decisions, configuration reference, risks, and references
+- [x] #1 Cluster Linking configuration requirements documented
+- [x] #2 Offset sync and failover/failback procedures outlined
+- [x] #3 Network requirements between clusters identified
+- [x] #4 RTO/RPO characteristics documented
+- [x] #5 Differences from MirrorMaker 2 noted
+- [x] #6 Research doc created in backlog/docs covering: summary, key findings, architecture decisions, configuration reference, risks, and references
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -76,5 +76,5 @@ Follow the standard research doc structure: Summary → Key Findings → Archite
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Research findings published to backlog/docs via backlog-document_create
+- [x] #1 Research findings published to backlog/docs via backlog-document_create
 <!-- DOD:END -->

@@ -1,10 +1,10 @@
 ---
 id: TASK-1.6
 title: 'Research: Terraform AzAPI Provider for Azure Infrastructure'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-27 20:44'
-updated_date: '2026-03-28 18:13'
+updated_date: '2026-03-28 18:24'
 labels:
   - research
   - terraform
@@ -42,11 +42,11 @@ Research the Terraform AzAPI provider to understand how it differs from the azur
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 AzAPI provider resource coverage mapped to required Azure resources
-- [ ] #2 AzAPI vs azurerm provider decision matrix documented
-- [ ] #3 Required AzAPI resource types identified for VMs, VNets, Key Vault, UAMI, and CMEK
-- [ ] #4 Terraform state backend configuration for Azure Blob Storage documented
-- [ ] #5 Research doc created in backlog/docs covering: summary, key findings, architecture decisions, configuration reference, risks, and references
+- [x] #1 AzAPI provider resource coverage mapped to required Azure resources
+- [x] #2 AzAPI vs azurerm provider decision matrix documented
+- [x] #3 Required AzAPI resource types identified for VMs, VNets, Key Vault, UAMI, and CMEK
+- [x] #4 Terraform state backend configuration for Azure Blob Storage documented
+- [x] #5 Research doc created in backlog/docs covering: summary, key findings, architecture decisions, configuration reference, risks, and references
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -68,7 +68,13 @@ The doc must cover:
 Follow the standard research doc structure: Summary → Key Findings → Architecture Decisions → Configuration Reference → Risks and Open Questions → References
 <!-- SECTION:PLAN:END -->
 
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Research completed 2026-03-28. Created backlog document doc-5 (Terraform AzAPI Provider Research) covering all required topics: AzAPI vs azurerm decision matrix, resource type mapping for VMs/VNets/NSGs/Key Vault/UAMI/CMEK/PPG/Route Tables/Managed Disks, API version pinning strategy, data sources and dynamic references, state backend configuration, and risks/open questions. All HCL examples use AzAPI v2.0+ native HCL body syntax.
+<!-- SECTION:NOTES:END -->
+
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Research findings published to backlog/docs via backlog-document_create
+- [x] #1 Research findings published to backlog/docs via backlog-document_create
 <!-- DOD:END -->

@@ -1,10 +1,10 @@
 ---
 id: TASK-1.3
 title: 'Research: Confluent Schema Registry — Multi-DC Deployment'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-27 20:43'
-updated_date: '2026-03-28 18:13'
+updated_date: '2026-03-28 18:23'
 labels:
   - research
   - confluent
@@ -40,11 +40,11 @@ Research Confluent Schema Registry for multi-datacenter deployment, focusing on 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Multi-DC Schema Registry deployment options documented (primary/secondary)
-- [ ] #2 Schema compatibility modes and their effect on failover documented
-- [ ] #3 Schema Registry HA configuration identified
-- [ ] #4 Integration with Kafka clients (Python) documented
-- [ ] #5 Research doc created in backlog/docs covering: summary, key findings, architecture decisions, configuration reference, risks, and references
+- [x] #1 Multi-DC Schema Registry deployment options documented (primary/secondary)
+- [x] #2 Schema compatibility modes and their effect on failover documented
+- [x] #3 Schema Registry HA configuration identified
+- [x] #4 Integration with Kafka clients (Python) documented
+- [x] #5 Research doc created in backlog/docs covering: summary, key findings, architecture decisions, configuration reference, risks, and references
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -68,5 +68,5 @@ Follow the standard research doc structure: Summary → Key Findings → Archite
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Research findings published to backlog/docs via backlog-document_create
+- [x] #1 Research findings published to backlog/docs via backlog-document_create
 <!-- DOD:END -->

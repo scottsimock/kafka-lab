@@ -1,10 +1,10 @@
 ---
 id: TASK-1.5
 title: 'Research: Azure VM Infrastructure for Kafka Brokers'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-27 20:44'
-updated_date: '2026-03-28 18:13'
+updated_date: '2026-03-28 18:24'
 labels:
   - research
   - azure
@@ -44,12 +44,12 @@ Research Azure Virtual Machine options and configuration requirements for hostin
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 VM SKU recommendations per component (broker, ZooKeeper, Schema Registry, Connect) documented
-- [ ] #2 Disk sizing and IOPS requirements for Kafka data logs documented
-- [ ] #3 Availability Zone placement strategy for 3-broker cluster documented
-- [ ] #4 Azure VM extension and monitoring agent requirements identified
-- [ ] #5 Ubuntu 22.04 LTS-specific Azure VM considerations noted
-- [ ] #6 Research doc created in backlog/docs covering: summary, key findings, architecture decisions, configuration reference, risks, and references
+- [x] #1 VM SKU recommendations per component (broker, ZooKeeper, Schema Registry, Connect) documented
+- [x] #2 Disk sizing and IOPS requirements for Kafka data logs documented
+- [x] #3 Availability Zone placement strategy for 3-broker cluster documented
+- [x] #4 Azure VM extension and monitoring agent requirements identified
+- [x] #5 Ubuntu 22.04 LTS-specific Azure VM considerations noted
+- [x] #6 Research doc created in backlog/docs covering: summary, key findings, architecture decisions, configuration reference, risks, and references
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -73,5 +73,5 @@ Follow the standard research doc structure: Summary → Key Findings → Archite
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Research findings published to backlog/docs via backlog-document_create
+- [x] #1 Research findings published to backlog/docs via backlog-document_create
 <!-- DOD:END -->

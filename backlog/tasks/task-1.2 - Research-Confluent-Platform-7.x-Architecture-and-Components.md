@@ -1,10 +1,10 @@
 ---
 id: TASK-1.2
 title: 'Research: Confluent Platform 7.x Architecture and Components'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-27 20:43'
-updated_date: '2026-03-28 18:13'
+updated_date: '2026-03-28 18:24'
 labels:
   - research
   - confluent
@@ -42,11 +42,11 @@ Deep-dive into Confluent Platform 7.x overall architecture to understand how all
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Component inventory documented with HA requirements and port map
-- [ ] #2 VM sizing recommendations per component identified
-- [ ] #3 ZooKeeper + 3-broker topology diagram drafted
-- [ ] #4 Required vs optional components classified for the lab
-- [ ] #5 Research doc created in backlog/docs covering: summary, key findings, architecture decisions, configuration reference, risks, and references
+- [x] #1 Component inventory documented with HA requirements and port map
+- [x] #2 VM sizing recommendations per component identified
+- [x] #3 ZooKeeper + 3-broker topology diagram drafted
+- [x] #4 Required vs optional components classified for the lab
+- [x] #5 Research doc created in backlog/docs covering: summary, key findings, architecture decisions, configuration reference, risks, and references
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -68,7 +68,13 @@ The doc must cover:
 Follow the standard research doc structure: Summary → Key Findings → Architecture Decisions → Configuration Reference → Risks and Open Questions → References
 <!-- SECTION:PLAN:END -->
 
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Research completed via web search across Confluent official documentation, architecture white papers, and community guides. All findings published to backlog doc-3. Key deliverables:\n\n- Full component inventory with HA classification and port map\n- VM sizing table for all 6 components using Azure D-series SKUs\n- ASCII topology diagrams for ZK ensemble + 3-broker layout\n- Required vs optional component matrix for the resilience lab\n- Configuration reference with server.properties, ZK config, SR config, Connect config, and Cluster Linking setup\n- 5 risks and 6 open questions identified for follow-up
+<!-- SECTION:NOTES:END -->
+
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Research findings published to backlog/docs via backlog-document_create
+- [x] #1 Research findings published to backlog/docs via backlog-document_create
 <!-- DOD:END -->

@@ -1,10 +1,10 @@
 ---
 id: TASK-1.4
 title: 'Research: Confluent Kafka Connect — Lab Deployment'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-27 20:43'
-updated_date: '2026-03-28 18:13'
+updated_date: '2026-03-28 18:24'
 labels:
   - research
   - confluent
@@ -38,11 +38,11 @@ Research Confluent Kafka Connect to understand its role in the lab and how it sh
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Connect worker distributed mode configuration documented
-- [ ] #2 Connector types relevant to lab identified
-- [ ] #3 Connect HA and failover behavior documented
-- [ ] #4 Integration with Schema Registry for Avro-serialized data documented
-- [ ] #5 Research doc created in backlog/docs covering: summary, key findings, architecture decisions, configuration reference, risks, and references
+- [x] #1 Connect worker distributed mode configuration documented
+- [x] #2 Connector types relevant to lab identified
+- [x] #3 Connect HA and failover behavior documented
+- [x] #4 Integration with Schema Registry for Avro-serialized data documented
+- [x] #5 Research doc created in backlog/docs covering: summary, key findings, architecture decisions, configuration reference, risks, and references
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -67,5 +67,5 @@ Follow the standard research doc structure: Summary → Key Findings → Archite
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Research findings published to backlog/docs via backlog-document_create
+- [x] #1 Research findings published to backlog/docs via backlog-document_create
 <!-- DOD:END -->

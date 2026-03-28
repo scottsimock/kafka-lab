@@ -1,10 +1,10 @@
 ---
 id: TASK-1.12
 title: 'Research: Azure Networking Design for Multi-Region Kafka'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-27 20:45'
-updated_date: '2026-03-28 18:13'
+updated_date: '2026-03-28 18:31'
 labels:
   - research
   - azure
@@ -44,12 +44,12 @@ Research Azure networking design for the Kafka Lab, covering VNet topology, cros
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 VNet design for each region documented (address space, subnets per tier)
-- [ ] #2 VNet peering strategy between southcentralus and mexicocentral documented
-- [ ] #3 ExpressRoute vs VPN Gateway vs VNet peering decision documented for cross-region Kafka traffic
-- [ ] #4 NSG rules for Kafka broker, ZooKeeper, Schema Registry, and Connect ports documented
-- [ ] #5 Private endpoint vs public endpoint decision for each Confluent component documented
-- [ ] #6 Research doc created in backlog/docs covering: summary, key findings, architecture decisions, configuration reference, risks, and references
+- [x] #1 VNet design for each region documented (address space, subnets per tier)
+- [x] #2 VNet peering strategy between southcentralus and mexicocentral documented
+- [x] #3 ExpressRoute vs VPN Gateway vs VNet peering decision documented for cross-region Kafka traffic
+- [x] #4 NSG rules for Kafka broker, ZooKeeper, Schema Registry, and Connect ports documented
+- [x] #5 Private endpoint vs public endpoint decision for each Confluent component documented
+- [x] #6 Research doc created in backlog/docs covering: summary, key findings, architecture decisions, configuration reference, risks, and references
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -73,5 +73,5 @@ Follow the standard research doc structure: Summary → Key Findings → Archite
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Research findings published to backlog/docs via backlog-document_create
+- [x] #1 Research findings published to backlog/docs via backlog-document_create
 <!-- DOD:END -->

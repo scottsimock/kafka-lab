@@ -1,10 +1,10 @@
 ---
 id: TASK-1.10
 title: 'Research: Python FastAPI Producer and Consumer App Design'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-27 20:44'
-updated_date: '2026-03-28 18:13'
+updated_date: '2026-03-28 18:25'
 labels:
   - research
   - python
@@ -42,12 +42,12 @@ Research the Python/FastAPI application design for the producer and consumer app
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Confluent Python client (confluent-kafka) producer and consumer API documented
-- [ ] #2 FastAPI integration pattern with async Kafka producer/consumer documented
-- [ ] #3 Schema Registry client integration for Avro serialization documented
-- [ ] #4 Consumer group failover behavior during broker unavailability described
-- [ ] #5 Observability instrumentation for the app (metrics endpoint, health check) outlined
-- [ ] #6 Research doc created in backlog/docs covering: summary, key findings, architecture decisions, configuration reference, risks, and references
+- [x] #1 Confluent Python client (confluent-kafka) producer and consumer API documented
+- [x] #2 FastAPI integration pattern with async Kafka producer/consumer documented
+- [x] #3 Schema Registry client integration for Avro serialization documented
+- [x] #4 Consumer group failover behavior during broker unavailability described
+- [x] #5 Observability instrumentation for the app (metrics endpoint, health check) outlined
+- [x] #6 Research doc created in backlog/docs covering: summary, key findings, architecture decisions, configuration reference, risks, and references
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -70,7 +70,39 @@ The doc must cover:
 Follow the standard research doc structure: Summary → Key Findings → Architecture Decisions → Configuration Reference → Risks and Open Questions → References
 <!-- SECTION:PLAN:END -->
 
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+## TASK-1.10 Completion Summary
+
+**Research document created**: `doc-8 — FastAPI Producer Consumer App Research`
+
+### What was researched
+- **confluent-kafka Python client** (librdkafka-based) — producer and consumer APIs, deprecation of AvroProducer/AvroConsumer in favor of AvroSerializer/AvroDeserializer
+- **Producer resilience config** — acks=all, enable.idempotence=True, retries, delivery callbacks
+- **Consumer resilience config** — manual offset commit, session timeout, heartbeat, static group membership, rebalance callbacks
+- **FastAPI integration** — lifespan context manager pattern, run_in_executor for blocking calls, asyncio.Task for consumer loop
+- **Schema Registry** — SchemaRegistryClient + AvroSerializer/AvroDeserializer with Confluent wire format
+- **Real-time visualization** — SSE via sse-starlette with EventSourceResponse, minimal HTML/JS dashboard
+- **Observability** — prometheus_client metrics endpoint, stats_cb for librdkafka internals, consumer lag tracking
+- **Reconnection handling** — librdkafka auto-reconnects; error_cb for logging; KafkaError.fatal() for unrecoverable errors
+
+### Key decisions documented
+1. Use confluent-kafka (not aiokafka) for production-grade throughput and native Schema Registry support
+2. Manual offset commit for observable resilience behavior during chaos experiments
+3. FastAPI lifespan context manager for clean lifecycle management
+4. SSE over WebSocket for unidirectional message visualization
+5. Prometheus metrics with stats_cb for comprehensive chaos experiment observability
+6. Idempotent producer with acks=all for strongest delivery guarantees
+
+### Deliverables
+- Full Python code examples for producer app, consumer app, SSE stream, and minimal dashboard
+- Complete configuration parameter tables for producer and consumer
+- requirements.txt with all dependencies
+- 6 open questions documented for future sprint planning
+<!-- SECTION:FINAL_SUMMARY:END -->
+
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Research findings published to backlog/docs via backlog-document_create
+- [x] #1 Research findings published to backlog/docs via backlog-document_create
 <!-- DOD:END -->

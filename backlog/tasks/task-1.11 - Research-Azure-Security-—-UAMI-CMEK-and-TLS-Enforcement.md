@@ -1,10 +1,10 @@
 ---
 id: TASK-1.11
 title: 'Research: Azure Security — UAMI, CMEK, and TLS Enforcement'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-27 20:45'
-updated_date: '2026-03-28 18:13'
+updated_date: '2026-03-28 18:31'
 labels:
   - research
   - azure
@@ -48,12 +48,12 @@ Research Azure security requirements for the Kafka Lab: User Assigned Managed Id
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 UAMI provisioning and assignment pattern for each VM type documented
-- [ ] #2 Key Vault + CMEK configuration for managed disks documented (one key per resource)
-- [ ] #3 Disk encryption set (DES) configuration for Azure managed disks documented
-- [ ] #4 TLS 1.2 enforcement approach for Kafka inter-broker and client communication documented
-- [ ] #5 Least-privilege RBAC role assignments for each UAMI documented
-- [ ] #6 Research doc created in backlog/docs covering: summary, key findings, architecture decisions, configuration reference, risks, and references
+- [x] #1 UAMI provisioning and assignment pattern for each VM type documented
+- [x] #2 Key Vault + CMEK configuration for managed disks documented (one key per resource)
+- [x] #3 Disk encryption set (DES) configuration for Azure managed disks documented
+- [x] #4 TLS 1.2 enforcement approach for Kafka inter-broker and client communication documented
+- [x] #5 Least-privilege RBAC role assignments for each UAMI documented
+- [x] #6 Research doc created in backlog/docs covering: summary, key findings, architecture decisions, configuration reference, risks, and references
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -75,7 +75,34 @@ The doc must cover:
 Follow the standard research doc structure: Summary → Key Findings → Architecture Decisions → Configuration Reference → Risks and Open Questions → References
 <!-- SECTION:PLAN:END -->
 
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+## Research Complete: Azure Security — UAMI, CMEK, and TLS Enforcement
+
+### Deliverable
+Published comprehensive research document **doc-10 — Azure Security UAMI CMEK TLS Research** to backlog/docs.
+
+### Key Decisions Documented
+1. **UAMI Strategy**: 9 UAMIs total (3 regions × 3 workflows: kafka-broker, zookeeper, DES) — one UAMI per workflow per region
+2. **CMEK Strategy**: One Key Vault key + one Disk Encryption Set per managed disk; one Key Vault per region (Premium SKU, RBAC mode)
+3. **TLS Strategy**: mTLS everywhere — Kafka inter-broker (SSL listener on :9093), ZooKeeper client+quorum TLS, TLS 1.2 minimum with TLS 1.3 preferred
+4. **RBAC Roles**: Key Vault Crypto Service Encryption User for DES; Key Vault Secrets User for broker/ZK UAMIs
+
+### Configuration References Included
+- Terraform AzAPI HCL for UAMI, Key Vault, Key Vault Keys, DES, RBAC role assignments, and VM with CMEK disks
+- Confluent `server.properties` for broker SSL/TLS and ZooKeeper mTLS
+- ZooKeeper `zookeeper.properties` for server-side TLS
+- RBAC role assignment summary table
+
+### Open Questions Flagged
+- ZooKeeper disk count (OS only vs OS + data)
+- Certificate authority choice (self-signed CA vs HashiCorp Vault PKI vs Azure Key Vault certs)
+- Key Vault Private Endpoint dependency on networking module
+- Java version confirmation for TLS 1.3 support
+<!-- SECTION:FINAL_SUMMARY:END -->
+
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Research findings published to backlog/docs via backlog-document_create
+- [x] #1 Research findings published to backlog/docs via backlog-document_create
 <!-- DOD:END -->

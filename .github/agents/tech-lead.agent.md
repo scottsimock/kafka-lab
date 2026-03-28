@@ -25,10 +25,10 @@ tools:
   - mcp_github_list_commits
   - mcp_github_list_pull_requests
 agents:
-  - .github/agents/kafka-lab/subagents/product-owner.agent.md
-  - .github/agents/kafka-lab/subagents/scrum-master.agent.md
-  - .github/agents/kafka-lab/subagents/coder.agent.md
-  - .github/agents/kafka-lab/subagents/tester.agent.md
+  - .github/agents/subagents/product-owner.agent.md
+  - .github/agents/subagents/scrum-master.agent.md
+  - .github/agents/subagents/coder.agent.md
+  - .github/agents/subagents/tester.agent.md
 ---
 
 # Tech Lead

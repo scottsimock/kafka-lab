@@ -4,6 +4,7 @@ title: 'Research: Azure Networking Design for Multi-Region Kafka'
 status: To Do
 assignee: []
 created_date: '2026-03-27 20:45'
+updated_date: '2026-03-28 18:13'
 labels:
   - research
   - azure
@@ -48,4 +49,29 @@ Research Azure networking design for the Kafka Lab, covering VNet topology, cros
 - [ ] #3 ExpressRoute vs VPN Gateway vs VNet peering decision documented for cross-region Kafka traffic
 - [ ] #4 NSG rules for Kafka broker, ZooKeeper, Schema Registry, and Connect ports documented
 - [ ] #5 Private endpoint vs public endpoint decision for each Confluent component documented
+- [ ] #6 Research doc created in backlog/docs covering: summary, key findings, architecture decisions, configuration reference, risks, and references
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+### Documentation Output
+
+Publish findings via `backlog-document_create` with title: **Azure Networking Multi-Region Design Research**
+
+The doc must cover:
+
+- VNet topology per region: address spaces, subnets per tier
+- Cross-region connectivity for Cluster Linking (VNet peering vs VPN Gateway vs ExpressRoute)
+- NSG rules for all Confluent component ports
+- Private endpoint vs public endpoint decision per component
+- Azure DNS configuration for broker hostname resolution across regions
+- Kafka advertised listeners configuration with Azure networking
+
+Follow the standard research doc structure: Summary → Key Findings → Architecture Decisions → Configuration Reference → Risks and Open Questions → References
+<!-- SECTION:PLAN:END -->
+
+## Definition of Done
+<!-- DOD:BEGIN -->
+- [ ] #1 Research findings published to backlog/docs via backlog-document_create
+<!-- DOD:END -->

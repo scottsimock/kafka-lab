@@ -4,6 +4,7 @@ title: 'Research: GitHub Actions Pipeline — Terraform and Ansible Orchestratio
 status: To Do
 assignee: []
 created_date: '2026-03-27 20:44'
+updated_date: '2026-03-28 18:13'
 labels:
   - research
   - github-actions
@@ -50,4 +51,30 @@ Research GitHub Actions pipeline design for orchestrating Terraform infrastructu
 - [ ] #3 Secret and variable management strategy (GitHub Secrets vs Key Vault) documented
 - [ ] #4 Stage gates between Terraform and Ansible runs defined
 - [ ] #5 Workflow trigger strategy (push, manual, scheduled) outlined
+- [ ] #6 Research doc created in backlog/docs covering: summary, key findings, architecture decisions, configuration reference, risks, and references
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+### Documentation Output
+
+Publish findings via `backlog-document_create` with title: **GitHub Actions Pipeline Research**
+
+The doc must cover:
+
+- Workflow structure for Terraform → Ansible deployment pipeline
+- Azure OIDC/UAMI authentication from GitHub Actions
+- Terraform output → Ansible variable handoff mechanism
+- Secret and variable management (GitHub Secrets vs Key Vault)
+- Stage gates between Terraform and Ansible runs
+- Workflow trigger strategy (push, manual, scheduled)
+- Self-hosted vs GitHub-hosted runner recommendation
+
+Follow the standard research doc structure: Summary → Key Findings → Architecture Decisions → Configuration Reference → Risks and Open Questions → References
+<!-- SECTION:PLAN:END -->
+
+## Definition of Done
+<!-- DOD:BEGIN -->
+- [ ] #1 Research findings published to backlog/docs via backlog-document_create
+<!-- DOD:END -->

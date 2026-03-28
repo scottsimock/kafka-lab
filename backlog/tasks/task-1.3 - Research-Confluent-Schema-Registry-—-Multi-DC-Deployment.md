@@ -4,6 +4,7 @@ title: 'Research: Confluent Schema Registry — Multi-DC Deployment'
 status: To Do
 assignee: []
 created_date: '2026-03-27 20:43'
+updated_date: '2026-03-28 18:13'
 labels:
   - research
   - confluent
@@ -43,4 +44,29 @@ Research Confluent Schema Registry for multi-datacenter deployment, focusing on 
 - [ ] #2 Schema compatibility modes and their effect on failover documented
 - [ ] #3 Schema Registry HA configuration identified
 - [ ] #4 Integration with Kafka clients (Python) documented
+- [ ] #5 Research doc created in backlog/docs covering: summary, key findings, architecture decisions, configuration reference, risks, and references
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+### Documentation Output
+
+Publish findings via `backlog-document_create` with title: **Schema Registry Multi-DC Deployment Research**
+
+The doc must cover:
+
+- Schema Registry architecture and HA options
+- Multi-DC deployment patterns (primary/secondary vs active-active)
+- Schema compatibility modes and impact on failover
+- Failover behavior when primary cluster goes down
+- Recommended serialization format (Avro) and rationale
+- Python client integration for schema registration and retrieval
+
+Follow the standard research doc structure: Summary → Key Findings → Architecture Decisions → Configuration Reference → Risks and Open Questions → References
+<!-- SECTION:PLAN:END -->
+
+## Definition of Done
+<!-- DOD:BEGIN -->
+- [ ] #1 Research findings published to backlog/docs via backlog-document_create
+<!-- DOD:END -->

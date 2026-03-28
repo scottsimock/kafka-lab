@@ -4,6 +4,7 @@ title: 'Research: Python FastAPI Producer and Consumer App Design'
 status: To Do
 assignee: []
 created_date: '2026-03-27 20:44'
+updated_date: '2026-03-28 18:13'
 labels:
   - research
   - python
@@ -46,4 +47,30 @@ Research the Python/FastAPI application design for the producer and consumer app
 - [ ] #3 Schema Registry client integration for Avro serialization documented
 - [ ] #4 Consumer group failover behavior during broker unavailability described
 - [ ] #5 Observability instrumentation for the app (metrics endpoint, health check) outlined
+- [ ] #6 Research doc created in backlog/docs covering: summary, key findings, architecture decisions, configuration reference, risks, and references
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+### Documentation Output
+
+Publish findings via `backlog-document_create` with title: **FastAPI Producer Consumer App Research**
+
+The doc must cover:
+
+- confluent-kafka Python library (librdkafka) producer and consumer API
+- Producer config for resilience: acks, retries, idempotence, delivery guarantees
+- Consumer config for resilience: group rebalance, offset commit, session timeout
+- FastAPI async patterns with Kafka (background tasks, lifespan events)
+- Schema Registry client integration for Avro serialization
+- Observability instrumentation (metrics endpoint, health check)
+- Reconnection handling during broker failures
+
+Follow the standard research doc structure: Summary → Key Findings → Architecture Decisions → Configuration Reference → Risks and Open Questions → References
+<!-- SECTION:PLAN:END -->
+
+## Definition of Done
+<!-- DOD:BEGIN -->
+- [ ] #1 Research findings published to backlog/docs via backlog-document_create
+<!-- DOD:END -->

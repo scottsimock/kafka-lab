@@ -4,6 +4,7 @@ title: 'Research: Confluent Kafka Connect — Lab Deployment'
 status: To Do
 assignee: []
 created_date: '2026-03-27 20:43'
+updated_date: '2026-03-28 18:13'
 labels:
   - research
   - confluent
@@ -41,4 +42,30 @@ Research Confluent Kafka Connect to understand its role in the lab and how it sh
 - [ ] #2 Connector types relevant to lab identified
 - [ ] #3 Connect HA and failover behavior documented
 - [ ] #4 Integration with Schema Registry for Avro-serialized data documented
+- [ ] #5 Research doc created in backlog/docs covering: summary, key findings, architecture decisions, configuration reference, risks, and references
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+### Documentation Output
+
+Publish findings via `backlog-document_create` with title: **Kafka Connect Lab Deployment Research**
+
+The doc must cover:
+
+- Worker modes (standalone vs distributed) with lab recommendation
+- Relevant connector types for the lab use case
+- Decision: Connect for data generation vs FastAPI producer app
+- Connect HA and failover behavior
+- Integration with Schema Registry for Avro serialization
+- VM placement recommendation (dedicated vs co-located with brokers)
+- Minimum distributed mode configuration
+
+Follow the standard research doc structure: Summary → Key Findings → Architecture Decisions → Configuration Reference → Risks and Open Questions → References
+<!-- SECTION:PLAN:END -->
+
+## Definition of Done
+<!-- DOD:BEGIN -->
+- [ ] #1 Research findings published to backlog/docs via backlog-document_create
+<!-- DOD:END -->

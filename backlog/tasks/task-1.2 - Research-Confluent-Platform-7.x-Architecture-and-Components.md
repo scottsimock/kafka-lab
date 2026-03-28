@@ -4,6 +4,7 @@ title: 'Research: Confluent Platform 7.x Architecture and Components'
 status: To Do
 assignee: []
 created_date: '2026-03-27 20:43'
+updated_date: '2026-03-28 18:13'
 labels:
   - research
   - confluent
@@ -45,4 +46,29 @@ Deep-dive into Confluent Platform 7.x overall architecture to understand how all
 - [ ] #2 VM sizing recommendations per component identified
 - [ ] #3 ZooKeeper + 3-broker topology diagram drafted
 - [ ] #4 Required vs optional components classified for the lab
+- [ ] #5 Research doc created in backlog/docs covering: summary, key findings, architecture decisions, configuration reference, risks, and references
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+### Documentation Output
+
+Publish findings via `backlog-document_create` with title: **Confluent Platform 7.x Architecture Research**
+
+The doc must cover:
+
+- Component inventory: Kafka brokers, ZooKeeper, Schema Registry, Connect, Cluster Linking, Control Center
+- HA requirements per component (required vs optional for lab)
+- Port map for all inter-component communication
+- VM sizing recommendations per component
+- ZooKeeper + 3-broker topology design
+- Component co-location constraints and deployment topology
+
+Follow the standard research doc structure: Summary → Key Findings → Architecture Decisions → Configuration Reference → Risks and Open Questions → References
+<!-- SECTION:PLAN:END -->
+
+## Definition of Done
+<!-- DOD:BEGIN -->
+- [ ] #1 Research findings published to backlog/docs via backlog-document_create
+<!-- DOD:END -->

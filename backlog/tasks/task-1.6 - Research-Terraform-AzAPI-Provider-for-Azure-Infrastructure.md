@@ -4,6 +4,7 @@ title: 'Research: Terraform AzAPI Provider for Azure Infrastructure'
 status: To Do
 assignee: []
 created_date: '2026-03-27 20:44'
+updated_date: '2026-03-28 18:13'
 labels:
   - research
   - terraform
@@ -45,4 +46,29 @@ Research the Terraform AzAPI provider to understand how it differs from the azur
 - [ ] #2 AzAPI vs azurerm provider decision matrix documented
 - [ ] #3 Required AzAPI resource types identified for VMs, VNets, Key Vault, UAMI, and CMEK
 - [ ] #4 Terraform state backend configuration for Azure Blob Storage documented
+- [ ] #5 Research doc created in backlog/docs covering: summary, key findings, architecture decisions, configuration reference, risks, and references
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+### Documentation Output
+
+Publish findings via `backlog-document_create` with title: **Terraform AzAPI Provider Research**
+
+The doc must cover:
+
+- AzAPI vs azurerm provider decision matrix
+- AzAPI resource type mapping for all required Azure resources (VMs, VNets, NSGs, Key Vault, UAMI, Managed Disks)
+- API version pinning strategy
+- AzAPI data sources and dynamic resource references
+- Terraform state backend configuration for Azure Blob Storage
+- Provider limitations and workarounds
+
+Follow the standard research doc structure: Summary → Key Findings → Architecture Decisions → Configuration Reference → Risks and Open Questions → References
+<!-- SECTION:PLAN:END -->
+
+## Definition of Done
+<!-- DOD:BEGIN -->
+- [ ] #1 Research findings published to backlog/docs via backlog-document_create
+<!-- DOD:END -->

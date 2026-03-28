@@ -4,6 +4,7 @@ title: 'Research: Azure Security — UAMI, CMEK, and TLS Enforcement'
 status: To Do
 assignee: []
 created_date: '2026-03-27 20:45'
+updated_date: '2026-03-28 18:13'
 labels:
   - research
   - azure
@@ -52,4 +53,29 @@ Research Azure security requirements for the Kafka Lab: User Assigned Managed Id
 - [ ] #3 Disk encryption set (DES) configuration for Azure managed disks documented
 - [ ] #4 TLS 1.2 enforcement approach for Kafka inter-broker and client communication documented
 - [ ] #5 Least-privilege RBAC role assignments for each UAMI documented
+- [ ] #6 Research doc created in backlog/docs covering: summary, key findings, architecture decisions, configuration reference, risks, and references
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+### Documentation Output
+
+Publish findings via `backlog-document_create` with title: **Azure Security UAMI CMEK TLS Research**
+
+The doc must cover:
+
+- UAMI provisioning and assignment strategy (per VM, per cluster, per workflow)
+- Key Vault + CMEK configuration for managed disks (one key per resource)
+- Disk Encryption Set (DES) configuration
+- TLS 1.2+ enforcement for Kafka inter-broker, client, and ZooKeeper communication
+- Confluent SSL listener configuration
+- Least-privilege RBAC role assignments per UAMI
+
+Follow the standard research doc structure: Summary → Key Findings → Architecture Decisions → Configuration Reference → Risks and Open Questions → References
+<!-- SECTION:PLAN:END -->
+
+## Definition of Done
+<!-- DOD:BEGIN -->
+- [ ] #1 Research findings published to backlog/docs via backlog-document_create
+<!-- DOD:END -->

@@ -4,6 +4,7 @@ title: 'Research: Confluent Cluster Linking — Multi-Region Setup'
 status: To Do
 assignee: []
 created_date: '2026-03-27 20:43'
+updated_date: '2026-03-28 18:13'
 labels:
   - research
   - confluent
@@ -50,4 +51,30 @@ Research Confluent Cluster Linking to understand how to replicate topics between
 - [ ] #3 Network requirements between clusters identified
 - [ ] #4 RTO/RPO characteristics documented
 - [ ] #5 Differences from MirrorMaker 2 noted
+- [ ] #6 Research doc created in backlog/docs covering: summary, key findings, architecture decisions, configuration reference, risks, and references
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+### Documentation Output
+
+Publish findings via `backlog-document_create` with title: **Confluent Cluster Linking — Multi-Region Research**
+
+The doc must cover:
+
+- Cluster Linking architecture and how it connects the 3 clusters (SCUS primary, MXC secondary, CAE passive DR)
+- Configuration requirements and prerequisites
+- Offset sync and consumer group migration procedures
+- Failover and failback procedures with RTO/RPO profile
+- Comparison with MirrorMaker 2
+- Network requirements between clusters
+- Behavior during network partitions (input for chaos experiments)
+
+Follow the standard research doc structure: Summary → Key Findings → Architecture Decisions → Configuration Reference → Risks and Open Questions → References
+<!-- SECTION:PLAN:END -->
+
+## Definition of Done
+<!-- DOD:BEGIN -->
+- [ ] #1 Research findings published to backlog/docs via backlog-document_create
+<!-- DOD:END -->

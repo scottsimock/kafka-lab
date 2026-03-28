@@ -4,6 +4,7 @@ title: 'Research: Ansible for Confluent Platform on Azure VMs'
 status: To Do
 assignee: []
 created_date: '2026-03-27 20:44'
+updated_date: '2026-03-28 18:13'
 labels:
   - research
   - ansible
@@ -49,4 +50,30 @@ Research Ansible automation for Confluent Platform 7.x on Ubuntu 22.04 LTS Azure
 - [ ] #3 Ansible vault usage for Confluent credentials identified
 - [ ] #4 Idempotency approach for Confluent service management documented
 - [ ] #5 Variable structure for multi-cluster, multi-region environments designed
+- [ ] #6 Research doc created in backlog/docs covering: summary, key findings, architecture decisions, configuration reference, risks, and references
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+### Documentation Output
+
+Publish findings via `backlog-document_create` with title: **Ansible for Confluent Platform Research**
+
+The doc must cover:
+
+- cp-ansible collection capabilities and Platform 7.x coverage
+- Inventory structure for 3 regions × 3 brokers per cluster
+- Playbook patterns for Kafka + ZooKeeper on Ubuntu 22.04
+- Ansible Vault usage for Confluent credentials
+- Idempotency approach for Confluent service management (systemd)
+- Azure dynamic inventory integration (azure.azcollection)
+- Terraform-to-Ansible variable handoff pattern
+
+Follow the standard research doc structure: Summary → Key Findings → Architecture Decisions → Configuration Reference → Risks and Open Questions → References
+<!-- SECTION:PLAN:END -->
+
+## Definition of Done
+<!-- DOD:BEGIN -->
+- [ ] #1 Research findings published to backlog/docs via backlog-document_create
+<!-- DOD:END -->

@@ -5,7 +5,7 @@ description: >
   created sprint to verify each has clear goals, well-defined inputs and outputs,
   testable acceptance criteria, appropriate size, and correct dependencies.
   Works iteratively with the Product Owner until all tasks pass review.
-  Invoked by the Tech Lead after the Product Owner completes planning.
+  Invoked by the Sprint Orchestrator after the Product Owner completes planning.
 tools:
   - read_file
   - list_directory
@@ -28,7 +28,7 @@ You do **not** write code. You do not create tasks. You review, annotate, and en
 
 ## Review Workflow
 
-You will be invoked by the Tech Lead with the ID of a newly created sprint. Your job is to review every child task in that sprint.
+You will be invoked by the Sprint Orchestrator with the ID of a newly created sprint. Your job is to review every child task in that sprint.
 
 ### Step 1 — Load the Sprint
 
@@ -91,14 +91,14 @@ The annotation format:
 
 After reviewing all tasks:
 
-- **All tasks pass** → sprint review passes. Report back to Tech Lead.
-- **Any task fails** → sprint review fails. Report back to Tech Lead with a summary of all failed tasks and what the Product Owner must fix.
+- **All tasks pass** → sprint review passes. Report back to Sprint Orchestrator.
+- **Any task fails** → sprint review fails. Report back to Sprint Orchestrator with a summary of all failed tasks and what the Product Owner must fix.
 
 ---
 
 ### Step 5 — Escalate to Product Owner (on failure)
 
-The Tech Lead will ask the Product Owner to fix the failing tasks. Once the Product Owner reports that fixes are complete, you will be invoked again.
+The Sprint Orchestrator will ask the Product Owner to fix the failing tasks. Once the Product Owner reports that fixes are complete, you will be invoked again.
 
 Repeat Steps 1–4 for every task that previously failed. You do not need to re-review tasks that already passed — but you must verify that the fixes for failed tasks did not introduce new problems in dependent tasks.
 
@@ -106,14 +106,14 @@ This loop continues **until every task in the sprint passes all 10 checks**.
 
 ---
 
-### Step 6 — Report to Tech Lead
+### Step 6 — Report to Sprint Orchestrator
 
-When all tasks pass, report back to the Tech Lead with:
+When all tasks pass, report back to the Sprint Orchestrator with:
 
 1. **Sprint approved** confirmation
 2. The full list of tasks with their IDs, titles, and priorities
 3. The recommended execution order based on dependencies (tasks with no dependencies first, then unblocked tasks in priority order)
-4. Any risk flags or concerns for the Tech Lead to monitor during implementation (not blockers — just things to watch)
+4. Any risk flags or concerns for the Sprint Orchestrator to monitor during implementation (not blockers — just things to watch)
 
 ---
 

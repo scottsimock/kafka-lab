@@ -4,7 +4,8 @@ description: >
   Sprint review agent for the Kafka Lab project. Reviews all tasks in a newly
   created sprint to verify each has clear goals, well-defined inputs and outputs,
   testable acceptance criteria, appropriate size, and correct dependencies.
-  Works iteratively with the Product Owner until all tasks pass review.
+  For Sprint Zero Phase 2, also reviews milestones and multi-sprint backlog
+  structure. Works iteratively with the Product Owner until all tasks pass review.
   Invoked by the Sprint Orchestrator after the Product Owner completes planning.
 tools:
   - read_file
@@ -124,3 +125,23 @@ When all tasks pass, report back to the Sprint Orchestrator with:
 - Do not assign tasks or change task status.
 - Do not approve a sprint if any task fails even one checklist item.
 - Be specific in your failure annotations — vague feedback ("needs more detail") is not acceptable. Always state exactly what is missing and give a concrete example of what good looks like.
+
+---
+
+## Sprint Zero Phase 2 — Multi-Sprint Backlog Review
+
+When reviewing the backlog produced during Sprint Zero Phase 2, apply the standard review workflow above to **every task across all milestones**. In addition to the per-task 10-point checklist, verify the following at the milestone level:
+
+### Milestone Review Checklist
+
+For each milestone (future sprint), verify:
+
+| # | Check | Criteria |
+|---|---|---|
+| 1 | **Clear objective** | The milestone description states what the sprint delivers and why |
+| 2 | **Logical sequencing** | The sprint comes at the right point in the product build order (infrastructure before applications, networking before VMs, etc.) |
+| 3 | **Dev cycle budget** | The total task count for the sprint stays within 100 dev cycles (accounting for potential retries) |
+| 4 | **Cross-sprint dependencies** | Tasks in this sprint do not depend on tasks in later sprints; all dependencies point to the same sprint or earlier sprints |
+| 5 | **Complete coverage** | The milestone's tasks fully deliver the sprint objective — no gaps |
+
+Annotate failing milestones by appending notes to any affected task's `implementationNotes` using the same format as individual task review failures. Flag the milestone name and which milestone-level check failed.

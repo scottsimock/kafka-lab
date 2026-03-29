@@ -1,13 +1,4 @@
-﻿todo
- - create skills for each technology
-
---------------------------------------------------
-
-/grill-me lets update the sprint orchestrator and subagests with a concept called sprint zero and is invoked by the human typing something like lets do sprint 0. 
-
-
-
-
+﻿
 ------------------------------------------------
 
 /grill-me Your the business reponsible for this project. WE are setuping our development/coding/implementation harness to ensure we have clear roles and responsibilities for this project

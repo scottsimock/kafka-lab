@@ -1,0 +1,33 @@
+---
+# Azure dynamic inventory configuration
+# Discovers VMs from the kafkalab resource group and groups them by tags
+plugin: azure.azcollection.azure_rm
+
+auth_source: auto
+
+include_vm_resource_groups:
+  - 'klc-rg-kafkalab-scus'
+
+keyed_groups:
+  - prefix: ''
+    separator: ''
+    key: tags.role | default('ungrouped')
+  - prefix: 'region'
+    separator: '_'
+    key: location
+  - prefix: 'zone'
+    separator: '_'
+    key: tags.zone | default('unknown')
+
+hostvar_expressions:
+  ansible_host: private_ipv4_addresses[0]
+
+conditional_groups:
+  kafka_brokers: "'kafka-broker' in tags.role"
+  zookeeper: "'zookeeper' in tags.role"
+  schema_registry: "'schema-registry' in tags.role"
+  kafka_connect: "'kafka-connect' in tags.role"
+  web_app: "'web-app' in tags.role"
+
+exclude_host_filters:
+  - powerstate != 'running'

@@ -1,0 +1,91 @@
+---
+# Ansible playbook: Deploy and configure Kafka broker
+# Uses Jinja2 templates to generate per-broker server.properties
+- name: Configure Confluent Kafka brokers
+  hosts: kafka_brokers
+  become: true
+  vars:
+    confluent_major_version: '7.7'
+    kafka_data_dir: '/data/kafka/data'
+    kafka_log_retention_hours: 168
+    kafka_replication_factor: 3
+    kafka_min_insync_replicas: 2
+    kafka_num_partitions: 6
+    zookeeper_nodes:
+      - 'zk-1.kafka.internal:2181'
+      - 'zk-2.kafka.internal:2181'
+      - 'zk-3.kafka.internal:2181'
+
+  tasks:
+    - name: Add Confluent APT key
+      ansible.builtin.apt_key:
+        url: 'https://packages.confluent.io/deb/{{ confluent_major_version }}/archive.key'
+        state: present
+
+    - name: Add Confluent APT repository
+      ansible.builtin.apt_repository:
+        repo: "deb https://packages.confluent.io/deb/{{ confluent_major_version }} stable main"
+        state: present
+        filename: confluent
+
+    - name: Install Confluent Platform
+      ansible.builtin.apt:
+        name:
+          - confluent-platform
+        state: present
+        update_cache: true
+
+    - name: Create Kafka data directory
+      ansible.builtin.file:
+        path: '{{ kafka_data_dir }}'
+        state: directory
+        owner: cp-kafka
+        group: confluent
+        mode: '0750'
+
+    - name: Deploy server.properties
+      ansible.builtin.template:
+        src: server.properties.j2
+        dest: /etc/kafka/server.properties
+        owner: cp-kafka
+        group: confluent
+        mode: '0640'
+      notify: Restart kafka
+
+    - name: Deploy broker log4j configuration
+      ansible.builtin.template:
+        src: log4j.properties.j2
+        dest: /etc/kafka/log4j.properties
+        owner: cp-kafka
+        group: confluent
+        mode: '0644'
+      notify: Restart kafka
+
+    - name: Configure system limits for Kafka
+      ansible.builtin.copy:
+        dest: /etc/security/limits.d/kafka.conf
+        content: |
+          cp-kafka soft nofile 128000
+          cp-kafka hard nofile 128000
+          cp-kafka soft nproc 65536
+          cp-kafka hard nproc 65536
+        mode: '0644'
+
+    - name: Enable and start Kafka broker
+      ansible.builtin.service:
+        name: confluent-kafka
+        enabled: true
+        state: started
+
+    - name: Verify broker is accepting connections
+      ansible.builtin.wait_for:
+        port: 9092
+        host: '{{ inventory_hostname }}'
+        delay: 10
+        timeout: 120
+
+  handlers:
+    - name: Restart kafka
+      ansible.builtin.service:
+        name: confluent-kafka
+        state: restarted

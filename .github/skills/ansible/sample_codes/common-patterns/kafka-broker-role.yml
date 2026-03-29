@@ -1,0 +1,54 @@
+---
+# Kafka broker role tasks
+# Installs Confluent Platform and configures the Kafka broker service
+- name: Add Confluent APT repository key
+  ansible.builtin.apt_key:
+    url: 'https://packages.confluent.io/deb/{{ confluent_major_version }}/archive.key'
+    state: present
+
+- name: Add Confluent APT repository
+  ansible.builtin.apt_repository:
+    repo: "deb https://packages.confluent.io/deb/{{ confluent_major_version }} stable main"
+    state: present
+    filename: confluent
+
+- name: Install Confluent Platform packages
+  ansible.builtin.apt:
+    name:
+      - confluent-platform
+    state: present
+    update_cache: true
+
+- name: Create server.properties from template
+  ansible.builtin.template:
+    src: server.properties.j2
+    dest: /etc/kafka/server.properties
+    owner: kafka
+    group: kafka
+    mode: '0640'
+  notify: Restart kafka broker
+
+- name: Create Kafka broker systemd override directory
+  ansible.builtin.file:
+    path: /etc/systemd/system/confluent-kafka.service.d
+    state: directory
+    mode: '0755'
+
+- name: Configure Kafka broker systemd override
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/confluent-kafka.service.d/override.conf
+    content: |
+      [Service]
+      User=kafka
+      Group=kafka
+      LimitNOFILE=128000
+    mode: '0644'
+  notify:
+    - Reload systemd
+    - Restart kafka broker
+
+- name: Enable and start Kafka broker service
+  ansible.builtin.service:
+    name: confluent-kafka
+    enabled: true
+    state: started

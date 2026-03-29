@@ -1,0 +1,56 @@
+---
+# Ansible playbook: Configure Azure VM with base packages and SSH hardening
+- name: Configure Azure Linux VMs
+  hosts: kafka_brokers
+  become: true
+  vars:
+    admin_username: 'azureuser'
+
+  pre_tasks:
+    - name: Wait for cloud-init to complete
+      ansible.builtin.command:
+        cmd: cloud-init status --wait
+      changed_when: false
+
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install base packages
+      ansible.builtin.apt:
+        name:
+          - curl
+          - wget
+          - unzip
+          - jq
+          - net-tools
+          - htop
+          - openjdk-17-jdk-headless
+        state: present
+
+    - name: Disable SSH password authentication
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+        validate: 'sshd -t -f %s'
+      notify: Restart sshd
+
+    - name: Configure data disk mount points
+      ansible.builtin.file:
+        path: '/data/kafka/{{ item }}'
+        state: directory
+        owner: '{{ admin_username }}'
+        group: '{{ admin_username }}'
+        mode: '0750'
+      loop:
+        - 'logs'
+        - 'data'
+
+  handlers:
+    - name: Restart sshd
+      ansible.builtin.service:
+        name: sshd
+        state: restarted

@@ -1,6 +1,7 @@
 ---
 description: 'Tester — Reviews and scores completed work against the quality rubric.'
 instructions:
+  - .github/instructions/sprint-workflow.instructions.md
   - .github/instructions/markdown.instructions.md
   - .github/instructions/context7.instructions.md
   - .github/instructions/coding-standards/ansible.instructions.md

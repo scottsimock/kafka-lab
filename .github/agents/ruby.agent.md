@@ -1,6 +1,7 @@
 ---
 description: 'Ruby — Sprint orchestrator. Manages branch lifecycle, invokes PO/SM/TL, creates PRs.'
 instructions:
+  - .github/instructions/sprint-workflow.instructions.md
   - .github/instructions/markdown.instructions.md
 agents:
   - .github/agents/subagents/product-owner.agent.md

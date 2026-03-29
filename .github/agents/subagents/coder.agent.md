@@ -1,6 +1,7 @@
 ---
 description: 'Coder — Executes individual tasks: writes code, tests, docs, and research documents.'
 instructions:
+  - .github/instructions/sprint-workflow.instructions.md
   - .github/instructions/markdown.instructions.md
   - .github/instructions/context7.instructions.md
   - .github/instructions/coding-standards/ansible.instructions.md

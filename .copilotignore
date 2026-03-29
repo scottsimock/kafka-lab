@@ -1,0 +1,5 @@
+# Files and folders excluded from GitHub Copilot context.
+# Follows .gitignore syntax.
+
+# Private scratch notes — not intended for agent consumption
+.agent-ignore/

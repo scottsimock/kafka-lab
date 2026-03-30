@@ -1,0 +1,33 @@
+---
+# Install OpenJDK and configure JAVA_HOME
+
+- name: Install OpenJDK {{ java_version }} JDK
+  ansible.builtin.apt:
+    name: "{{ java_package }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  become: true
+
+- name: Deploy JAVA_HOME profile configuration
+  ansible.builtin.template:
+    src: java.sh.j2
+    dest: /etc/profile.d/java.sh
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+
+- name: Verify Java installation
+  ansible.builtin.command:
+    cmd: java -version
+  register: java_version_output
+  changed_when: false
+  become: false
+
+- name: Assert Java version is correct
+  ansible.builtin.assert:
+    that:
+      - "'openjdk version \"17' in java_version_output.stderr or 'openjdk version \"17' in java_version_output.stdout"
+    fail_msg: "Expected OpenJDK 17 but got: {{ java_version_output.stderr | default(java_version_output.stdout) }}"
+    success_msg: "OpenJDK 17 verified successfully"

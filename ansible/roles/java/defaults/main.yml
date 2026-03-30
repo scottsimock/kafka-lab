@@ -1,0 +1,5 @@
+---
+# Default variables for java role
+java_version: '17'
+java_package: 'openjdk-17-jdk-headless'
+java_home: '/usr/lib/jvm/java-17-openjdk-amd64'

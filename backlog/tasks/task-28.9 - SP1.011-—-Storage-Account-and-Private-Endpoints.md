@@ -1,11 +1,11 @@
 ---
 id: TASK-28.9
 title: SP1.011 — Storage Account and Private Endpoints
-status: In Progress
+status: Done
 assignee:
-  - coder-1
+  - tester-1
 created_date: '2026-03-30 16:40'
-updated_date: '2026-03-30 19:41'
+updated_date: '2026-03-30 20:01'
 labels:
   - story
 milestone: m-1
@@ -75,4 +75,39 @@ Both PEs auto-register DNS A records in their respective Private DNS zones via t
 - Assigned to coder-1 (Wave 4, final task)
 - All 5 dependencies Done
 - Modifies main.tf (storage account, blob container, 2 private endpoints)
+
+## [TL] 2026-03-30T20:02:00Z
+- Coder agent completed file edits but did not commit (agent stalled)
+- TL verified changes: storage account, blob container, 2 PE modules all correct
+- terraform init + validate: PASS
+- Committed on behalf of coder: feat(SP1.011): storage account and private endpoints
+- Sending to tester
+
+## [Tester] 2026-03-30T20:10:00Z
+
+### Verification Checklist
+- [x] Storage account type = Microsoft.Storage/storageAccounts@2023-01-01
+- [x] Storage account name = klcstgkafkalabscus
+- [x] kind = StorageV2, sku.name = Standard_LRS
+- [x] CMEK: keySource = "Microsoft.Keyvault", keyvaultproperties present
+- [x] UAMI identity block with type = "UserAssigned"
+- [x] publicNetworkAccess = "Disabled"
+- [x] minimumTlsVersion = "TLS1_2"
+- [x] allowBlobPublicAccess = false
+- [x] Blob container type = Microsoft.Storage/storageAccounts/blobServices/containers@2023-01-01
+- [x] Container name = tfstate
+- [x] PE module pe_storage_blob with group_ids = ["blob"]
+- [x] PE module pe_key_vault with group_ids = ["vault"]
+- [x] Both PEs use snet-private-endpoints subnet
+- [x] Both PEs wire dns_zone_ids from module.private_dns_zones
+
+### Score Breakdown
+| Category | Weight | Score | Notes |
+|---|---|---|---|
+| Acceptance Criteria | 30 | 28 | 14/14 AC met. Minor: keyvaultproperties uses lowercase field names (keyname, keyvaulturi) instead of camelCase (keyName, keyVaultUri) per Azure REST API spec; Azure is case-insensitive in practice but deviates from description. keyVersion omitted (valid — Azure auto-uses latest key version). |
+| Tests | 25 | 25 | terraform fmt -check: PASS. terraform validate: PASS. |
+| Code Quality | 20 | 20 | Section headers (// ===), snake_case resource names, clean structure throughout. |
+| Documentation | 15 | 15 | All 3 new outputs (storage_account_id, pe_storage_blob_id, pe_key_vault_id) have descriptions. |
+| Dependencies | 10 | 10 | All 5 task dependencies wired correctly. Module paths valid. No broken references. |
+| **Total** | **100** | **98** | **PASS (threshold: 90%)** |
 <!-- SECTION:NOTES:END -->

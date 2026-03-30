@@ -1,10 +1,10 @@
 ---
 id: TASK-30.6
 title: SP3.006 — Kafka Client Credentials
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-03-30 16:44'
-updated_date: '2026-03-30 22:23'
+updated_date: '2026-03-30 22:31'
 labels:
   - story
 milestone: m-3

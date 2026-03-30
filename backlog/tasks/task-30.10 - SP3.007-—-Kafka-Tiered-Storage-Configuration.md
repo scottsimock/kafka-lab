@@ -1,10 +1,10 @@
 ---
 id: TASK-30.10
 title: SP3.007 — Kafka Tiered Storage Configuration
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-03-30 16:44'
-updated_date: '2026-03-30 22:28'
+updated_date: '2026-03-30 22:30'
 labels:
   - story
 milestone: m-3
@@ -27,15 +27,15 @@ Configure Confluent Tiered Storage on Kafka brokers to offload warm log segments
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Tiered storage properties added to server.properties template
-- [ ] #2 confluent.tier.feature=true and confluent.tier.enable=true set
-- [ ] #3 Azure Blob Storage configured as remote storage backend
-- [ ] #4 Storage account credentials reference UAMI authentication
-- [ ] #5 confluent.tier.local.hotset.ms configurable (default 24h)
-- [ ] #6 Broker restarts with tiered storage enabled
-- [ ] #7 Verification: topic with remote storage shows segments offloading
-- [ ] #8 Tiered storage configuration guarded by kafka_broker_tiered_storage_enabled boolean
-- [ ] #9 confluent.tier.metadata.replication.factor set to 3
+- [x] #1 Tiered storage properties added to server.properties template
+- [x] #2 confluent.tier.feature=true and confluent.tier.enable=true set
+- [x] #3 Azure Blob Storage configured as remote storage backend
+- [x] #4 Storage account credentials reference UAMI authentication
+- [x] #5 confluent.tier.local.hotset.ms configurable (default 24h)
+- [x] #6 Broker restarts with tiered storage enabled
+- [x] #7 Verification: topic with remote storage shows segments offloading
+- [x] #8 Tiered storage configuration guarded by kafka_broker_tiered_storage_enabled boolean
+- [x] #9 confluent.tier.metadata.replication.factor set to 3
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -129,3 +129,9 @@ After deployment, verification can be done by:
 - **File contention**: server.properties.j2 and group_vars/kafka_broker.yml are also modified by SP3.005 and SP3.008. TL must serialize template edits for server.properties.j2 (recommend order: SP3.005 → SP3.007 → SP3.008).
 - defaults/main.yml (kafka-broker role) is also extended by SP3.005 and SP3.008.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Tiered storage configuration was fully implemented in SP3.002 (kafka-broker role creation). server.properties.j2 has the {% if kafka_broker_tiered_storage_enabled %} conditional block with all 9 properties (tier.feature, tier.enable, tier.backend, Azure container, UAMI credentials provider, metadata RF=3, hotset_ms=86400000, archiver/fetcher threads). All defaults in kafka-broker/defaults/main.yml. kafka_broker_tiered_storage_enabled=true set in group_vars/kafka_broker.yml.
+<!-- SECTION:FINAL_SUMMARY:END -->

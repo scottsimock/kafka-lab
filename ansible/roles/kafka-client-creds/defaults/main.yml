@@ -1,0 +1,18 @@
+---
+# Default variables for kafka-client-creds role
+kafka_client_creds_bootstrap_server: "{{ hostvars[groups['kafka_broker'][0]]['ansible_host'] }}:{{ kafka_broker_client_port | default(9092) }}"
+kafka_client_creds_admin_config: "{{ kafka_broker_config_dir | default('/opt/confluent/current/etc/kafka') }}/admin.properties"
+kafka_client_creds_scram_iterations: 8192
+kafka_client_creds_ssl_dir: /etc/kafka/ssl
+kafka_client_creds_truststore_file: kafka.truststore.jks
+kafka_client_creds_client_dir: /etc/kafka/client
+kafka_client_creds_bin_dir: "{{ confluent_current_link | default('/opt/confluent/current') }}/bin"
+
+# Service account definitions
+kafka_client_users:
+  - name: web-app
+    password: "{{ vault_kafka_webapp_password | default('changeit') }}"
+  - name: schema-registry
+    password: "{{ vault_kafka_schema_registry_password | default('changeit') }}"
+  - name: connect-worker
+    password: "{{ vault_kafka_connect_worker_password | default('changeit') }}"

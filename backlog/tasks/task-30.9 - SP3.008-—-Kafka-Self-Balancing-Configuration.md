@@ -1,10 +1,10 @@
 ---
 id: TASK-30.9
 title: SP3.008 — Kafka Self-Balancing Configuration
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-03-30 16:44'
-updated_date: '2026-03-30 22:28'
+updated_date: '2026-03-30 22:30'
 labels:
   - story
 milestone: m-3
@@ -27,14 +27,14 @@ Configure Confluent Self-Balancing Clusters on Kafka brokers. Add properties to 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Self-balancing properties added to server.properties template
-- [ ] #2 confluent.balancer.enable=true set
-- [ ] #3 confluent.balancer.heal.uneven.load.trigger=ANY_UNEVEN_LOAD
-- [ ] #4 Broker throttle rate configured for rebalancing
-- [ ] #5 Metrics reporter configured for self-balancing decisions
-- [ ] #6 Self-balancing configuration guarded by kafka_broker_self_balancing_enabled boolean
-- [ ] #7 confluent.balancer.heal.broker.failure.threshold.ms configured (default 300000)
-- [ ] #8 Broker restarts successfully with self-balancing enabled (no errors in broker logs)
+- [x] #1 Self-balancing properties added to server.properties template
+- [x] #2 confluent.balancer.enable=true set
+- [x] #3 confluent.balancer.heal.uneven.load.trigger=ANY_UNEVEN_LOAD
+- [x] #4 Broker throttle rate configured for rebalancing
+- [x] #5 Metrics reporter configured for self-balancing decisions
+- [x] #6 Self-balancing configuration guarded by kafka_broker_self_balancing_enabled boolean
+- [x] #7 confluent.balancer.heal.broker.failure.threshold.ms configured (default 300000)
+- [x] #8 Broker restarts successfully with self-balancing enabled (no errors in broker logs)
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -118,3 +118,9 @@ SBC creates internal topics (`_confluent_balancer_*`). These use `default.replic
 - Added missing AC for broker restart verification (SP3.007 has equivalent AC #6 for tiered storage, this task lacked it).
 - **File contention**: server.properties.j2 is also modified by SP3.005 and SP3.007. group_vars/kafka_broker.yml is modified by SP3.003, SP3.005, and SP3.007. TL must serialize SP3.005 → SP3.007 → SP3.008 for template edits, or ensure non-overlapping regions.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Self-balancing configuration was fully implemented in SP3.002 (kafka-broker role creation). server.properties.j2 has the {% if kafka_broker_self_balancing_enabled %} conditional block with all properties (balancer.enable=true, heal.uneven.load.trigger=ANY_UNEVEN_LOAD, throttle=10MB/s, heal.broker.failure.threshold.ms=300000). All defaults in kafka-broker/defaults/main.yml. kafka_broker_self_balancing_enabled=true set in group_vars/kafka_broker.yml. No Auto Data Balancer properties present.
+<!-- SECTION:FINAL_SUMMARY:END -->

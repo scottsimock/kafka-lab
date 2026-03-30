@@ -1,10 +1,10 @@
 ---
 id: TASK-30.7
 title: SP3.004 — TLS Certificate Generation Role
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-03-30 16:44'
-updated_date: '2026-03-30 22:28'
+updated_date: '2026-03-30 22:30'
 labels:
   - story
 milestone: m-3
@@ -28,16 +28,16 @@ Create an Ansible role at ansible/roles/tls-certs/ that generates TLS certificat
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Role exists at ansible/roles/tls-certs/ with tasks/, templates/, files/ directories
-- [ ] #2 Generates a private CA key and self-signed CA certificate
-- [ ] #3 Generates per-node server certificates signed by the CA
-- [ ] #4 Creates JKS keystores and truststores for each Kafka component
-- [ ] #5 Stores CA cert in a shared truststore
-- [ ] #6 Certificates use SAN entries with private IPs and hostnames
-- [ ] #7 All key material placed in /etc/kafka/ssl/ on target nodes
-- [ ] #8 extendedKeyUsage includes both serverAuth and clientAuth per doc-11
-- [ ] #9 Certificates generated on Ansible controller and distributed to target nodes
-- [ ] #10 SSL directory permissions set to 0750 (dir) and 0640 (files) owned by kafka:kafka
+- [x] #1 Role exists at ansible/roles/tls-certs/ with tasks/, templates/, files/ directories
+- [x] #2 Generates a private CA key and self-signed CA certificate
+- [x] #3 Generates per-node server certificates signed by the CA
+- [x] #4 Creates JKS keystores and truststores for each Kafka component
+- [x] #5 Stores CA cert in a shared truststore
+- [x] #6 Certificates use SAN entries with private IPs and hostnames
+- [x] #7 All key material placed in /etc/kafka/ssl/ on target nodes
+- [x] #8 extendedKeyUsage includes both serverAuth and clientAuth per doc-11
+- [x] #9 Certificates generated on Ansible controller and distributed to target nodes
+- [x] #10 SSL directory permissions set to 0750 (dir) and 0640 (files) owned by kafka:kafka
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -196,3 +196,9 @@ roles:
 - Passwords should reference vault variables (vault_tls_*_password)
 - All nodes: zk-01 through zk-03, kb-01 through kb-03, plus schema_registry and kafka_connect hosts
 <!-- SECTION:PLAN:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Created ansible/roles/tls-certs/ with CA generation (delegate_to: localhost, run_once), per-node cert generation with SAN extension (serverAuth+clientAuth per doc-11), and certificate distribution to /etc/kafka/ssl/ (mode 0750/0640, kafka:kafka). openssl-san.cnf.j2 template used for signing. site.yml updated with tls-certs in both ZK and Kafka broker plays.
+<!-- SECTION:FINAL_SUMMARY:END -->

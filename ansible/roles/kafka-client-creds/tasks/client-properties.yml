@@ -1,0 +1,34 @@
+---
+# Client properties deployment tasks
+- name: Create client config directory
+  ansible.builtin.file:
+    path: '{{ kafka_client_creds_client_dir }}'
+    state: directory
+    owner: '{{ kafka_user }}'
+    group: '{{ kafka_group }}'
+    mode: '0750'
+  become: true
+
+- name: Deploy client.properties for {{ item.name }}
+  ansible.builtin.template:
+    src: 'client.properties.j2'
+    dest: '{{ kafka_client_creds_client_dir }}/{{ item.name }}.properties'
+    owner: '{{ kafka_user }}'
+    group: '{{ kafka_group }}'
+    mode: '0640'
+  vars:
+    client_user_name: '{{ item.name }}'
+    client_user_password: '{{ item.password }}'
+  loop: '{{ kafka_client_users }}'
+  become: true
+  no_log: true
+
+- name: Copy truststore to client config directory
+  ansible.builtin.copy:
+    src: '{{ kafka_client_creds_ssl_dir }}/{{ kafka_client_creds_truststore_file }}'
+    dest: '{{ kafka_client_creds_client_dir }}/{{ kafka_client_creds_truststore_file }}'
+    owner: '{{ kafka_user }}'
+    group: '{{ kafka_group }}'
+    mode: '0640'
+    remote_src: true
+  become: true

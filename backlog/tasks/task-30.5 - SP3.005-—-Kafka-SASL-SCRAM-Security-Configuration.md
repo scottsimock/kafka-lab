@@ -1,10 +1,10 @@
 ---
 id: TASK-30.5
 title: SP3.005 — Kafka SASL/SCRAM Security Configuration
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-30 16:44'
-updated_date: '2026-03-30 22:23'
+updated_date: '2026-03-30 22:30'
 labels:
   - story
 milestone: m-3
@@ -28,17 +28,17 @@ Extend the kafka-broker role to configure SASL/SCRAM-SHA-512 authentication with
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Broker server.properties updated with SASL_SSL listeners on ports 9092 (client) and 9093 (inter-broker)
-- [ ] #2 listener.security.protocol.map configured for INTERNAL:SASL_SSL and CLIENT:SASL_SSL
-- [ ] #3 SCRAM-SHA-512 configured as the SASL mechanism
-- [ ] #4 SSL keystore and truststore paths configured
-- [ ] #5 Inter-broker authentication uses SCRAM-SHA-512
-- [ ] #6 Bootstrap SCRAM credentials created for broker-internal and admin users
-- [ ] #7 JAAS configuration rendered from template with credentials from Key Vault
-- [ ] #8 Broker restarts successfully with SASL_SSL enabled
-- [ ] #9 admin.properties file generated for CLI operations with SASL_SSL config
-- [ ] #10 AclAuthorizer enabled with super.users for broker-internal and admin
-- [ ] #11 SCRAM credentials bootstrapped in ZooKeeper before broker SASL startup
+- [x] #1 Broker server.properties updated with SASL_SSL listeners on ports 9092 (client) and 9093 (inter-broker)
+- [x] #2 listener.security.protocol.map configured for INTERNAL:SASL_SSL and CLIENT:SASL_SSL
+- [x] #3 SCRAM-SHA-512 configured as the SASL mechanism
+- [x] #4 SSL keystore and truststore paths configured
+- [x] #5 Inter-broker authentication uses SCRAM-SHA-512
+- [x] #6 Bootstrap SCRAM credentials created for broker-internal and admin users
+- [x] #7 JAAS configuration rendered from template with credentials from Key Vault
+- [x] #8 Broker restarts successfully with SASL_SSL enabled
+- [x] #9 admin.properties file generated for CLI operations with SASL_SSL config
+- [x] #10 AclAuthorizer enabled with super.users for broker-internal and admin
+- [x] #11 SCRAM credentials bootstrapped in ZooKeeper before broker SASL startup
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -231,3 +231,9 @@ Deploy this file in configure.yml when `kafka_broker_security_enabled` is true.
 - **File contention**: server.properties.j2, defaults/main.yml, and group_vars/kafka_broker.yml are also modified by SP3.007 and SP3.008. This task should run FIRST among the three since it restructures the listener section with conditionals. Recommended TL execution order: SP3.005 → SP3.007 → SP3.008.
 - admin.properties created here is reused by SP3.006 and SP3.009 — do not duplicate.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+All SASL/SCRAM-SHA-512 configuration was implemented in SP3.002 (kafka-broker role creation). server.properties.j2 has dual SASL_SSL listeners (CLIENT:9092, INTERNAL:9093), SCRAM-SHA-512 mechanism, per-listener JAAS config with ScramLoginModule, SSL keystore/truststore paths, ssl.client.auth=required, AclAuthorizer with super.users. scram-bootstrap.yml uses --zookeeper flag (ZK mode) to bootstrap broker-internal and admin credentials before broker startup. admin.properties.j2 exists for CLI ops. kafka_broker_security_enabled=true in group_vars.
+<!-- SECTION:FINAL_SUMMARY:END -->

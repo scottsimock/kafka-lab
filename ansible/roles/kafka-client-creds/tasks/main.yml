@@ -1,0 +1,7 @@
+---
+# Main task file for kafka-client-creds role
+- name: Import SCRAM user creation tasks
+  ansible.builtin.import_tasks: scram-users.yml
+
+- name: Import client properties deployment tasks
+  ansible.builtin.import_tasks: client-properties.yml

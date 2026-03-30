@@ -1,0 +1,6 @@
+bootstrap.servers={{ groups['kafka_broker'] | map('extract', hostvars, 'ansible_host') | map('regex_replace', '$', ':' ~ (kafka_broker_client_port | default(9092))) | join(',') }}
+security.protocol=SASL_SSL
+sasl.mechanism=SCRAM-SHA-512
+sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="{{ client_user_name }}" password="{{ client_user_password }}";
+ssl.truststore.location={{ kafka_client_creds_ssl_dir }}/{{ kafka_client_creds_truststore_file }}
+ssl.truststore.password={{ vault_tls_truststore_password | default('changeit') }}

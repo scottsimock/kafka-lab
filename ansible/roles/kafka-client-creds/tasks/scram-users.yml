@@ -1,0 +1,36 @@
+---
+# SCRAM user creation tasks — runs on first broker (run_once: true)
+# Uses --bootstrap-server since brokers are already running with SASL_SSL
+- name: Create SCRAM-SHA-512 credential for {{ item.name }}
+  ansible.builtin.command:
+    cmd: >-
+      {{ kafka_client_creds_bin_dir }}/kafka-configs
+      --bootstrap-server {{ kafka_client_creds_bootstrap_server }}
+      --command-config {{ kafka_client_creds_admin_config }}
+      --alter
+      --add-config 'SCRAM-SHA-512=[iterations={{ kafka_client_creds_scram_iterations }},password={{ item.password }}]'
+      --entity-type users
+      --entity-name {{ item.name }}
+  loop: '{{ kafka_client_users }}'
+  run_once: true
+  become: true
+  become_user: '{{ kafka_user }}'
+  changed_when: true
+  no_log: true
+
+- name: Verify SCRAM credential exists for {{ item.name }}
+  ansible.builtin.command:
+    cmd: >-
+      {{ kafka_client_creds_bin_dir }}/kafka-configs
+      --bootstrap-server {{ kafka_client_creds_bootstrap_server }}
+      --command-config {{ kafka_client_creds_admin_config }}
+      --describe
+      --entity-type users
+      --entity-name {{ item.name }}
+  loop: '{{ kafka_client_users }}'
+  register: cred_verify
+  failed_when: "'SCRAM-SHA-512' not in cred_verify.stdout"
+  run_once: true
+  changed_when: false
+  become: true
+  become_user: '{{ kafka_user }}'

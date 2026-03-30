@@ -16,3 +16,13 @@ output "subnet_ids" {
   description = "Map of subnet names to resource IDs"
   value       = module.vnet_scus.subnet_ids
 }
+
+output "key_vault_id" {
+  description = "Resource ID of the key vault"
+  value       = module.key_vault.key_vault_id
+}
+
+output "cmk_key_id" {
+  description = "Resource ID of the CMEK encryption key"
+  value       = module.key_vault.cmk_key_id
+}

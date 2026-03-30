@@ -1,4 +1,51 @@
 ---
 # site.yml — Master playbook for Confluent Platform base configuration
-# Roles will be added as they are created in SP2 tasks (TASK-29.5 through TASK-29.8)
-# Full playbook structure defined in TASK-29.9
+#
+# Role ordering (dependency chain):
+#   common (packages, kafka user/group) -> disk-setup (needs kafka user) -> java -> confluent-common (needs JAVA_HOME)
+#
+# Component-specific configuration roles will be added in SP3
+
+# Play 1: ZooKeeper nodes — rolling deployment (serial: 1) to maintain quorum
+- name: Configure ZooKeeper nodes
+  hosts: zookeeper
+  gather_facts: true
+  any_errors_fatal: true
+  serial: 1
+  roles:
+    - common
+    - disk-setup
+    - java
+    - confluent-common
+
+# Play 2: Kafka broker nodes — rolling deployment (serial: 1) to maintain availability
+- name: Configure Kafka broker nodes
+  hosts: kafka_broker
+  gather_facts: true
+  any_errors_fatal: true
+  serial: 1
+  roles:
+    - common
+    - disk-setup
+    - java
+    - confluent-common
+
+# Play 3: Schema Registry nodes — no data disk, no serial constraint
+- name: Configure Schema Registry nodes
+  hosts: schema_registry
+  gather_facts: true
+  any_errors_fatal: true
+  roles:
+    - common
+    - java
+    - confluent-common
+
+# Play 4: Kafka Connect nodes — no data disk, no serial constraint
+- name: Configure Kafka Connect nodes
+  hosts: kafka_connect
+  gather_facts: true
+  any_errors_fatal: true
+  roles:
+    - common
+    - java
+    - confluent-common

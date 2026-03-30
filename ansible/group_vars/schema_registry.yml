@@ -1,2 +1,12 @@
 ---
 # Schema Registry-specific variables
+
+# JVM — dev environment sizing
+schema_registry_heap_size: '512m'
+
+# Security — SCRAM credentials for broker communication
+schema_registry_user: schema-registry
+schema_registry_password: "{{ vault_kafka_schema_registry_password }}"
+
+# Schema compatibility
+schema_registry_schema_compatibility_level: 'BACKWARD'

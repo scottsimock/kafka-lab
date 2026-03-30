@@ -1,2 +1,14 @@
 ---
 # Kafka Connect-specific variables
+
+# JVM — dev environment sizing
+kafka_connect_heap_size: '512m'
+
+# Security — SCRAM credentials for broker communication
+kafka_connect_user: connect-worker
+kafka_connect_password: "{{ vault_kafka_connect_worker_password }}"
+
+# Converters — Avro with Schema Registry
+kafka_connect_key_converter: 'io.confluent.connect.avro.AvroConverter'
+kafka_connect_value_converter: 'io.confluent.connect.avro.AvroConverter'
+kafka_connect_schema_registry_url: 'http://sr-01:8081'

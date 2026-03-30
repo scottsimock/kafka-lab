@@ -1,10 +1,10 @@
 ---
 id: TASK-30.4
 title: SP3.003 — Ansible Group and Host Variables
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-03-30 16:44'
-updated_date: '2026-03-30 22:25'
+updated_date: '2026-03-30 22:26'
 labels:
   - story
 milestone: m-3
@@ -27,14 +27,14 @@ Create Ansible group_vars and host_vars files for ZooKeeper and Kafka broker con
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 group_vars/zookeeper.yml defines ZooKeeper-specific variables
-- [ ] #2 group_vars/kafka_broker.yml defines broker-specific variables
-- [ ] #3 host_vars/ files define per-host broker.id and myid
-- [ ] #4 Variables follow Ansible precedence hierarchy from doc-13
-- [ ] #5 All variable files use snake_case naming
-- [ ] #6 host_vars/ files named to match VM names from azure_rm dynamic inventory (zk-01, zk-02, zk-03, kb-01, kb-02, kb-03)
-- [ ] #7 Variable precedence verified: host_vars > group_vars > role defaults per doc-13
-- [ ] #8 broker.rack values match Azure Availability Zone assignments
+- [x] #1 group_vars/zookeeper.yml defines ZooKeeper-specific variables
+- [x] #2 group_vars/kafka_broker.yml defines broker-specific variables
+- [x] #3 host_vars/ files define per-host broker.id and myid
+- [x] #4 Variables follow Ansible precedence hierarchy from doc-13
+- [x] #5 All variable files use snake_case naming
+- [x] #6 host_vars/ files named to match VM names from azure_rm dynamic inventory (zk-01, zk-02, zk-03, kb-01, kb-02, kb-03)
+- [x] #7 Variable precedence verified: host_vars > group_vars > role defaults per doc-13
+- [x] #8 broker.rack values match Azure Availability Zone assignments
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -150,3 +150,9 @@ This follows standard Ansible precedence: host_vars > group_vars > role defaults
 - This task is now a dependency for TASK-30.8 (SP3.001 ZK Role) because ZK templates reference `zookeeper_myid` from host_vars. host_vars/ directory does not yet exist in the repo.
 - **File contention**: group_vars/kafka_broker.yml is later extended by SP3.005, SP3.007, and SP3.008. Ensure this task creates the base file content that those tasks can safely append to.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Created host_vars/ directory with per-host files for all 6 nodes (zk-01..03, kb-01..03). Extended group_vars/zookeeper.yml with ZK ensemble config. Extended group_vars/kafka_broker.yml with broker defaults plus boolean flags for security, tiered storage, self-balancing, and ACL enforcement — enabling all features at group level so subsequent tasks can toggle via defaults.
+<!-- SECTION:FINAL_SUMMARY:END -->

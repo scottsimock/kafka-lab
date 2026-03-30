@@ -1,0 +1,6 @@
+---
+# Computed variables for zookeeper role — not operator-tunable
+zookeeper_config_file: '{{ zookeeper_config_dir }}/zookeeper.properties'
+zookeeper_env_file: '{{ zookeeper_config_dir }}/zookeeper-env.sh'
+zookeeper_service_name: confluent-zookeeper
+zookeeper_bin_dir: "{{ confluent_current_link | default('/opt/confluent/current') }}/bin"

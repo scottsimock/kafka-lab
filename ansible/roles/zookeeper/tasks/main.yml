@@ -1,0 +1,7 @@
+---
+# Main task file for zookeeper role — imports sub-task files
+- name: Import ZooKeeper configuration tasks
+  ansible.builtin.import_tasks: configure.yml
+
+- name: Import ZooKeeper service tasks
+  ansible.builtin.import_tasks: service.yml

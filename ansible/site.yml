@@ -17,6 +17,7 @@
     - disk-setup
     - java
     - confluent-common
+    - zookeeper
 
 # Play 2: Kafka broker nodes — rolling deployment (serial: 1) to maintain availability
 - name: Configure Kafka broker nodes

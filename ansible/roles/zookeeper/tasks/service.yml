@@ -1,0 +1,28 @@
+---
+# ZooKeeper service tasks
+- name: Create GC log directory
+  ansible.builtin.file:
+    path: '/var/log/kafka'
+    state: directory
+    owner: '{{ kafka_user }}'
+    group: '{{ kafka_group }}'
+    mode: '0755'
+  become: true
+
+- name: Deploy confluent-zookeeper systemd unit
+  ansible.builtin.template:
+    src: 'confluent-zookeeper.service.j2'
+    dest: '/etc/systemd/system/confluent-zookeeper.service'
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  notify: 'Restart confluent-zookeeper'
+
+- name: Enable and start confluent-zookeeper service
+  ansible.builtin.systemd:
+    name: '{{ zookeeper_service_name }}'
+    enabled: true
+    state: started
+    daemon_reload: true
+  become: true

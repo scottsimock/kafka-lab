@@ -1,0 +1,30 @@
+---
+# ZooKeeper configuration tasks
+- name: Render zookeeper.properties
+  ansible.builtin.template:
+    src: 'zookeeper.properties.j2'
+    dest: '{{ zookeeper_config_file }}'
+    owner: '{{ kafka_user }}'
+    group: '{{ kafka_group }}'
+    mode: '0640'
+  become: true
+  notify: 'Restart confluent-zookeeper'
+
+- name: Create myid file
+  ansible.builtin.copy:
+    content: '{{ zookeeper_myid }}'
+    dest: '{{ zookeeper_data_dir }}/myid'
+    owner: '{{ kafka_user }}'
+    group: '{{ kafka_group }}'
+    mode: '0644'
+  become: true
+
+- name: Deploy ZooKeeper JVM environment script
+  ansible.builtin.template:
+    src: 'zookeeper-env.sh.j2'
+    dest: '{{ zookeeper_env_file }}'
+    owner: '{{ kafka_user }}'
+    group: '{{ kafka_group }}'
+    mode: '0755'
+  become: true
+  notify: 'Restart confluent-zookeeper'

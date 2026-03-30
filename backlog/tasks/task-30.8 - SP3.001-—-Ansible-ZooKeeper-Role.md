@@ -1,10 +1,10 @@
 ---
 id: TASK-30.8
 title: SP3.001 — Ansible ZooKeeper Role
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-03-30 16:44'
-updated_date: '2026-03-30 22:23'
+updated_date: '2026-03-30 22:26'
 labels:
   - story
 milestone: m-3

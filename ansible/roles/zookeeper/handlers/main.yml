@@ -1,0 +1,20 @@
+---
+# Handlers for zookeeper role
+- name: Restart confluent-zookeeper
+  ansible.builtin.systemd:
+    name: '{{ zookeeper_service_name }}'
+    state: restarted
+    daemon_reload: true
+  become: true
+  listen: 'Restart confluent-zookeeper'
+  notify: 'Verify zookeeper health'
+
+- name: Verify zookeeper health
+  ansible.builtin.command:
+    cmd: bash -c "echo ruok | nc -w 5 localhost {{ zookeeper_client_port }}"
+  register: zk_health
+  until: zk_health.stdout == 'imok'
+  retries: 6
+  delay: 10
+  changed_when: false
+  listen: 'Verify zookeeper health'

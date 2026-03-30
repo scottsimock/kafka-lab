@@ -1,0 +1,17 @@
+[Unit]
+Description=Confluent ZooKeeper
+After=network.target
+
+[Service]
+Type=simple
+User={{ kafka_user }}
+Group={{ kafka_group }}
+EnvironmentFile={{ zookeeper_env_file }}
+ExecStart={{ zookeeper_bin_dir }}/zookeeper-server-start {{ zookeeper_config_file }}
+Restart=on-failure
+RestartSec=10
+LimitNOFILE={{ kafka_nofile_limit | default(100000) }}
+TimeoutStopSec=180
+
+[Install]
+WantedBy=multi-user.target

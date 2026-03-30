@@ -1,10 +1,10 @@
 ---
 id: TASK-29
 title: SP2 — Compute and Base Configuration
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-30 16:40'
-updated_date: '2026-03-30 21:41'
+updated_date: '2026-03-30 21:43'
 labels:
   - sprint
 milestone: m-2
@@ -21,11 +21,11 @@ Compute and base configuration sprint covering VM provisioning for ZooKeeper and
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 VM Terraform module provisions ZooKeeper, Kafka broker, Schema Registry, and Kafka Connect instances in southcentralus Zone 1
-- [ ] #2 Ansible project structure includes dynamic inventory, site playbook, and role-based organization
-- [ ] #3 Common OS configuration role applies base hardening and prerequisites to all VMs
-- [ ] #4 Data disk setup role mounts and formats dedicated disks for Kafka and ZooKeeper data
-- [ ] #5 Confluent Platform packages are installed on all target VMs via Ansible role
+- [x] #1 VM Terraform module provisions ZooKeeper, Kafka broker, Schema Registry, and Kafka Connect instances in southcentralus Zone 1
+- [x] #2 Ansible project structure includes dynamic inventory, site playbook, and role-based organization
+- [x] #3 Common OS configuration role applies base hardening and prerequisites to all VMs
+- [x] #4 Data disk setup role mounts and formats dedicated disks for Kafka and ZooKeeper data
+- [x] #5 Confluent Platform packages are installed on all target VMs via Ansible role
 <!-- AC:END -->
 
 ## Implementation Notes
@@ -134,4 +134,6 @@ All 10 tasks meet the quality bar after SM fixes. Sprint SP2 is ready for TL exe
 - Average test score: 99.3%
 - All terraform validate and fmt checks pass
 - 10 commits on sprint/SP2-compute-and-base-configuration branch
+
+2026-03-30T17:20:00-04:00 [Ruby] Sprint SP2 complete. 10/10 tasks Done, 0 Blocked, 99.3% avg score. PR being created.
 <!-- SECTION:NOTES:END -->

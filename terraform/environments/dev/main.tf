@@ -593,3 +593,96 @@ module "private_dns_zones" {
   }
   tags = local.common_tags
 }
+
+// =====================================================
+// Storage Account
+// =====================================================
+
+resource "azapi_resource" "storage_account" {
+  type      = "Microsoft.Storage/storageAccounts@2023-01-01"
+  name      = "klcstgkafkalabscus"
+  parent_id = data.azapi_resource.resource_group.id
+  location  = var.primary_location
+  tags      = local.common_tags
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [module.uami_kafkalab.uami_id]
+  }
+
+  body = {
+    kind = "StorageV2"
+    sku  = { name = "Standard_LRS" }
+    properties = {
+      publicNetworkAccess   = "Disabled"
+      minimumTlsVersion     = "TLS1_2"
+      allowBlobPublicAccess = false
+      encryption = {
+        keySource = "Microsoft.Keyvault"
+        keyvaultproperties = {
+          keyname     = "${module.key_vault.key_vault_name}-cmk"
+          keyvaulturi = module.key_vault.key_vault_uri
+        }
+        identity = {
+          userAssignedIdentity = module.uami_kafkalab.uami_id
+        }
+        services = {
+          blob = { enabled = true, keyType = "Account" }
+          file = { enabled = true, keyType = "Account" }
+        }
+      }
+    }
+  }
+}
+
+// =====================================================
+// Blob Container
+// =====================================================
+
+resource "azapi_resource" "tfstate_container" {
+  type      = "Microsoft.Storage/storageAccounts/blobServices/containers@2023-01-01"
+  name      = "tfstate"
+  parent_id = "${azapi_resource.storage_account.id}/blobServices/default"
+
+  body = {
+    properties = {
+      publicAccess = "None"
+    }
+  }
+
+  depends_on = [azapi_resource.storage_account]
+}
+
+// =====================================================
+// Private Endpoints
+// =====================================================
+
+module "pe_storage_blob" {
+  source = "../../modules/private-endpoint"
+
+  name               = "klc-pe-storage-blob-scus"
+  location           = var.primary_location
+  resource_group_id  = data.azapi_resource.resource_group.id
+  subnet_id          = module.vnet_scus.subnet_ids["snet-private-endpoints"]
+  target_resource_id = azapi_resource.storage_account.id
+  group_ids          = ["blob"]
+  dns_zone_ids = {
+    "blob" = module.private_dns_zones["blob"].dns_zone_id
+  }
+  tags = local.common_tags
+}
+
+module "pe_key_vault" {
+  source = "../../modules/private-endpoint"
+
+  name               = "klc-pe-keyvault-scus"
+  location           = var.primary_location
+  resource_group_id  = data.azapi_resource.resource_group.id
+  subnet_id          = module.vnet_scus.subnet_ids["snet-private-endpoints"]
+  target_resource_id = module.key_vault.key_vault_id
+  group_ids          = ["vault"]
+  dns_zone_ids = {
+    "vault" = module.private_dns_zones["vault"].dns_zone_id
+  }
+  tags = local.common_tags
+}

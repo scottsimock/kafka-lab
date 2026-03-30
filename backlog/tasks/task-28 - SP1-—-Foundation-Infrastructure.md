@@ -1,10 +1,10 @@
 ---
 id: TASK-28
 title: SP1 — Foundation Infrastructure
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-03-30 16:37'
-updated_date: '2026-03-30 17:09'
+updated_date: '2026-03-30 18:34'
 labels:
   - sprint
 milestone: m-1

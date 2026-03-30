@@ -31,3 +31,18 @@ output "private_dns_zone_ids" {
   description = "Map of DNS zone key to resource ID for each private DNS zone"
   value       = { for k, v in module.private_dns_zones : k => v.dns_zone_id }
 }
+
+output "storage_account_id" {
+  description = "Resource ID of the Terraform state storage account"
+  value       = azapi_resource.storage_account.id
+}
+
+output "pe_storage_blob_id" {
+  description = "Resource ID of the storage account blob private endpoint"
+  value       = module.pe_storage_blob.private_endpoint_id
+}
+
+output "pe_key_vault_id" {
+  description = "Resource ID of the key vault private endpoint"
+  value       = module.pe_key_vault.private_endpoint_id
+}

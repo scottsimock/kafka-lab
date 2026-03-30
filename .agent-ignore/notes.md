@@ -41,3 +41,8 @@ todo:
 - PLease upda the TL agent to make sure they append to the current sprint milestone everytime they assign a task to a coder or tester
 - Please review the SM agent and make sure teh SM  is appending the current sprints sprint-report before the sprint is closed 
 - I've noticed that in many cases there is only a single background task running. Do we need more testers added to the team? Ideally we should have as many coders and testers running at the same time as long as we don't too many agents working on the same files causing conficts.
+
+-------
+
+- why does it take so long for ruby complete the initial step and pass control to the PO. Looking in the logs ruby is taking about 10 minutes even when the human is not in the loop
+- since the entire backlog has been generated, how can we decrease the time the PO and SM spend on the backlog at the beginning of sprints are SP0

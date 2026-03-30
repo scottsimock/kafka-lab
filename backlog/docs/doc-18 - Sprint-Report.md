@@ -3,7 +3,7 @@ id: doc-18
 title: Sprint Report
 type: other
 created_date: '2026-03-30 17:26'
-updated_date: '2026-03-30 22:42'
+updated_date: '2026-03-30 23:54'
 ---
 # Sprint Report
 
@@ -11,8 +11,8 @@ updated_date: '2026-03-30 22:42'
 
 | Metric | Value |
 |---|---|
-| Total sprints completed | 4 (SP0, SP1, SP2, SP3) |
-| Total stories completed | 43 |
+| Total sprints completed | 5 (SP0, SP1, SP2, SP3, SP4) |
+| Total stories completed | 50 |
 | Total stories blocked | 0 |
 | Overall completion rate | 100% |
 
@@ -24,7 +24,7 @@ updated_date: '2026-03-30 22:42'
 | SP1 | Foundation Infrastructure | 11 | Complete |
 | SP2 | Compute and Base Configuration | 10 | Complete |
 | SP3 | Kafka Platform Deployment | 10 | Complete |
-| SP4 | Kafka Ecosystem Services | 7 | To Do |
+| SP4 | Kafka Ecosystem Services | 7 | Complete |
 | SP5 | Web Application | 10 | To Do |
 | SP6 | CI/CD Pipeline | 8 | To Do |
 | SP7 | Multi-Region Expansion | 8 | To Do |
@@ -260,5 +260,64 @@ The PO reviewed all 12 research documents and REQUIREMENTS.md to create the full
 - File contention on server.properties.j2 required serialized task execution (SP3.005 → SP3.007 → SP3.008)
 - ansible-lint unavailable in build environment — manual YAML validation performed
 - TASK-28.9 (SP1.011) remains at Dev Complete status (tester scored 98% but status not advanced to Done)
+
+---
+
+## SP4 — Kafka Ecosystem Services
+
+**Status:** Complete
+**Date:** 2026-03-30
+**Branch:** sprint/SP4-kafka-ecosystem-services
+
+### Metrics
+
+| Metric | Value |
+|---|---|
+| Stories completed | 7/7 |
+| Stories blocked | 0 |
+| Completion rate | 100% |
+| Average score | 100% |
+| Total retries | 1 |
+| Files added/changed | 38 (29 new Ansible files) |
+| Lines added | 1,279 |
+| Commits | 9 |
+
+### Completed Tasks
+
+| # | Task | Summary | Score |
+|---|------|---------|-------|
+| SP4.001 | Ansible Schema Registry Role | Full role with properties template, systemd service, health check handler, JVM heap config | 10/10 (100%) |
+| SP4.002 | Ansible Kafka Connect Role | Distributed mode role with properties template, connector install tasks, systemd service, REST API health check | 12/12 (100%) |
+| SP4.003 | Schema Registry and Connect Group Variables | Populated schema_registry.yml and kafka_connect.yml with bootstrap servers, SASL_SSL security, JVM heaps, vault credential references | 8/8 (100%) |
+| SP4.004 | Azure Blob Storage Sink Connector | Confluent Hub install task, connector JSON config template with UAMI auth, DLQ setup | 8/8 (100%) |
+| SP4.005 | Application Topic Creation | Playbook creating 4 topics (app-messages/12p, app-events/6p, app-metrics/6p, app-state/compacted/6p), all RF=3, min.insync=2 | 8/8 (100%) |
+| SP4.006 | Schema Registration | 3 Avro schemas (messages, events, metrics) with REST API registration playbook | 6/6 (100%) |
+| SP4.007 | Ecosystem Verification Playbook | Comprehensive playbook verifying SR, Connect, topics, schemas, Blob sink connector, and E2E Avro produce→consume→sink test | 9/9 (100%) |
+
+### Execution Waves
+
+- **Wave 1** (parallel): SP4.001, SP4.002, SP4.005 — all first-pass success
+- **Wave 2** (parallel): SP4.003, SP4.004 — all first-pass success
+- **Wave 3**: SP4.006 — first-pass success
+- **Wave 4**: SP4.007 — 1 retry (Avro tooling fix for E2E test)
+
+### Key Deliverables
+
+- **Schema Registry Role** (`ansible/roles/schema-registry/`) — Full role with properties template, systemd service, health check handler, JVM heap config
+- **Kafka Connect Role** (`ansible/roles/kafka-connect/`) — Distributed mode role with properties template, connector install tasks, systemd service, REST API health check
+- **Group Variables** — Populated `schema_registry.yml` and `kafka_connect.yml` with bootstrap servers, SASL_SSL security, JVM heaps, vault credential references
+- **Azure Blob Storage Sink Connector** — Confluent Hub install task, connector JSON config template with UAMI auth, DLQ setup
+- **Application Topics** — Playbook creating 4 topics (app-messages/12p, app-events/6p, app-metrics/6p, app-state/compacted/6p), all RF=3, min.insync=2
+- **Schema Registration** — 3 Avro schemas (messages, events, metrics) with REST API registration playbook
+- **Ecosystem Verification** — Comprehensive playbook verifying SR, Connect, topics, schemas, Blob sink connector, and E2E Avro produce→consume→sink test
+
+### Key Decisions
+
+- Schema Registry and Kafka Connect deployed as single-node instances (dev sizing) on dedicated VMs from SP2.009
+- SASL_SSL security configuration inherited from SP3 broker setup via group variables
+- Avro chosen as the primary schema format for all application topics
+- Compacted cleanup policy applied to app-state topic for stateful consumers
+- DLQ (dead letter queue) configured on Blob sink connector for poison pill handling
+- UAMI authentication for Azure Blob Storage sink (consistent with tiered storage auth from SP3)
 
 ---

@@ -1,11 +1,11 @@
 ---
 id: TASK-28.9
 title: SP1.011 — Storage Account and Private Endpoints
-status: Dev Complete
+status: Done
 assignee:
   - tester-1
 created_date: '2026-03-30 16:40'
-updated_date: '2026-03-30 20:03'
+updated_date: '2026-03-30 22:43'
 labels:
   - story
 milestone: m-1

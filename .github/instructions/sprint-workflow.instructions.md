@@ -244,6 +244,22 @@ Ruby creates PR ──► STOPS ──► Human reviews and merges
 | All research tasks Done/Blocked, no SP1+ tasks | SP0P1 complete | Begin SP0P2 |
 | SP1+ sprint/story tasks exist | SP0P2 in progress | Resume PO/SM |
 
+## Agent Execution Modes
+
+Agents run in specific execution modes matching the architecture diagram. These are strict requirements, not suggestions.
+
+| Agent | Mode | Rationale |
+|---|---|---|
+| Ruby | `sync` (foreground) | Orchestrator — human must observe progress |
+| PO | `sync` (foreground) | Invoked by Ruby sequentially |
+| SM | `sync` (foreground) | Invoked by Ruby sequentially |
+| TL | `sync` (foreground) | Invoked by Ruby sequentially |
+| Coder | `background` | TL manages pool of up to 3 concurrent coders |
+| Tester | `background` | TL manages pool of up to 3 concurrent testers |
+
+- **Never** run Ruby, PO, SM, or TL as background agents. The human must see their output in real time.
+- Coders and Testers run in the background so TL can manage concurrency and collect results.
+
 ## Agent Communication
 
 - All agents use backlog MCP tools exclusively for task state management.

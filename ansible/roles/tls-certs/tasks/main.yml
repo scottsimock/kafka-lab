@@ -1,0 +1,10 @@
+---
+# Main task file for tls-certs role — imports sub-task files
+- name: Import CA generation tasks
+  ansible.builtin.import_tasks: ca.yml
+
+- name: Import node certificate generation tasks
+  ansible.builtin.import_tasks: node-certs.yml
+
+- name: Import certificate distribution tasks
+  ansible.builtin.import_tasks: distribute.yml

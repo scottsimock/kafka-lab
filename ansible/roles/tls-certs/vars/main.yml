@@ -1,0 +1,5 @@
+---
+# Computed variables for tls-certs role — not operator-tunable
+tls_ca_key: '{{ tls_local_cert_dir }}/ca.key'
+tls_ca_cert: '{{ tls_local_cert_dir }}/ca.crt'
+tls_truststore_file: kafka.truststore.jks

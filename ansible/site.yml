@@ -17,6 +17,7 @@
     - disk-setup
     - java
     - confluent-common
+    - tls-certs
     - zookeeper
 
 # Play 2: Kafka broker nodes — rolling deployment (serial: 1) to maintain availability
@@ -30,6 +31,7 @@
     - disk-setup
     - java
     - confluent-common
+    - tls-certs
     - kafka-broker
 
 # Play 3: Schema Registry nodes — no data disk, no serial constraint

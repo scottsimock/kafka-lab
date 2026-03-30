@@ -1,10 +1,10 @@
 ---
 id: TASK-30.1
 title: SP3.002 — Ansible Kafka Broker Role
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-03-30 16:44'
-updated_date: '2026-03-30 22:27'
+updated_date: '2026-03-30 22:28'
 labels:
   - story
 milestone: m-3
@@ -28,18 +28,18 @@ Create the Kafka broker Ansible role at ansible/roles/kafka-broker/ that configu
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Role exists at ansible/roles/kafka-broker/ with tasks/, handlers/, defaults/, templates/ directories
-- [ ] #2 Renders server.properties from Jinja2 template with configurable broker.id, listeners, log.dirs
-- [ ] #3 Configures broker.rack from availability zone
-- [ ] #4 Sets replication factor defaults: default.replication.factor=3, min.insync.replicas=2
-- [ ] #5 Configures JVM heap settings (KAFKA_HEAP_OPTS=-Xmx6g -Xms6g for D4s_v5)
-- [ ] #6 Creates Kafka log directory at /data/kafka/logs
-- [ ] #7 Creates systemd unit file confluent-kafka.service
-- [ ] #8 Handler restarts and verifies broker registration
-- [ ] #9 Handler retries broker health check up to 6 times with 10s delay
-- [ ] #10 Kafka JVM configured with 6 GB heap and G1GC per doc-8
-- [ ] #11 site.yml updated to include kafka-broker role in Kafka Broker play after confluent-common
-- [ ] #12 server.properties template is structured with sections for extensibility by later tasks (TLS, SASL, tiered storage, self-balancing)
+- [x] #1 Role exists at ansible/roles/kafka-broker/ with tasks/, handlers/, defaults/, templates/ directories
+- [x] #2 Renders server.properties from Jinja2 template with configurable broker.id, listeners, log.dirs
+- [x] #3 Configures broker.rack from availability zone
+- [x] #4 Sets replication factor defaults: default.replication.factor=3, min.insync.replicas=2
+- [x] #5 Configures JVM heap settings (KAFKA_HEAP_OPTS=-Xmx6g -Xms6g for D4s_v5)
+- [x] #6 Creates Kafka log directory at /data/kafka/logs
+- [x] #7 Creates systemd unit file confluent-kafka.service
+- [x] #8 Handler restarts and verifies broker registration
+- [x] #9 Handler retries broker health check up to 6 times with 10s delay
+- [x] #10 Kafka JVM configured with 6 GB heap and G1GC per doc-8
+- [x] #11 site.yml updated to include kafka-broker role in Kafka Broker play after confluent-common
+- [x] #12 server.properties template is structured with sections for extensibility by later tasks (TLS, SASL, tiered storage, self-balancing)
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -248,3 +248,9 @@ Add `kafka-broker` to the Kafka Broker play's roles list:
 - Template must be extensible for SP3.005/SP3.007/SP3.008 additions
 - Existing role pattern: roles/common/, roles/confluent-common/
 <!-- SECTION:PLAN:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Created ansible/roles/kafka-broker/ with full role structure. server.properties.j2 uses sectioned {% if %} guards for PLAINTEXT vs SASL_SSL listeners, TLS settings, tiered storage, and self-balancing — all extensible independently. All defaults for SP3.005/007/008 are pre-loaded. SCRAM bootstrap task uses --zookeeper flag. admin.properties.j2 template for CLI ops. 6g heap with G1GC. Systemd unit with ZK ordering. Handler chain with 6 retries/10s. site.yml updated.
+<!-- SECTION:FINAL_SUMMARY:END -->

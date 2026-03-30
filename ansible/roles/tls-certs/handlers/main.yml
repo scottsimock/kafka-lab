@@ -1,0 +1,2 @@
+---
+# Handlers for tls-certs role — TLS cert changes trigger component restarts via their own roles

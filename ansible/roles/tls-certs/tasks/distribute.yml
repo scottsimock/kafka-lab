@@ -1,0 +1,28 @@
+---
+# Certificate distribution tasks — copies keystores/truststores to target nodes
+- name: Create SSL directory on target node
+  ansible.builtin.file:
+    path: '{{ tls_cert_dir }}'
+    state: directory
+    owner: '{{ kafka_user }}'
+    group: '{{ kafka_group }}'
+    mode: '0750'
+  become: true
+
+- name: Copy node keystore to target
+  ansible.builtin.copy:
+    src: '{{ tls_local_cert_dir }}/{{ inventory_hostname }}.keystore.jks'
+    dest: '{{ tls_cert_dir }}/{{ inventory_hostname }}.keystore.jks'
+    owner: '{{ kafka_user }}'
+    group: '{{ kafka_group }}'
+    mode: '0640'
+  become: true
+
+- name: Copy shared truststore to target
+  ansible.builtin.copy:
+    src: '{{ tls_local_cert_dir }}/{{ tls_truststore_file }}'
+    dest: '{{ tls_cert_dir }}/{{ tls_truststore_file }}'
+    owner: '{{ kafka_user }}'
+    group: '{{ kafka_group }}'
+    mode: '0640'
+  become: true

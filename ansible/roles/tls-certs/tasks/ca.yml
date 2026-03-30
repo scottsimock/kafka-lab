@@ -1,0 +1,50 @@
+---
+# CA generation tasks — runs on Ansible controller (delegate_to: localhost, run_once: true)
+- name: Create TLS staging directory on controller
+  ansible.builtin.file:
+    path: '{{ tls_local_cert_dir }}'
+    state: directory
+    mode: '0700'
+  delegate_to: localhost
+  run_once: true
+
+- name: Generate CA private key
+  ansible.builtin.command:
+    cmd: >-
+      openssl genrsa
+      -aes256
+      -passout pass:{{ tls_ca_password }}
+      -out {{ tls_ca_key }}
+      {{ tls_key_size }}
+    creates: '{{ tls_ca_key }}'
+  delegate_to: localhost
+  run_once: true
+  no_log: true
+
+- name: Generate self-signed CA certificate
+  ansible.builtin.command:
+    cmd: >-
+      openssl req -new -x509
+      -key {{ tls_ca_key }}
+      -passin pass:{{ tls_ca_password }}
+      -out {{ tls_ca_cert }}
+      -days {{ tls_ca_validity_days }}
+      -subj "/CN={{ tls_ca_cn }}/OU={{ tls_ca_ou }}/O={{ tls_ca_o }}/C={{ tls_ca_c }}"
+    creates: '{{ tls_ca_cert }}'
+  delegate_to: localhost
+  run_once: true
+  no_log: true
+
+- name: Create shared CA truststore
+  ansible.builtin.command:
+    cmd: >-
+      keytool -import
+      -keystore {{ tls_local_cert_dir }}/{{ tls_truststore_file }}
+      -alias CARoot
+      -file {{ tls_ca_cert }}
+      -storepass {{ tls_truststore_password }}
+      -noprompt
+    creates: '{{ tls_local_cert_dir }}/{{ tls_truststore_file }}'
+  delegate_to: localhost
+  run_once: true
+  no_log: true

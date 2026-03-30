@@ -1,0 +1,86 @@
+---
+# Per-node certificate generation — runs on controller for the current target host
+- name: Generate node keystore with keypair for {{ inventory_hostname }}
+  ansible.builtin.command:
+    cmd: >-
+      keytool -genkey
+      -keystore {{ tls_local_cert_dir }}/{{ inventory_hostname }}.keystore.jks
+      -alias {{ inventory_hostname }}
+      -validity {{ tls_node_validity_days }}
+      -keyalg {{ tls_key_algorithm }}
+      -keysize {{ tls_key_size }}
+      -storepass {{ tls_keystore_password }}
+      -keypass {{ tls_key_password }}
+      -dname "CN={{ inventory_hostname }}.{{ tls_dns_domain }},OU={{ tls_ca_ou }},O={{ tls_ca_o }},C={{ tls_ca_c }}"
+      -ext "SAN=DNS:{{ inventory_hostname }}.{{ tls_dns_domain }},IP:{{ ansible_host }}"
+    creates: '{{ tls_local_cert_dir }}/{{ inventory_hostname }}.keystore.jks'
+  delegate_to: localhost
+  no_log: true
+
+- name: Export CSR from keystore for {{ inventory_hostname }}
+  ansible.builtin.command:
+    cmd: >-
+      keytool -certreq
+      -keystore {{ tls_local_cert_dir }}/{{ inventory_hostname }}.keystore.jks
+      -alias {{ inventory_hostname }}
+      -file {{ tls_local_cert_dir }}/{{ inventory_hostname }}.csr
+      -storepass {{ tls_keystore_password }}
+    creates: '{{ tls_local_cert_dir }}/{{ inventory_hostname }}.csr'
+  delegate_to: localhost
+  no_log: true
+
+- name: Render OpenSSL SAN extension config for {{ inventory_hostname }}
+  ansible.builtin.template:
+    src: 'openssl-san.cnf.j2'
+    dest: '{{ tls_local_cert_dir }}/{{ inventory_hostname }}-san.cnf'
+    mode: '0600'
+  vars:
+    cert_node_fqdn: '{{ inventory_hostname }}.{{ tls_dns_domain }}'
+    cert_node_ip: '{{ ansible_host }}'
+  delegate_to: localhost
+
+- name: Sign CSR with CA for {{ inventory_hostname }}
+  ansible.builtin.command:
+    cmd: >-
+      openssl x509 -req
+      -CA {{ tls_ca_cert }}
+      -CAkey {{ tls_ca_key }}
+      -in {{ tls_local_cert_dir }}/{{ inventory_hostname }}.csr
+      -out {{ tls_local_cert_dir }}/{{ inventory_hostname }}-signed.crt
+      -days {{ tls_node_validity_days }}
+      -CAcreateserial
+      -passin pass:{{ tls_ca_password }}
+      -extfile {{ tls_local_cert_dir }}/{{ inventory_hostname }}-san.cnf
+      -extensions v3_req
+    creates: '{{ tls_local_cert_dir }}/{{ inventory_hostname }}-signed.crt'
+  delegate_to: localhost
+  no_log: true
+
+- name: Import CA cert into node keystore for {{ inventory_hostname }}
+  ansible.builtin.command:
+    cmd: >-
+      keytool -import
+      -keystore {{ tls_local_cert_dir }}/{{ inventory_hostname }}.keystore.jks
+      -alias CARoot
+      -file {{ tls_ca_cert }}
+      -storepass {{ tls_keystore_password }}
+      -noprompt
+  delegate_to: localhost
+  register: import_ca
+  changed_when: import_ca.rc == 0
+  failed_when: import_ca.rc != 0 and 'already exists' not in import_ca.stderr
+  no_log: true
+
+- name: Import signed cert into node keystore for {{ inventory_hostname }}
+  ansible.builtin.command:
+    cmd: >-
+      keytool -import
+      -keystore {{ tls_local_cert_dir }}/{{ inventory_hostname }}.keystore.jks
+      -alias {{ inventory_hostname }}
+      -file {{ tls_local_cert_dir }}/{{ inventory_hostname }}-signed.crt
+      -storepass {{ tls_keystore_password }}
+  delegate_to: localhost
+  register: import_cert
+  changed_when: import_cert.rc == 0
+  failed_when: import_cert.rc != 0 and 'already exists' not in import_cert.stderr
+  no_log: true

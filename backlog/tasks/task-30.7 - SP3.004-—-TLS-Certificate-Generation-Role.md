@@ -1,10 +1,10 @@
 ---
 id: TASK-30.7
 title: SP3.004 — TLS Certificate Generation Role
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-03-30 16:44'
-updated_date: '2026-03-30 22:10'
+updated_date: '2026-03-30 22:28'
 labels:
   - story
 milestone: m-3

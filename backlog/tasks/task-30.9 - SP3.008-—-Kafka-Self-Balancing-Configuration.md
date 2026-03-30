@@ -1,10 +1,10 @@
 ---
 id: TASK-30.9
 title: SP3.008 — Kafka Self-Balancing Configuration
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-03-30 16:44'
-updated_date: '2026-03-30 22:23'
+updated_date: '2026-03-30 22:28'
 labels:
   - story
 milestone: m-3

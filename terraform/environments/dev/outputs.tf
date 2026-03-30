@@ -26,3 +26,8 @@ output "cmk_key_id" {
   description = "Resource ID of the CMEK encryption key"
   value       = module.key_vault.cmk_key_id
 }
+
+output "private_dns_zone_ids" {
+  description = "Map of DNS zone key to resource ID for each private DNS zone"
+  value       = { for k, v in module.private_dns_zones : k => v.dns_zone_id }
+}

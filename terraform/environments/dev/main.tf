@@ -570,3 +570,26 @@ module "nsgs" {
   subnet_id         = module.vnet_scus.subnet_ids[each.value.subnet_name]
   tags              = local.common_tags
 }
+
+// =====================================================
+// Private DNS Zones
+// =====================================================
+
+locals {
+  private_dns_zones = {
+    "blob"  = "privatelink.blob.core.windows.net"
+    "vault" = "privatelink.vaultcore.azure.net"
+  }
+}
+
+module "private_dns_zones" {
+  source   = "../../modules/private-dns-zone"
+  for_each = local.private_dns_zones
+
+  zone_name         = each.value
+  resource_group_id = data.azapi_resource.resource_group.id
+  vnet_links = {
+    "link-scus" = module.vnet_scus.vnet_id
+  }
+  tags = local.common_tags
+}

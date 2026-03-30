@@ -1,0 +1,12 @@
+---
+# Azure Blob Storage Sink Connector installation tasks
+- name: Install Azure Blob Storage Sink Connector via confluent-hub
+  ansible.builtin.command:
+    cmd: >-
+      {{ kafka_connect_bin_dir }}/confluent-hub install
+      confluentinc/kafka-connect-azure-blob-storage:latest
+      --no-prompt
+      --component-dir /usr/share/confluent-hub-components
+    creates: /usr/share/confluent-hub-components/confluentinc-kafka-connect-azure-blob-storage
+  become: true
+  notify: 'Restart confluent-kafka-connect'

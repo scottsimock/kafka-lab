@@ -1,0 +1,26 @@
+{
+  "name": "azure-blob-sink",
+  "config": {
+    "connector.class": "io.confluent.connect.azure.blob.AzureBlobStorageSinkConnector",
+    "tasks.max": "{{ kafka_connect_blob_sink_tasks_max }}",
+    "topics": "{{ kafka_connect_blob_sink_topics }}",
+    "azblob.account.name": "{{ kafka_connect_blob_sink_account_name }}",
+    "azblob.container.name": "{{ kafka_connect_blob_sink_container_name }}",
+    "azblob.credentials.provider": "{{ kafka_connect_blob_sink_credentials_provider }}",
+    "format.class": "io.confluent.connect.azure.blob.format.avro.AvroFormat",
+    "flush.size": "{{ kafka_connect_blob_sink_flush_size }}",
+    "rotate.interval.ms": "{{ kafka_connect_blob_sink_rotate_interval_ms | default(600000) }}",
+    "partition.duration.ms": "{{ kafka_connect_blob_sink_partition_duration_ms | default(3600000) }}",
+    "path.format": "'year'=YYYY/'month'=MM/'day'=dd/'hour'=HH",
+    "locale": "en-US",
+    "timezone": "UTC",
+    "key.converter": "io.confluent.connect.avro.AvroConverter",
+    "key.converter.schema.registry.url": "{{ kafka_connect_schema_registry_url }}",
+    "value.converter": "io.confluent.connect.avro.AvroConverter",
+    "value.converter.schema.registry.url": "{{ kafka_connect_schema_registry_url }}",
+    "errors.tolerance": "all",
+    "errors.deadletterqueue.topic.name": "{{ kafka_connect_blob_sink_dlq_topic }}",
+    "errors.deadletterqueue.topic.replication.factor": "{{ kafka_connect_blob_sink_dlq_replication_factor }}",
+    "errors.deadletterqueue.context.headers.enable": "true"
+  }
+}

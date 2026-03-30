@@ -41,3 +41,13 @@ kafka_connect_password: "{{ vault_kafka_connect_worker_password | default('chang
 
 # Paths
 kafka_connect_config_dir: "{{ confluent_current_link | default('/opt/confluent/current') }}/etc/kafka-connect"
+
+# Azure Blob Storage Sink Connector
+kafka_connect_blob_sink_topics: 'app-messages,app-events,app-metrics'
+kafka_connect_blob_sink_account_name: 'klcstgkafkalabscus'
+kafka_connect_blob_sink_container_name: 'kafka-sink-data'
+kafka_connect_blob_sink_credentials_provider: 'com.microsoft.azure.storage.auth.ManagedIdentityCredentialProvider'
+kafka_connect_blob_sink_flush_size: 1000
+kafka_connect_blob_sink_tasks_max: 3
+kafka_connect_blob_sink_dlq_topic: 'dlq-azure-blob-sink'
+kafka_connect_blob_sink_dlq_replication_factor: 3

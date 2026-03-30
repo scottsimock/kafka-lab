@@ -38,4 +38,6 @@ SP0 Part 2 (SP0P2) - This part is to populate the entire backlog to build out al
 -----------------------------------
 
 todo:
-- tell the TL to append to the sprint milestone everytime they assign a tasks to a coder or tester
+- PLease upda the TL agent to make sure they append to the current sprint milestone everytime they assign a task to a coder or tester
+- Please review the SM agent and make sure teh SM  is appending the current sprints sprint-report before the sprint is closed 
+- I've noticed that in many cases there is only a single background task running. Do we need more testers added to the team? Ideally we should have as many coders and testers running at the same time as long as we don't too many agents working on the same files causing conficts.

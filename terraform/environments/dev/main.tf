@@ -753,3 +753,65 @@ module "kafka_broker_vms" {
   dns_record_name    = each.value.dns_name
   tags               = merge(local.common_tags, { component = "kafka_broker" })
 }
+
+// =====================================================
+// Schema Registry VM Instances
+// =====================================================
+
+locals {
+  schema_registry_nodes = {
+    "klc-vm-sr-01-scus" = { private_ip = "10.1.3.4", dns_name = "sr-01" }
+  }
+}
+
+module "schema_registry_vms" {
+  source   = "../../modules/virtual-machine"
+  for_each = local.schema_registry_nodes
+
+  name               = each.key
+  location           = var.primary_location
+  resource_group_id  = data.azapi_resource.resource_group.id
+  subnet_id          = module.vnet_scus.subnet_ids["snet-schema-registry"]
+  private_ip_address = each.value.private_ip
+  vm_size            = "Standard_D2s_v5"
+  zone               = "1"
+  os_disk_size_gb    = 64
+  data_disk_size_gb  = 0
+  admin_username     = "azureuser"
+  ssh_public_key     = var.ssh_public_key
+  uami_id            = module.uami_kafkalab.uami_id
+  dns_zone_id        = module.private_dns_zones["internal"].dns_zone_id
+  dns_record_name    = each.value.dns_name
+  tags               = merge(local.common_tags, { component = "schema_registry" })
+}
+
+// =====================================================
+// Kafka Connect VM Instances
+// =====================================================
+
+locals {
+  kafka_connect_nodes = {
+    "klc-vm-kc-01-scus" = { private_ip = "10.1.4.4", dns_name = "kc-01" }
+  }
+}
+
+module "kafka_connect_vms" {
+  source   = "../../modules/virtual-machine"
+  for_each = local.kafka_connect_nodes
+
+  name               = each.key
+  location           = var.primary_location
+  resource_group_id  = data.azapi_resource.resource_group.id
+  subnet_id          = module.vnet_scus.subnet_ids["snet-connect"]
+  private_ip_address = each.value.private_ip
+  vm_size            = "Standard_D2s_v5"
+  zone               = "1"
+  os_disk_size_gb    = 64
+  data_disk_size_gb  = 0
+  admin_username     = "azureuser"
+  ssh_public_key     = var.ssh_public_key
+  uami_id            = module.uami_kafkalab.uami_id
+  dns_zone_id        = module.private_dns_zones["internal"].dns_zone_id
+  dns_record_name    = each.value.dns_name
+  tags               = merge(local.common_tags, { component = "kafka_connect" })
+}

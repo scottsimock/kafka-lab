@@ -66,3 +66,23 @@ output "kafka_broker_private_ips" {
   description = "Map of Kafka broker VM name to private IP address"
   value       = { for k, v in module.kafka_broker_vms : k => v.private_ip_address }
 }
+
+output "schema_registry_vm_ids" {
+  description = "Map of Schema Registry VM name to resource ID"
+  value       = { for k, v in module.schema_registry_vms : k => v.vm_id }
+}
+
+output "schema_registry_private_ips" {
+  description = "Map of Schema Registry VM name to private IP address"
+  value       = { for k, v in module.schema_registry_vms : k => v.private_ip_address }
+}
+
+output "kafka_connect_vm_ids" {
+  description = "Map of Kafka Connect VM name to resource ID"
+  value       = { for k, v in module.kafka_connect_vms : k => v.vm_id }
+}
+
+output "kafka_connect_private_ips" {
+  description = "Map of Kafka Connect VM name to private IP address"
+  value       = { for k, v in module.kafka_connect_vms : k => v.private_ip_address }
+}

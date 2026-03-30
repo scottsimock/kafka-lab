@@ -1,0 +1,30 @@
+---
+# Kafka Connect configuration tasks
+- name: Create Kafka Connect config directory
+  ansible.builtin.file:
+    path: '{{ kafka_connect_config_dir }}'
+    state: directory
+    owner: '{{ kafka_user }}'
+    group: '{{ kafka_group }}'
+    mode: '0755'
+  become: true
+
+- name: Render connect-distributed.properties
+  ansible.builtin.template:
+    src: 'connect-distributed.properties.j2'
+    dest: '{{ kafka_connect_config_file }}'
+    owner: '{{ kafka_user }}'
+    group: '{{ kafka_group }}'
+    mode: '0640'
+  become: true
+  notify: 'Restart confluent-kafka-connect'
+
+- name: Deploy Kafka Connect JVM environment script
+  ansible.builtin.template:
+    src: 'connect-env.sh.j2'
+    dest: '{{ kafka_connect_env_file }}'
+    owner: '{{ kafka_user }}'
+    group: '{{ kafka_group }}'
+    mode: '0755'
+  become: true
+  notify: 'Restart confluent-kafka-connect'

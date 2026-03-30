@@ -1,0 +1,7 @@
+---
+# Main task file for kafka-connect role — imports sub-task files
+- name: Import Kafka Connect configuration tasks
+  ansible.builtin.import_tasks: configure.yml
+
+- name: Import Kafka Connect service tasks
+  ansible.builtin.import_tasks: service.yml

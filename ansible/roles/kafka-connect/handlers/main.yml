@@ -1,0 +1,21 @@
+---
+# Handlers for kafka-connect role
+- name: Restart confluent-kafka-connect
+  ansible.builtin.systemd:
+    name: '{{ kafka_connect_service_name }}'
+    state: restarted
+    daemon_reload: true
+  become: true
+  listen: 'Restart confluent-kafka-connect'
+  notify: 'Verify kafka connect health'
+
+- name: Verify kafka connect health
+  ansible.builtin.uri:
+    url: 'http://localhost:{{ kafka_connect_port }}/'
+    method: GET
+    status_code: 200
+  register: connect_health
+  until: connect_health.status == 200
+  retries: 6
+  delay: 10
+  listen: 'Verify kafka connect health'

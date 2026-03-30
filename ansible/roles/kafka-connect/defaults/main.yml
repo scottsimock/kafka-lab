@@ -1,0 +1,43 @@
+---
+# Default variables for kafka-connect role — operator-overrideable
+
+# REST API
+kafka_connect_port: 8083
+kafka_connect_rest_listener: 'http://0.0.0.0:{{ kafka_connect_port }}'
+
+# JVM
+kafka_connect_heap_size: '2g'
+
+# Group
+kafka_connect_group_id: 'connect-cluster'
+
+# Internal topics
+kafka_connect_config_topic: 'connect-configs'
+kafka_connect_config_replication_factor: 3
+kafka_connect_offset_topic: 'connect-offsets'
+kafka_connect_offset_replication_factor: 3
+kafka_connect_status_topic: 'connect-status'
+kafka_connect_status_replication_factor: 3
+
+# Converters
+kafka_connect_key_converter: 'io.confluent.connect.avro.AvroConverter'
+kafka_connect_value_converter: 'io.confluent.connect.avro.AvroConverter'
+kafka_connect_schema_registry_url: "http://{{ groups['schema_registry'] | map('extract', hostvars, 'ansible_host') | first }}:8081"
+
+# Plugin path
+kafka_connect_plugin_path: '/usr/share/java,/usr/share/confluent-hub-components'
+
+# Security (SASL_SSL with SCRAM-SHA-512)
+kafka_connect_security_protocol: SASL_SSL
+kafka_connect_sasl_mechanism: SCRAM-SHA-512
+kafka_connect_ssl_dir: /etc/kafka/ssl
+kafka_connect_ssl_truststore_file: kafka.truststore.jks
+kafka_connect_ssl_truststore_password: "{{ vault_tls_truststore_password | default('changeit') }}"
+kafka_connect_ssl_keystore_file: '{{ inventory_hostname }}.keystore.jks'
+kafka_connect_ssl_keystore_password: "{{ vault_tls_keystore_password | default('changeit') }}"
+kafka_connect_ssl_key_password: "{{ vault_tls_key_password | default('changeit') }}"
+kafka_connect_user: connect-worker
+kafka_connect_password: "{{ vault_kafka_connect_worker_password | default('changeit') }}"
+
+# Paths
+kafka_connect_config_dir: "{{ confluent_current_link | default('/opt/confluent/current') }}/etc/kafka-connect"

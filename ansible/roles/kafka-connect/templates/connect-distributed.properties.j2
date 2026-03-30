@@ -1,0 +1,71 @@
+# =====================================================
+# Bootstrap and Group
+# =====================================================
+bootstrap.servers={{ groups['kafka_broker'] | map('extract', hostvars, 'ansible_host') | map('regex_replace', '$', ':' ~ (kafka_broker_client_port | default(9092))) | join(',') }}
+group.id={{ kafka_connect_group_id }}
+
+# =====================================================
+# Internal Topics
+# =====================================================
+config.storage.topic={{ kafka_connect_config_topic }}
+config.storage.replication.factor={{ kafka_connect_config_replication_factor }}
+offset.storage.topic={{ kafka_connect_offset_topic }}
+offset.storage.replication.factor={{ kafka_connect_offset_replication_factor }}
+status.storage.topic={{ kafka_connect_status_topic }}
+status.storage.replication.factor={{ kafka_connect_status_replication_factor }}
+
+# =====================================================
+# Converters
+# =====================================================
+key.converter={{ kafka_connect_key_converter }}
+key.converter.schema.registry.url={{ kafka_connect_schema_registry_url }}
+value.converter={{ kafka_connect_value_converter }}
+value.converter.schema.registry.url={{ kafka_connect_schema_registry_url }}
+
+# =====================================================
+# REST API
+# =====================================================
+rest.advertised.host.name={{ ansible_host }}
+rest.advertised.port={{ kafka_connect_port }}
+listeners={{ kafka_connect_rest_listener }}
+
+# =====================================================
+# Plugin Path
+# =====================================================
+plugin.path={{ kafka_connect_plugin_path }}
+
+# =====================================================
+# SASL_SSL Security (Worker → Broker)
+# =====================================================
+security.protocol={{ kafka_connect_security_protocol }}
+sasl.mechanism={{ kafka_connect_sasl_mechanism }}
+sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="{{ kafka_connect_user }}" password="{{ kafka_connect_password }}";
+ssl.truststore.location={{ kafka_connect_ssl_dir }}/{{ kafka_connect_ssl_truststore_file }}
+ssl.truststore.password={{ kafka_connect_ssl_truststore_password }}
+ssl.keystore.location={{ kafka_connect_ssl_dir }}/{{ kafka_connect_ssl_keystore_file }}
+ssl.keystore.password={{ kafka_connect_ssl_keystore_password }}
+ssl.key.password={{ kafka_connect_ssl_key_password }}
+
+# =====================================================
+# Producer Override (Connector → Broker)
+# =====================================================
+producer.security.protocol={{ kafka_connect_security_protocol }}
+producer.sasl.mechanism={{ kafka_connect_sasl_mechanism }}
+producer.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="{{ kafka_connect_user }}" password="{{ kafka_connect_password }}";
+producer.ssl.truststore.location={{ kafka_connect_ssl_dir }}/{{ kafka_connect_ssl_truststore_file }}
+producer.ssl.truststore.password={{ kafka_connect_ssl_truststore_password }}
+producer.ssl.keystore.location={{ kafka_connect_ssl_dir }}/{{ kafka_connect_ssl_keystore_file }}
+producer.ssl.keystore.password={{ kafka_connect_ssl_keystore_password }}
+producer.ssl.key.password={{ kafka_connect_ssl_key_password }}
+
+# =====================================================
+# Consumer Override (Connector → Broker)
+# =====================================================
+consumer.security.protocol={{ kafka_connect_security_protocol }}
+consumer.sasl.mechanism={{ kafka_connect_sasl_mechanism }}
+consumer.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="{{ kafka_connect_user }}" password="{{ kafka_connect_password }}";
+consumer.ssl.truststore.location={{ kafka_connect_ssl_dir }}/{{ kafka_connect_ssl_truststore_file }}
+consumer.ssl.truststore.password={{ kafka_connect_ssl_truststore_password }}
+consumer.ssl.keystore.location={{ kafka_connect_ssl_dir }}/{{ kafka_connect_ssl_keystore_file }}
+consumer.ssl.keystore.password={{ kafka_connect_ssl_keystore_password }}
+consumer.ssl.key.password={{ kafka_connect_ssl_key_password }}

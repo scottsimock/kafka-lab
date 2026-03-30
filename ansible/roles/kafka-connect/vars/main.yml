@@ -1,0 +1,6 @@
+---
+# Computed variables for kafka-connect role — not operator-tunable
+kafka_connect_config_file: '{{ kafka_connect_config_dir }}/connect-distributed.properties'
+kafka_connect_env_file: '{{ kafka_connect_config_dir }}/connect-env.sh'
+kafka_connect_service_name: confluent-kafka-connect
+kafka_connect_bin_dir: "{{ confluent_current_link | default('/opt/confluent/current') }}/bin"

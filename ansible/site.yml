@@ -53,3 +53,5 @@
     - common
     - java
     - confluent-common
+    - tls-certs
+    - kafka-connect

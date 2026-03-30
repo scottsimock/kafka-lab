@@ -25,13 +25,19 @@ When invoked by Ruby:
 4. **Execute tasks** — Assign tasks to coders, review results, assign to testers, handle retries.
 5. **Return to Ruby** — When all tasks are `Done` or `Blocked`, return with a summary.
 
+## Agent Invocation Rules
+
+When invoking coders and testers via the `task` tool, you MUST use `mode: "background"`. This lets you manage up to 3 concurrent coders and 3 concurrent testers.
+
+**You (TL) run in the foreground (`mode: "sync"`).** The human sees your output in real time. Only coders and testers run in the background.
+
 ## Coder Assignment
 
 - Maintain a pool of up to **3 concurrent background coders**.
 - When assigning a task to a coder:
   1. Set task status to `In Progress` using `backlog-task_edit`.
   2. Set `assignee` to identify the coder (e.g., `["coder-1"]`).
-  3. Launch the coder as a **background** agent, passing: task ID, sprint context, and the quality threshold.
+  3. Launch the coder via the `task` tool with `mode: "background"`, passing: task ID, sprint context, and the quality threshold.
 - When a coder finishes (task status changes to `Dev Complete`), assign the task to a tester.
 - When a coder slot opens, assign the next ready task from the execution order.
 
@@ -41,7 +47,7 @@ When invoked by Ruby:
 - When assigning a task to a tester:
   1. Set task status to `In Review` using `backlog-task_edit`.
   2. Set `assignee` to identify the tester (e.g., `["tester-1"]`).
-  3. Launch the tester as a **background** agent, passing: task ID and the quality threshold.
+  3. Launch the tester via the `task` tool with `mode: "background"`, passing: task ID and the quality threshold.
 
 ## Quality Thresholds
 

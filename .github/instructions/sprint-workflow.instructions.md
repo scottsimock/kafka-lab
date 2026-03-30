@@ -246,19 +246,22 @@ Ruby creates PR ──► STOPS ──► Human reviews and merges
 
 ## Agent Execution Modes
 
-Agents run in specific execution modes matching the architecture diagram. These are strict requirements, not suggestions.
+Agents run in specific execution modes when invoked via the `task` tool. These are **strict requirements**, not suggestions. Violating these rules means the human loses visibility and the ability to steer.
 
-| Agent | Mode | Rationale |
+| Agent | `task` tool `mode` | Rationale |
 |---|---|---|
-| Ruby | `sync` (foreground) | Orchestrator — human must observe progress |
-| PO | `sync` (foreground) | Invoked by Ruby sequentially |
-| SM | `sync` (foreground) | Invoked by Ruby sequentially |
-| TL | `sync` (foreground) | Invoked by Ruby sequentially |
-| Coder | `background` | TL manages pool of up to 3 concurrent coders |
-| Tester | `background` | TL manages pool of up to 3 concurrent testers |
+| Ruby | `"sync"` (foreground) | Orchestrator — human must observe progress |
+| PO | `"sync"` (foreground) | Invoked by Ruby sequentially — human must see planning |
+| SM | `"sync"` (foreground) | Invoked by Ruby sequentially — human must see reviews |
+| TL | `"sync"` (foreground) | Invoked by Ruby sequentially — human must see execution |
+| Coder | `"background"` | TL manages pool of up to 3 concurrent coders |
+| Tester | `"background"` | TL manages pool of up to 3 concurrent testers |
 
-- **Never** run Ruby, PO, SM, or TL as background agents. The human must see their output in real time.
-- Coders and Testers run in the background so TL can manage concurrency and collect results.
+**CRITICAL — foreground enforcement:**
+
+- When Ruby invokes PO, SM, or TL, it MUST pass `mode: "sync"` to the `task` tool.
+- **NEVER** use `mode: "background"` for Ruby, PO, SM, or TL. The human is watching the terminal and needs real-time output to observe progress and intervene when necessary.
+- Only Coders and Testers run in the background so the TL can manage concurrency and collect results.
 
 ## Agent Communication
 

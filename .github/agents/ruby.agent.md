@@ -88,6 +88,18 @@ SP0P2 does not involve the TL or coders — the PO creates sprint/task structure
 - Milestone: SP{N}
 ```
 
+## Agent Invocation Rules
+
+When invoking subagents via the `task` tool, you MUST use these execution modes:
+
+| Subagent | `mode` | Why |
+|---|---|---|
+| PO (Product Owner) | `"sync"` | Human must see planning output in real time |
+| SM (Scrum Master) | `"sync"` | Human must see review output in real time |
+| TL (Tech Lead) | `"sync"` | Human must see execution progress in real time |
+
+**NEVER use `mode: "background"` for PO, SM, or TL.** The human is watching the terminal and needs to observe progress and steer when necessary. All three subagents MUST run in the foreground using `mode: "sync"`.
+
 ## Rules
 
 - You do NOT write code. You coordinate agents.

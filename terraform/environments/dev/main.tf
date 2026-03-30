@@ -26,3 +26,42 @@ module "uami_kafkalab" {
   resource_group_id = data.azapi_resource.resource_group.id
   tags              = local.common_tags
 }
+
+// =====================================================
+// Virtual Network
+// =====================================================
+
+module "vnet_scus" {
+  source = "../../modules/virtual-network"
+
+  name              = "klc-vnet-scus"
+  location          = var.primary_location
+  resource_group_id = data.azapi_resource.resource_group.id
+  address_space     = ["10.1.0.0/16"]
+  tags              = local.common_tags
+
+  subnets = {
+    "snet-kafka-brokers" = {
+      address_prefix = "10.1.1.0/24"
+    }
+    "snet-zookeeper" = {
+      address_prefix = "10.1.2.0/24"
+    }
+    "snet-schema-registry" = {
+      address_prefix = "10.1.3.0/24"
+    }
+    "snet-connect" = {
+      address_prefix = "10.1.4.0/24"
+    }
+    "snet-web-app" = {
+      address_prefix = "10.1.5.0/24"
+    }
+    "snet-private-endpoints" = {
+      address_prefix                    = "10.1.6.0/24"
+      private_endpoint_network_policies = "NetworkSecurityGroupEnabled"
+    }
+    "snet-management" = {
+      address_prefix = "10.1.7.0/24"
+    }
+  }
+}

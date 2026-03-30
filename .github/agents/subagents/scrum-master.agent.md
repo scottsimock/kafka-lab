@@ -87,7 +87,7 @@ Find the milestone file in `backlog/milestones/` for the current sprint (e.g., t
 MILESTONE_FILE=$(find backlog/milestones -maxdepth 1 -type f -iname "*sp${SPRINT_NUM}*" | head -1)
 if [ -n "$MILESTONE_FILE" ]; then
   grep -q "## Status Updates" "$MILESTONE_FILE" || printf '\n## Status Updates\n' >> "$MILESTONE_FILE"
-  echo "- $(date -u +%Y-%m-%dT%H:%M:%SZ) [SM] <brief description>" >> "$MILESTONE_FILE"
+  echo "- $(TZ='America/New_York' date '+%Y-%m-%dT%H:%M:%S %Z') [SM] <brief description>" >> "$MILESTONE_FILE"
 fi
 ```
 
@@ -96,6 +96,75 @@ fi
 - After completing a review pass (whether tasks passed or need PO revision)
 
 Each entry is a single line: `- {ISO timestamp} [SM] {brief description of review outcome}`.
+
+## Sprint Report
+
+After every sprint review (SP0P2 and onward), publish or update a cumulative sprint report as a backlog document.
+
+### First Sprint
+
+Create the report using `backlog-document_create` with the title **"Sprint Report"**. Note the returned document ID.
+
+### Subsequent Sprints
+
+Update the existing document using `backlog-document_update` with the same document ID. Append the new sprint section — do not overwrite previous sprint data.
+
+### Report Format
+
+The report is cumulative — every sprint adds a section, building a complete project history.
+
+```markdown
+# Sprint Report
+
+## Project Summary
+
+| Metric | Value |
+|---|---|
+| Total sprints completed | {N} |
+| Total stories completed | {N} |
+| Total stories blocked | {N} |
+| Overall completion rate | {%} |
+| Overall average score | {%} |
+
+---
+
+## SP{N} — {Sprint Goal}
+
+**Status:** Complete | In Progress
+**Date:** {YYYY-MM-DD}
+
+### Metrics
+
+| Metric | Value |
+|---|---|
+| Stories completed | {done}/{total} |
+| Stories blocked | {N} |
+| Completion rate | {%} |
+| Average score | {%} |
+| PO↔SM iterations | {N} |
+
+### Completed Stories
+
+| Task | Title | Score |
+|---|---|---|
+| TASK-X.Y | SP{N}.NNN — Description | {%} |
+
+### Blocked Stories
+
+| Task | Title | Reason |
+|---|---|---|
+| TASK-X.Y | SP{N}.NNN — Description | Brief reason |
+
+### Key Decisions / Notes
+
+- Bullet points summarizing significant decisions, carry-over items, or observations
+
+---
+```
+
+### Discovery
+
+To find the existing sprint report document, use `backlog-document_search` with query `"Sprint Report"`. The first result is the cumulative report to update.
 
 ## Rules
 

@@ -1,0 +1,21 @@
+---
+# Handlers for schema-registry role
+- name: Restart confluent-schema-registry
+  ansible.builtin.systemd:
+    name: '{{ schema_registry_service_name }}'
+    state: restarted
+    daemon_reload: true
+  become: true
+  listen: 'Restart confluent-schema-registry'
+  notify: 'Verify schema registry health'
+
+- name: Verify schema registry health
+  ansible.builtin.uri:
+    url: 'http://localhost:{{ schema_registry_port }}/subjects'
+    method: GET
+    status_code: 200
+  register: sr_health
+  until: sr_health.status == 200
+  retries: 6
+  delay: 10
+  listen: 'Verify schema registry health'

@@ -1,0 +1,18 @@
+[Unit]
+Description=Confluent Schema Registry
+After=network.target confluent-kafka.service
+Wants=confluent-kafka.service
+
+[Service]
+Type=simple
+User={{ kafka_user }}
+Group={{ kafka_group }}
+EnvironmentFile={{ schema_registry_env_file }}
+ExecStart={{ schema_registry_bin_dir }}/schema-registry-start {{ schema_registry_config_file }}
+Restart=on-failure
+RestartSec=10
+LimitNOFILE={{ kafka_nofile_limit | default(100000) }}
+TimeoutStopSec=180
+
+[Install]
+WantedBy=multi-user.target

@@ -43,6 +43,8 @@
     - common
     - java
     - confluent-common
+    - tls-certs
+    - schema-registry
 
 # Play 4: Kafka Connect nodes — no data disk, no serial constraint
 - name: Configure Kafka Connect nodes

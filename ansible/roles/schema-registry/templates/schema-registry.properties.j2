@@ -1,0 +1,28 @@
+# =====================================================
+# Listener
+# =====================================================
+listeners={{ schema_registry_listener }}
+
+# =====================================================
+# Kafka Store
+# =====================================================
+kafkastore.bootstrap.servers={{ groups['kafka_broker'] | map('extract', hostvars, 'ansible_host') | map('regex_replace', '$', ':' ~ (kafka_broker_client_port | default(9092))) | join(',') }}
+kafkastore.topic={{ schema_registry_kafkastore_topic }}
+kafkastore.topic.replication.factor={{ schema_registry_kafkastore_replication_factor }}
+
+# =====================================================
+# Schema Compatibility
+# =====================================================
+schema.compatibility.level={{ schema_registry_schema_compatibility_level }}
+
+# =====================================================
+# SASL_SSL — Kafka Broker Communication
+# =====================================================
+kafkastore.security.protocol={{ schema_registry_security_protocol }}
+kafkastore.sasl.mechanism={{ schema_registry_sasl_mechanism }}
+kafkastore.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="{{ schema_registry_user }}" password="{{ schema_registry_password }}";
+kafkastore.ssl.truststore.location={{ schema_registry_ssl_dir }}/{{ schema_registry_ssl_truststore_file }}
+kafkastore.ssl.truststore.password={{ schema_registry_ssl_truststore_password }}
+kafkastore.ssl.keystore.location={{ schema_registry_ssl_dir }}/{{ schema_registry_ssl_keystore_file }}
+kafkastore.ssl.keystore.password={{ schema_registry_ssl_keystore_password }}
+kafkastore.ssl.key.password={{ schema_registry_ssl_key_password }}

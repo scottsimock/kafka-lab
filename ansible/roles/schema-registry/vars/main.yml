@@ -1,0 +1,6 @@
+---
+# Computed variables for schema-registry role — not operator-tunable
+schema_registry_config_file: '{{ schema_registry_config_dir }}/schema-registry.properties'
+schema_registry_env_file: '{{ schema_registry_config_dir }}/schema-registry-env.sh'
+schema_registry_service_name: confluent-schema-registry
+schema_registry_bin_dir: "{{ confluent_current_link | default('/opt/confluent/current') }}/bin"

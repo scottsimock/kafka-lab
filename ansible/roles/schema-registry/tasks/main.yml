@@ -1,0 +1,7 @@
+---
+# Main task file for schema-registry role — imports sub-task files
+- name: Import Schema Registry configuration tasks
+  ansible.builtin.import_tasks: configure.yml
+
+- name: Import Schema Registry service tasks
+  ansible.builtin.import_tasks: service.yml

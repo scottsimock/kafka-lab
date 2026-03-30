@@ -1,0 +1,21 @@
+---
+# Schema Registry configuration tasks
+- name: Render schema-registry.properties
+  ansible.builtin.template:
+    src: 'schema-registry.properties.j2'
+    dest: '{{ schema_registry_config_file }}'
+    owner: '{{ kafka_user }}'
+    group: '{{ kafka_group }}'
+    mode: '0640'
+  become: true
+  notify: 'Restart confluent-schema-registry'
+
+- name: Deploy Schema Registry JVM environment script
+  ansible.builtin.template:
+    src: 'schema-registry-env.sh.j2'
+    dest: '{{ schema_registry_env_file }}'
+    owner: '{{ kafka_user }}'
+    group: '{{ kafka_group }}'
+    mode: '0755'
+  become: true
+  notify: 'Restart confluent-schema-registry'

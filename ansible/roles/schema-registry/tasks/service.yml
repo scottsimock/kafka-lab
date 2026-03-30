@@ -1,0 +1,19 @@
+---
+# Schema Registry service tasks
+- name: Deploy confluent-schema-registry systemd unit
+  ansible.builtin.template:
+    src: 'confluent-schema-registry.service.j2'
+    dest: '/etc/systemd/system/confluent-schema-registry.service'
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  notify: 'Restart confluent-schema-registry'
+
+- name: Enable and start confluent-schema-registry service
+  ansible.builtin.systemd:
+    name: '{{ schema_registry_service_name }}'
+    enabled: true
+    state: started
+    daemon_reload: true
+  become: true

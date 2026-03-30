@@ -1,0 +1,31 @@
+---
+# Default variables for schema-registry role — operator-overrideable
+
+# Listener
+schema_registry_port: 8081
+schema_registry_listener: 'http://0.0.0.0:8081'
+
+# JVM
+schema_registry_heap_size: '1g'
+
+# Kafka store
+schema_registry_kafkastore_topic: '_schemas'
+schema_registry_kafkastore_replication_factor: 3
+
+# Schema compatibility
+schema_registry_schema_compatibility_level: 'BACKWARD'
+
+# Security — SASL_SSL for broker communication
+schema_registry_security_protocol: SASL_SSL
+schema_registry_sasl_mechanism: SCRAM-SHA-512
+schema_registry_ssl_dir: /etc/kafka/ssl
+schema_registry_ssl_truststore_file: kafka.truststore.jks
+schema_registry_ssl_truststore_password: "{{ vault_tls_truststore_password | default('changeit') }}"
+schema_registry_ssl_keystore_file: '{{ inventory_hostname }}.keystore.jks'
+schema_registry_ssl_keystore_password: "{{ vault_tls_keystore_password | default('changeit') }}"
+schema_registry_ssl_key_password: "{{ vault_tls_key_password | default('changeit') }}"
+schema_registry_user: schema-registry
+schema_registry_password: "{{ vault_kafka_schema_registry_password | default('changeit') }}"
+
+# Paths
+schema_registry_config_dir: "{{ confluent_current_link | default('/opt/confluent/current') }}/etc/schema-registry"

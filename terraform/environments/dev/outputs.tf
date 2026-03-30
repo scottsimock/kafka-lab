@@ -46,3 +46,13 @@ output "pe_key_vault_id" {
   description = "Resource ID of the key vault private endpoint"
   value       = module.pe_key_vault.private_endpoint_id
 }
+
+output "zookeeper_vm_ids" {
+  description = "Map of ZooKeeper VM name to resource ID"
+  value       = { for k, v in module.zookeeper_vms : k => v.vm_id }
+}
+
+output "zookeeper_private_ips" {
+  description = "Map of ZooKeeper VM name to private IP address"
+  value       = { for k, v in module.zookeeper_vms : k => v.private_ip_address }
+}

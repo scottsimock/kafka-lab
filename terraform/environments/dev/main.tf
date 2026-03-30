@@ -577,8 +577,9 @@ module "nsgs" {
 
 locals {
   private_dns_zones = {
-    "blob"  = "privatelink.blob.core.windows.net"
-    "vault" = "privatelink.vaultcore.azure.net"
+    "blob"     = "privatelink.blob.core.windows.net"
+    "vault"    = "privatelink.vaultcore.azure.net"
+    "internal" = "kafkalab.internal"
   }
 }
 
@@ -685,4 +686,37 @@ module "pe_key_vault" {
     "vault" = module.private_dns_zones["vault"].dns_zone_id
   }
   tags = local.common_tags
+}
+
+// =====================================================
+// ZooKeeper VM Instances
+// =====================================================
+
+locals {
+  zookeeper_nodes = {
+    "klc-vm-zk-01-scus" = { private_ip = "10.1.2.4", dns_name = "zk-01" }
+    "klc-vm-zk-02-scus" = { private_ip = "10.1.2.5", dns_name = "zk-02" }
+    "klc-vm-zk-03-scus" = { private_ip = "10.1.2.6", dns_name = "zk-03" }
+  }
+}
+
+module "zookeeper_vms" {
+  source   = "../../modules/virtual-machine"
+  for_each = local.zookeeper_nodes
+
+  name               = each.key
+  location           = var.primary_location
+  resource_group_id  = data.azapi_resource.resource_group.id
+  subnet_id          = module.vnet_scus.subnet_ids["snet-zookeeper"]
+  private_ip_address = each.value.private_ip
+  vm_size            = "Standard_D2s_v5"
+  zone               = "1"
+  os_disk_size_gb    = 64
+  data_disk_size_gb  = 64
+  admin_username     = "azureuser"
+  ssh_public_key     = var.ssh_public_key
+  uami_id            = module.uami_kafkalab.uami_id
+  dns_zone_id        = module.private_dns_zones["internal"].dns_zone_id
+  dns_record_name    = each.value.dns_name
+  tags               = merge(local.common_tags, { component = "zookeeper" })
 }

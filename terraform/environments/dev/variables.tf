@@ -24,3 +24,9 @@ variable "resource_group_name" {
   type        = string
   default     = "klc-rg-kafkalab-scus"
 }
+
+variable "ssh_public_key" {
+  description = "SSH public key for VM authentication"
+  type        = string
+  sensitive   = true
+}

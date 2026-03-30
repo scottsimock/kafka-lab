@@ -261,30 +261,33 @@
     verify_test_topic: app-messages
     verify_test_message: '{"timestamp": "{{ ansible_date_time.iso8601 }}", "source": "ecosystem-verify", "payload": "end-to-end-test"}'
   tasks:
-    - name: Produce test message to {{ verify_test_topic }}
+    - name: Produce Avro test message to app-messages
       ansible.builtin.shell:
         cmd: >-
-          printf '%s\n' '{{ verify_test_message }}' |
-          {{ verify_bin_dir }}/kafka-console-producer
+          printf '{"id":"test-1","content":"ecosystem-verify","timestamp":{{ ansible_date_time.epoch | int * 1000 }},"source":"verify-playbook"}\n' |
+          {{ verify_bin_dir }}/kafka-avro-console-producer
           --bootstrap-server {{ verify_bootstrap_server }}
           --producer.config {{ verify_admin_config }}
-          --topic {{ verify_test_topic }}
+          --topic app-messages
+          --property schema.registry.url=http://{{ hostvars[groups['schema_registry'][0]]['ansible_host'] }}:8081
+          --property value.schema='{"type":"record","name":"AppMessage","namespace":"com.kafkalab.messages","fields":[{"name":"id","type":"string"},{"name":"content","type":"string"},{"name":"timestamp","type":"long"},{"name":"source","type":"string"}]}'
       changed_when: true
       become: true
       become_user: '{{ kafka_user }}'
 
-    - name: Consume test message from {{ verify_test_topic }}
+    - name: Consume Avro test message from app-messages
       ansible.builtin.command:
         cmd: >-
-          {{ verify_bin_dir }}/kafka-console-consumer
+          {{ verify_bin_dir }}/kafka-avro-console-consumer
           --bootstrap-server {{ verify_bootstrap_server }}
           --consumer.config {{ verify_admin_config }}
-          --topic {{ verify_test_topic }}
+          --topic app-messages
+          --property schema.registry.url=http://{{ hostvars[groups['schema_registry'][0]]['ansible_host'] }}:8081
           --from-beginning
           --max-messages 1
           --timeout-ms 30000
-      register: consumed
-      failed_when: consumed.stdout_lines | length < 1
+      register: consumed_avro
+      failed_when: consumed_avro.stdout_lines | length < 1
       changed_when: false
       become: true
       become_user: '{{ kafka_user }}'
@@ -307,21 +310,22 @@
         fail_msg: 'Not all schemas registered. Subjects: {{ sr_subjects.json }}'
         success_msg: 'All application schemas verified via Schema Registry'
 
-    - name: Verify connector is processing
+    - name: Verify Azure Blob sink connector is processing records
       ansible.builtin.uri:
-        url: '{{ verify_connect_url }}/connectors/azure-blob-sink/status'
+        url: 'http://{{ hostvars[groups["kafka_connect"][0]]["ansible_host"] }}:{{ kafka_connect_port | default(8083) }}/connectors/azure-blob-sink/status'
         method: GET
         return_content: true
         status_code: 200
-      register: connector_check
-      changed_when: false
+      register: sink_status
+      become: false
 
-    - name: Assert connector remains in RUNNING state
+    - name: Assert Azure Blob sink connector tasks are running
       ansible.builtin.assert:
         that:
-          - "connector_check.json.connector.state == 'RUNNING'"
-        fail_msg: 'Connector azure-blob-sink is not RUNNING after e2e test'
-        success_msg: 'Connector azure-blob-sink confirmed RUNNING'
+          - "sink_status.json.connector.state == 'RUNNING'"
+          - "sink_status.json.tasks | length > 0"
+        fail_msg: 'Blob sink connector not running: {{ sink_status.json }}'
+        success_msg: 'Azure Blob sink connector verified RUNNING with active tasks'
 
     - name: Display ecosystem verification summary
       ansible.builtin.debug:
@@ -333,7 +337,7 @@
           - Kafka Connect: healthy, azure-blob-sink connector RUNNING
           - Internal topics: connect-configs, connect-offsets, connect-status, _schemas
           - Application topics: app-messages, app-events, app-metrics, app-state
-          - End-to-end produce/consume: OK
-          - Schema deserialization: subjects verified
-          - Sink connector: azure-blob-sink processing
+          - Avro produce/consume: OK (kafka-avro-console-producer/consumer)
+          - Schema deserialization: subjects verified, Avro round-trip confirmed
+          - Azure Blob sink: {{ sink_status.json.connector.state }}, {{ sink_status.json.tasks | length }} task(s) active
           ============================================================

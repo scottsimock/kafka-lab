@@ -1,0 +1,4 @@
+---
+# Kafka broker kb-01 — 10.1.1.4 — southcentralus zone 1
+kafka_broker_id: 1
+kafka_broker_rack: '1'

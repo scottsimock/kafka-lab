@@ -3,3 +3,22 @@
 data_subdirectories:
   - 'kafka/data'
   - 'kafka/logs'
+
+# Broker configuration
+kafka_broker_heap_size: '6g'
+kafka_broker_default_replication_factor: 3
+kafka_broker_min_insync_replicas: 2
+kafka_broker_num_partitions: 6
+kafka_broker_log_retention_hours: 168
+
+# Security (enabled after TLS certs and SASL bootstrap are complete)
+kafka_broker_security_enabled: true
+
+# Tiered storage
+kafka_broker_tiered_storage_enabled: true
+
+# Self-balancing
+kafka_broker_self_balancing_enabled: true
+
+# ACL enforcement
+kafka_broker_acl_enabled: true

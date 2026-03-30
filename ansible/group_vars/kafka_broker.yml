@@ -1,0 +1,5 @@
+---
+# Kafka broker-specific variables
+data_subdirectories:
+  - 'kafka/data'
+  - 'kafka/logs'

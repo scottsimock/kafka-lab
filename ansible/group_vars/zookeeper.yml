@@ -1,0 +1,5 @@
+---
+# ZooKeeper-specific variables
+data_subdirectories:
+  - 'zookeeper/data'
+  - 'zookeeper/txn-log'

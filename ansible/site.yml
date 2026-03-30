@@ -1,0 +1,4 @@
+---
+# site.yml — Master playbook for Confluent Platform base configuration
+# Roles will be added as they are created in SP2 tasks (TASK-29.5 through TASK-29.8)
+# Full playbook structure defined in TASK-29.9

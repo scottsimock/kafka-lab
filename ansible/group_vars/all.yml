@@ -1,0 +1,7 @@
+---
+# Global variables for all Kafka platform hosts
+kafka_user: kafka
+kafka_group: kafka
+confluent_version: '7.9'
+java_version: '17'
+data_mount_path: /data

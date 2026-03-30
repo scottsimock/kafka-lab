@@ -720,3 +720,36 @@ module "zookeeper_vms" {
   dns_record_name    = each.value.dns_name
   tags               = merge(local.common_tags, { component = "zookeeper" })
 }
+
+// =====================================================
+// Kafka Broker VM Instances
+// =====================================================
+
+locals {
+  kafka_broker_nodes = {
+    "klc-vm-kb-01-scus" = { private_ip = "10.1.1.4", dns_name = "kb-01" }
+    "klc-vm-kb-02-scus" = { private_ip = "10.1.1.5", dns_name = "kb-02" }
+    "klc-vm-kb-03-scus" = { private_ip = "10.1.1.6", dns_name = "kb-03" }
+  }
+}
+
+module "kafka_broker_vms" {
+  source   = "../../modules/virtual-machine"
+  for_each = local.kafka_broker_nodes
+
+  name               = each.key
+  location           = var.primary_location
+  resource_group_id  = data.azapi_resource.resource_group.id
+  subnet_id          = module.vnet_scus.subnet_ids["snet-kafka-brokers"]
+  private_ip_address = each.value.private_ip
+  vm_size            = "Standard_D4s_v5"
+  zone               = "1"
+  os_disk_size_gb    = 64
+  data_disk_size_gb  = 256
+  admin_username     = "azureuser"
+  ssh_public_key     = var.ssh_public_key
+  uami_id            = module.uami_kafkalab.uami_id
+  dns_zone_id        = module.private_dns_zones["internal"].dns_zone_id
+  dns_record_name    = each.value.dns_name
+  tags               = merge(local.common_tags, { component = "kafka_broker" })
+}

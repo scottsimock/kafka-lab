@@ -56,3 +56,13 @@ output "zookeeper_private_ips" {
   description = "Map of ZooKeeper VM name to private IP address"
   value       = { for k, v in module.zookeeper_vms : k => v.private_ip_address }
 }
+
+output "kafka_broker_vm_ids" {
+  description = "Map of Kafka broker VM name to resource ID"
+  value       = { for k, v in module.kafka_broker_vms : k => v.vm_id }
+}
+
+output "kafka_broker_private_ips" {
+  description = "Map of Kafka broker VM name to private IP address"
+  value       = { for k, v in module.kafka_broker_vms : k => v.private_ip_address }
+}

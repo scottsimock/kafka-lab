@@ -1,0 +1,82 @@
+---
+# create-topics.yml — Create application-specific Kafka topics
+# Prerequisites: Kafka brokers running with SASL_SSL enabled, admin.properties deployed
+
+- name: Create application Kafka topics
+  hosts: 'kafka_broker[0]'
+  gather_facts: false
+  any_errors_fatal: true
+  vars:
+    topics_bin_dir: "{{ confluent_current_link | default('/opt/confluent/current') }}/bin"
+    topics_admin_config: "{{ kafka_broker_config_dir | default('/opt/confluent/current/etc/kafka') }}/admin.properties"
+    topics_bootstrap_server: 'localhost:{{ kafka_broker_client_port | default(9092) }}'
+    topics_replication_factor: 3
+    topics_min_insync_replicas: 2
+    application_topics:
+      - name: app-messages
+        partitions: 12
+        replication_factor: "{{ topics_replication_factor }}"
+        config: 'min.insync.replicas={{ topics_min_insync_replicas }}'
+      - name: app-events
+        partitions: 6
+        replication_factor: "{{ topics_replication_factor }}"
+        config: 'min.insync.replicas={{ topics_min_insync_replicas }}'
+      - name: app-metrics
+        partitions: 6
+        replication_factor: "{{ topics_replication_factor }}"
+        config: 'min.insync.replicas={{ topics_min_insync_replicas }}'
+      - name: app-state
+        partitions: 6
+        replication_factor: "{{ topics_replication_factor }}"
+        config: 'cleanup.policy=compact,min.insync.replicas={{ topics_min_insync_replicas }}'
+  tasks:
+    - name: Create topic {{ item.name }}
+      ansible.builtin.command:
+        cmd: >-
+          {{ topics_bin_dir }}/kafka-topics
+          --bootstrap-server {{ topics_bootstrap_server }}
+          --command-config {{ topics_admin_config }}
+          --create --if-not-exists
+          --topic {{ item.name }}
+          --partitions {{ item.partitions }}
+          --replication-factor {{ item.replication_factor }}
+          --config {{ item.config }}
+      loop: "{{ application_topics }}"
+      loop_control:
+        label: "{{ item.name }}"
+      become: true
+      become_user: '{{ kafka_user }}'
+      changed_when: true
+
+    - name: List all topics to verify creation
+      ansible.builtin.command:
+        cmd: >-
+          {{ topics_bin_dir }}/kafka-topics
+          --bootstrap-server {{ topics_bootstrap_server }}
+          --command-config {{ topics_admin_config }}
+          --list
+      register: topic_list
+      changed_when: false
+      become: true
+      become_user: '{{ kafka_user }}'
+
+    - name: Assert all application topics exist
+      ansible.builtin.assert:
+        that:
+          - "'app-messages' in topic_list.stdout"
+          - "'app-events' in topic_list.stdout"
+          - "'app-metrics' in topic_list.stdout"
+          - "'app-state' in topic_list.stdout"
+        fail_msg: 'Not all application topics were created. Current topics: {{ topic_list.stdout }}'
+        success_msg: 'All application topics verified'
+
+    - name: Display topic creation summary
+      ansible.builtin.debug:
+        msg: |
+          ============================================================
+          Application topics created successfully
+          ============================================================
+          Topics: app-messages, app-events, app-metrics, app-state
+          Replication factor: {{ topics_replication_factor }}
+          min.insync.replicas: {{ topics_min_insync_replicas }}
+          ============================================================

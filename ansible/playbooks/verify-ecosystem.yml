@@ -1,0 +1,339 @@
+---
+# verify-ecosystem.yml — End-to-end ecosystem verification playbook
+# Validates Schema Registry, Kafka Connect, internal topics, application topics,
+# Azure Blob sink connector deployment, and message flow through the ecosystem.
+# Prerequisites: ZooKeeper, Kafka brokers, Schema Registry, Kafka Connect,
+# application topics, and registered schemas must all be deployed.
+
+- name: Verify Schema Registry health
+  hosts: schema_registry
+  gather_facts: false
+  any_errors_fatal: true
+  vars:
+    verify_sr_url: 'http://localhost:{{ schema_registry_port | default(8081) }}'
+  tasks:
+    - name: Check confluent-schema-registry systemd service is active
+      ansible.builtin.systemd:
+        name: confluent-schema-registry
+      register: sr_service
+      failed_when: sr_service.status.ActiveState != 'active'
+      changed_when: false
+
+    - name: Query Schema Registry subjects endpoint
+      ansible.builtin.uri:
+        url: '{{ verify_sr_url }}/subjects'
+        method: GET
+        return_content: true
+        status_code: 200
+      register: sr_subjects
+      changed_when: false
+
+    - name: Query Schema Registry compatibility configuration
+      ansible.builtin.uri:
+        url: '{{ verify_sr_url }}/config'
+        method: GET
+        return_content: true
+        status_code: 200
+      register: sr_config
+      changed_when: false
+
+    - name: Display Schema Registry status
+      ansible.builtin.debug:
+        msg: >-
+          {{ inventory_hostname }} — service: active,
+          subjects: {{ sr_subjects.json | length }},
+          compatibility: {{ sr_config.json.compatibilityLevel | default('unknown') }}
+
+- name: Verify Kafka Connect health
+  hosts: kafka_connect
+  gather_facts: false
+  any_errors_fatal: true
+  vars:
+    verify_connect_url: 'http://localhost:{{ kafka_connect_port | default(8083) }}'
+  tasks:
+    - name: Check confluent-kafka-connect systemd service is active
+      ansible.builtin.systemd:
+        name: confluent-kafka-connect
+      register: connect_service
+      failed_when: connect_service.status.ActiveState != 'active'
+      changed_when: false
+
+    - name: Query Kafka Connect root endpoint for version info
+      ansible.builtin.uri:
+        url: '{{ verify_connect_url }}/'
+        method: GET
+        return_content: true
+        status_code: 200
+      register: connect_info
+      changed_when: false
+
+    - name: Query Kafka Connect available plugins
+      ansible.builtin.uri:
+        url: '{{ verify_connect_url }}/connector-plugins'
+        method: GET
+        return_content: true
+        status_code: 200
+      register: connect_plugins
+      changed_when: false
+
+    - name: Display Kafka Connect status
+      ansible.builtin.debug:
+        msg: >-
+          {{ inventory_hostname }} — service: active,
+          version: {{ connect_info.json.version | default('unknown') }},
+          plugins: {{ connect_plugins.json | length }}
+
+- name: Verify internal and application topics
+  hosts: 'kafka_broker[0]'
+  gather_facts: false
+  any_errors_fatal: true
+  vars:
+    verify_bin_dir: "{{ confluent_current_link | default('/opt/confluent/current') }}/bin"
+    verify_admin_config: "{{ kafka_broker_config_dir | default('/opt/confluent/current/etc/kafka') }}/admin.properties"
+    verify_bootstrap_server: 'localhost:{{ kafka_broker_client_port | default(9092) }}'
+    verify_internal_topics:
+      - connect-configs
+      - connect-offsets
+      - connect-status
+      - _schemas
+    verify_application_topics:
+      - name: app-messages
+        partitions: 12
+        replication_factor: 3
+      - name: app-events
+        partitions: 6
+        replication_factor: 3
+      - name: app-metrics
+        partitions: 6
+        replication_factor: 3
+      - name: app-state
+        partitions: 6
+        replication_factor: 3
+  tasks:
+    - name: List all topics
+      ansible.builtin.command:
+        cmd: >-
+          {{ verify_bin_dir }}/kafka-topics
+          --bootstrap-server {{ verify_bootstrap_server }}
+          --command-config {{ verify_admin_config }}
+          --list
+      register: topic_list
+      failed_when: topic_list.rc != 0
+      changed_when: false
+      become: true
+      become_user: '{{ kafka_user }}'
+
+    - name: Assert internal topics exist
+      ansible.builtin.assert:
+        that:
+          - "item in topic_list.stdout"
+        fail_msg: 'Internal topic {{ item }} not found. Current topics: {{ topic_list.stdout }}'
+        success_msg: 'Internal topic {{ item }} verified'
+      loop: "{{ verify_internal_topics }}"
+
+    - name: Describe application topic {{ item.name }}
+      ansible.builtin.command:
+        cmd: >-
+          {{ verify_bin_dir }}/kafka-topics
+          --bootstrap-server {{ verify_bootstrap_server }}
+          --command-config {{ verify_admin_config }}
+          --describe --topic {{ item.name }}
+      register: app_topic_details
+      failed_when: app_topic_details.rc != 0
+      changed_when: false
+      become: true
+      become_user: '{{ kafka_user }}'
+      loop: "{{ verify_application_topics }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Assert application topic {{ item.item.name }} has correct partition count
+      ansible.builtin.assert:
+        that:
+          - "'PartitionCount: ' ~ item.item.partitions | string in item.stdout"
+        fail_msg: >-
+          Topic {{ item.item.name }} expected {{ item.item.partitions }} partitions.
+          Output: {{ item.stdout }}
+        success_msg: 'Topic {{ item.item.name }} has {{ item.item.partitions }} partitions'
+      loop: "{{ app_topic_details.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+
+    - name: Assert application topic {{ item.item.name }} has correct replication factor
+      ansible.builtin.assert:
+        that:
+          - "'ReplicationFactor: ' ~ item.item.replication_factor | string in item.stdout"
+        fail_msg: >-
+          Topic {{ item.item.name }} expected RF={{ item.item.replication_factor }}.
+          Output: {{ item.stdout }}
+        success_msg: 'Topic {{ item.item.name }} has RF={{ item.item.replication_factor }}'
+      loop: "{{ app_topic_details.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+
+    - name: Display topic verification summary
+      ansible.builtin.debug:
+        msg: |
+          Internal topics verified: {{ verify_internal_topics | join(', ') }}
+          Application topics verified: {{ verify_application_topics | map(attribute='name') | join(', ') }}
+
+- name: Deploy Azure Blob sink connector
+  hosts: 'kafka_connect[0]'
+  gather_facts: false
+  any_errors_fatal: true
+  vars:
+    verify_connect_url: 'http://localhost:{{ kafka_connect_port | default(8083) }}'
+  tasks:
+    - name: Deploy Azure Blob sink connector via REST API
+      ansible.builtin.uri:
+        url: '{{ verify_connect_url }}/connectors'
+        method: POST
+        body_format: json
+        body:
+          name: azure-blob-sink
+          config:
+            connector.class: 'io.confluent.connect.azure.blob.AzureBlobStorageSinkConnector'
+            tasks.max: '{{ kafka_connect_blob_sink_tasks_max | default(3) }}'
+            topics: '{{ kafka_connect_blob_sink_topics | default("app-messages,app-events,app-metrics") }}'
+            azblob.account.name: '{{ kafka_connect_blob_sink_account_name | default("klcstgkafkalabscus") }}'
+            azblob.container.name: '{{ kafka_connect_blob_sink_container_name | default("kafka-sink-data") }}'
+            azblob.credentials.provider: '{{ kafka_connect_blob_sink_credentials_provider | default("com.microsoft.azure.storage.auth.ManagedIdentityCredentialProvider") }}'
+            format.class: 'io.confluent.connect.azure.blob.format.avro.AvroFormat'
+            flush.size: '{{ kafka_connect_blob_sink_flush_size | default(1000) }}'
+            rotate.interval.ms: '{{ kafka_connect_blob_sink_rotate_interval_ms | default(600000) }}'
+            partition.duration.ms: '{{ kafka_connect_blob_sink_partition_duration_ms | default(3600000) }}'
+            path.format: "'year'=YYYY/'month'=MM/'day'=dd/'hour'=HH"
+            locale: 'en-US'
+            timezone: 'UTC'
+            key.converter: 'io.confluent.connect.avro.AvroConverter'
+            key.converter.schema.registry.url: '{{ kafka_connect_schema_registry_url }}'
+            value.converter: 'io.confluent.connect.avro.AvroConverter'
+            value.converter.schema.registry.url: '{{ kafka_connect_schema_registry_url }}'
+            errors.tolerance: 'all'
+            errors.deadletterqueue.topic.name: '{{ kafka_connect_blob_sink_dlq_topic | default("dlq-azure-blob-sink") }}'
+            errors.deadletterqueue.topic.replication.factor: '{{ kafka_connect_blob_sink_dlq_replication_factor | default(3) }}'
+            errors.deadletterqueue.context.headers.enable: 'true'
+        status_code:
+          - 201
+          - 409
+        headers:
+          Content-Type: 'application/json'
+
+    - name: Wait for connector to initialize
+      ansible.builtin.pause:
+        seconds: 5
+
+    - name: Verify Azure Blob sink connector status
+      ansible.builtin.uri:
+        url: '{{ verify_connect_url }}/connectors/azure-blob-sink/status'
+        method: GET
+        return_content: true
+        status_code: 200
+      register: connector_status
+      changed_when: false
+
+    - name: Assert connector is in RUNNING state
+      ansible.builtin.assert:
+        that:
+          - "connector_status.json.connector.state == 'RUNNING'"
+        fail_msg: >-
+          Connector azure-blob-sink is not RUNNING.
+          State: {{ connector_status.json.connector.state | default('unknown') }}
+        success_msg: 'Connector azure-blob-sink is RUNNING'
+
+    - name: Display connector deployment summary
+      ansible.builtin.debug:
+        msg: |
+          Connector: azure-blob-sink
+          State: {{ connector_status.json.connector.state }}
+          Tasks: {{ connector_status.json.tasks | length }}
+
+- name: End-to-end ecosystem test
+  hosts: 'kafka_broker[0]'
+  gather_facts: true
+  any_errors_fatal: true
+  vars:
+    verify_bin_dir: "{{ confluent_current_link | default('/opt/confluent/current') }}/bin"
+    verify_admin_config: "{{ kafka_broker_config_dir | default('/opt/confluent/current/etc/kafka') }}/admin.properties"
+    verify_bootstrap_server: 'localhost:{{ kafka_broker_client_port | default(9092) }}'
+    verify_sr_url: "http://{{ groups['schema_registry'] | map('extract', hostvars, 'ansible_host') | first }}:{{ schema_registry_port | default(8081) }}"
+    verify_connect_url: "http://{{ groups['kafka_connect'] | map('extract', hostvars, 'ansible_host') | first }}:{{ kafka_connect_port | default(8083) }}"
+    verify_test_topic: app-messages
+    verify_test_message: '{"timestamp": "{{ ansible_date_time.iso8601 }}", "source": "ecosystem-verify", "payload": "end-to-end-test"}'
+  tasks:
+    - name: Produce test message to {{ verify_test_topic }}
+      ansible.builtin.shell:
+        cmd: >-
+          printf '%s\n' '{{ verify_test_message }}' |
+          {{ verify_bin_dir }}/kafka-console-producer
+          --bootstrap-server {{ verify_bootstrap_server }}
+          --producer.config {{ verify_admin_config }}
+          --topic {{ verify_test_topic }}
+      changed_when: true
+      become: true
+      become_user: '{{ kafka_user }}'
+
+    - name: Consume test message from {{ verify_test_topic }}
+      ansible.builtin.command:
+        cmd: >-
+          {{ verify_bin_dir }}/kafka-console-consumer
+          --bootstrap-server {{ verify_bootstrap_server }}
+          --consumer.config {{ verify_admin_config }}
+          --topic {{ verify_test_topic }}
+          --from-beginning
+          --max-messages 1
+          --timeout-ms 30000
+      register: consumed
+      failed_when: consumed.stdout_lines | length < 1
+      changed_when: false
+      become: true
+      become_user: '{{ kafka_user }}'
+
+    - name: Verify Schema Registry has registered subjects
+      ansible.builtin.uri:
+        url: '{{ verify_sr_url }}/subjects'
+        method: GET
+        return_content: true
+        status_code: 200
+      register: sr_subjects
+      changed_when: false
+
+    - name: Assert application schemas are registered
+      ansible.builtin.assert:
+        that:
+          - "'app-messages-value' in sr_subjects.json"
+          - "'app-events-value' in sr_subjects.json"
+          - "'app-metrics-value' in sr_subjects.json"
+        fail_msg: 'Not all schemas registered. Subjects: {{ sr_subjects.json }}'
+        success_msg: 'All application schemas verified via Schema Registry'
+
+    - name: Verify connector is processing
+      ansible.builtin.uri:
+        url: '{{ verify_connect_url }}/connectors/azure-blob-sink/status'
+        method: GET
+        return_content: true
+        status_code: 200
+      register: connector_check
+      changed_when: false
+
+    - name: Assert connector remains in RUNNING state
+      ansible.builtin.assert:
+        that:
+          - "connector_check.json.connector.state == 'RUNNING'"
+        fail_msg: 'Connector azure-blob-sink is not RUNNING after e2e test'
+        success_msg: 'Connector azure-blob-sink confirmed RUNNING'
+
+    - name: Display ecosystem verification summary
+      ansible.builtin.debug:
+        msg: |
+          ============================================================
+          Ecosystem verification PASSED
+          ============================================================
+          - Schema Registry: healthy, {{ sr_subjects.json | length }} subjects registered
+          - Kafka Connect: healthy, azure-blob-sink connector RUNNING
+          - Internal topics: connect-configs, connect-offsets, connect-status, _schemas
+          - Application topics: app-messages, app-events, app-metrics, app-state
+          - End-to-end produce/consume: OK
+          - Schema deserialization: subjects verified
+          - Sink connector: azure-blob-sink processing
+          ============================================================

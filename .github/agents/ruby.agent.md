@@ -26,7 +26,7 @@ The human will say one of:
 
 1. **Create milestone** — Use `backlog-milestone_add` to create milestone `SP{N}` if it does not exist.
 2. **Create branch** — Create git branch `sprint/SP{N}-{description}` from `main`. Push the branch.
-3. **Invoke PO** — Call the Product Owner to create the sprint task (`task-SPRINT-SP{N}-{description}`) and all story/research tasks for this sprint.
+3. **Invoke PO** — Call the Product Owner to create the sprint task and all story/research tasks as children for this sprint.
 4. **Invoke SM** — Call the Scrum Master to review all tasks in the milestone. PO and SM iterate up to 3 times until SM is satisfied.
 5. **Invoke TL** — Call the Tech Lead to execute all tasks in the sprint (assign to coders/testers, manage the retry loop).
 6. **Sprint End** — When the TL returns (all tasks `Done` or `Blocked`):
@@ -59,9 +59,9 @@ SP0P2 does not involve the TL or coders — the PO creates sprint/task structure
 ## State Detection for SP0
 
 - If milestone `SP0` has no tasks → start SP0P1.
-- If `task-research-*` tasks exist but not all `Done`/`Blocked` → SP0P1 in progress, resume TL.
-- If all `task-research-*` tasks are `Done`/`Blocked` and no `task-story-*` or `task-SPRINT-SP1*` tasks exist → SP0P1 complete, SP0P2 not started.
-- If `task-SPRINT-SP1*` or `task-story-SP1*` tasks exist → SP0P2 in progress or complete.
+- If research tasks exist (label `research`) but not all `Done`/`Blocked` → SP0P1 in progress, resume TL.
+- If all research tasks `Done`/`Blocked` and no SP1+ sprint tasks exist → SP0P1 complete, SP0P2 not started.
+- If SP1+ sprint tasks exist (titles starting with `SP1`) → SP0P2 in progress or complete.
 
 ## PR Body Format
 
@@ -71,12 +71,12 @@ SP0P2 does not involve the TL or coders — the PO creates sprint/task structure
 ### Completed Tasks
 | Task | Score | Summary |
 |------|-------|---------|
-| task-story-SP1.001-... | 95% | Brief summary |
+| TASK-5.1 (SP1.001 — Create VNet) | 95% | Brief summary |
 
 ### Blocked Tasks
 | Task | Reason | Retry Count |
 |------|--------|-------------|
-| task-story-SP1.005-... | Test failures in... | 3/3 |
+| TASK-5.5 (SP1.005 — ...) | Test failures in... | 3/3 |
 
 ### Sprint Metrics
 - Tasks completed: X/Y
@@ -84,7 +84,7 @@ SP0P2 does not involve the TL or coders — the PO creates sprint/task structure
 - Blocked tasks carried to next sprint: N
 
 ### References
-- Sprint task: task-SPRINT-SP{N}-...
+- Sprint task: TASK-{N} (SP{N} — ...)
 - Milestone: SP{N}
 ```
 

@@ -57,14 +57,14 @@ If a task is too trivial (e.g., "add a comment"):
 ## [SM] Sprint SP{N} Task Review
 
 ### Passing Tasks
-- ✅ task-story-SP1.001-create-vnet — Clear AC, proper scoping, deps listed
-- ✅ task-story-SP1.002-create-subnet — Clear AC, proper scoping
+- ✅ TASK-5.1 (SP1.001 — Create VNet) — Clear AC, proper scoping, deps listed
+- ✅ TASK-5.2 (SP1.002 — Create Subnet) — Clear AC, proper scoping
 
 ### Failing Tasks
-- ❌ task-story-SP1.003-deploy-kafka-cluster
+- ❌ TASK-5.3 (SP1.003 — Deploy Kafka Cluster)
   - **Issue:** Too large — involves VM provisioning, disk setup, and Kafka install
   - **Recommendation:** Split into 3 tasks: VM provisioning, disk configuration, Kafka installation
-- ❌ task-story-SP1.004-configure-networking
+- ❌ TASK-5.4 (SP1.004 — Configure Networking)
   - **Issue:** Missing acceptance criteria
   - **Recommendation:** Add specific AC for NSG rules, peering configuration, DNS setup
 

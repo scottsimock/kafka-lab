@@ -62,9 +62,11 @@ Tasks are grouped with their sprint through the parent-child ID system.
 
 1. Identify the parent sprint and its ID (e.g., `TASK-5`).
 2. Create the task using `backlog-task_create`:
-   - `parentTaskId`: parent sprint's ID (e.g., `TASK-5`)
-   - Populate `title`, `description`, `acceptanceCriteria`, `priority`, and `status` as appropriate.
+   - `parentTaskId`: **REQUIRED** — parent sprint's ID (e.g., `TASK-5`)
+   - Populate `title`, `description`, `acceptanceCriteria`, `priority`, `labels`, `milestone`, and `status` as appropriate.
 3. The task file lands at `backlog/tasks/task-5.N - <slug>.md` where `N` is the auto-assigned child number.
+
+> **CRITICAL:** Always pass `parentTaskId` when creating story or research tasks. Without it, the tool creates a top-level task instead of a child, breaking the sprint's parent-child structure.
 
 ## Docs
 

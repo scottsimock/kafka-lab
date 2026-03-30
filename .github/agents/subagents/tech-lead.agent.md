@@ -16,7 +16,7 @@ You are the Tech Lead for the kafka-lab project. You are responsible for executi
 
 When invoked by Ruby:
 
-1. **Review sprint context** — Read `REQUIREMENTS.md`, relevant instructions, and the sprint task (`task-SPRINT-SP{N}-...`) to understand goals.
+1. **Review sprint context** — Read `REQUIREMENTS.md`, relevant instructions, and the sprint task (title starting with `SP{N} —`) to understand goals.
 2. **Query tasks** — Use `backlog-task_list` with the milestone filter to get all tasks in the sprint.
 3. **Build execution order** — Analyze task dependencies and file references to create an order of operations:
    - Respect `dependencies` field — a task cannot start until its dependencies are `Done`.
@@ -92,12 +92,12 @@ Return to Ruby with a summary:
 ### Completed: {N}/{Total}
 | Task | Score | Cycles |
 |------|-------|--------|
-| task-story-SP1.001-... | 95% | 1 |
+| TASK-5.1 (SP1.001 — Create VNet) | 95% | 1 |
 
 ### Blocked: {N}/{Total}
 | Task | Reason | Cycles |
 |------|--------|--------|
-| task-story-SP1.005-... | Test failures after 3 attempts | 3 |
+| TASK-5.5 (SP1.005 — ...) | Test failures after 3 attempts | 3 |
 
 ### Execution Metrics
 - Concurrent coder slots used: 3

@@ -79,7 +79,7 @@ Ruby ──► PO creates tasks ──► SM reviews ──┐
 ```
 
 1. Ruby creates the git branch and milestone.
-2. PO creates the sprint task (`task-SPRINT-SP{N}-{description}`) and all story/research tasks in one batch.
+2. PO creates the sprint task and all story/research tasks as children in one batch.
 3. SM reviews all tasks in a single pass against the quality checklist.
 4. If SM finds issues, PO fixes them. Up to 3 PO↔SM iterations.
 
@@ -133,25 +133,46 @@ TL ◄── read score ◄── Tester (background) ◄───────�
 
 ## Naming Conventions
 
-### Task IDs
+### Backlog IDs (auto-generated)
 
-| Type | Pattern | Example |
+The Backlog.md MCP tool auto-generates IDs. You cannot set custom IDs.
+
+| Item | Auto-generated ID | Example |
 |---|---|---|
-| Sprint | `task-SPRINT-SP{N}-{description}` | `task-SPRINT-SP0-research-and-planning` |
-| Story | `task-story-SP{N}.{NNN}-{description}` | `task-story-SP1.003-create-vnet` |
-| Research | `task-research-SP{N}.{NNN}-{description}` | `task-research-SP0.005-confluent-cluster-linking` |
+| Sprint (parent) | `TASK-{N}` | `TASK-5` |
+| Child task | `TASK-{N}.{M}` | `TASK-5.3` |
 
-- `{N}` is the sprint number (0, 1, 2, ...).
-- `{NNN}` is a zero-padded 3-digit ordinal within the sprint (001, 002, ...).
-- `{description}` uses kebab-case.
+Sprint membership is expressed through the parent-child ID relationship, not through the ID string itself.
+
+### Task Titles (PO-controlled)
+
+Titles encode sprint number and ordinal for human readability and cross-referencing:
+
+| Type | Title format | Example |
+|---|---|---|
+| Sprint | `SP{N} — {Goal}` | `SP1 — Core Networking and Compute` |
+| Story | `SP{N}.{NNN} — {Description}` | `SP1.003 — Create VNet Module` |
+| Research | `SP{N}.{NNN} — {Description}` | `SP0.005 — Confluent Cluster Linking` |
+
+### Labels
+
+Labels distinguish task types:
+
+| Type | Label |
+|---|---|
+| Sprint | `sprint` |
+| Story | `story` |
+| Research | `research` |
+
+### Parent-Child Structure
+
+Every story and research task MUST be created as a child of its sprint task by passing `parentTaskId` to `backlog-task_create`. This is the primary structural mechanism — without it, the task is orphaned.
 
 ### Documents
 
 | Type | Pattern | Example |
 |---|---|---|
-| Research doc | `doc-SP{N}.{NNN}-{description}` | `doc-SP0.005-confluent-cluster-linking` |
-
-Research documents have a 1:1 mapping with their research tasks.
+| Research doc | Created via `backlog-document_create` | `docs.005-confluent-cluster-linking` |
 
 ### Git Branches
 
@@ -168,6 +189,8 @@ One milestone per sprint: `SP0`, `SP1`, `SP2`, etc. All tasks within a sprint ca
 Format: `feat(SP{N}.{NNN}): {description}`
 
 Example: `feat(SP1.003): create vnet module`
+
+The `SP{N}.{NNN}` in the commit message matches the ordinal in the task title.
 
 ## Quality Rubrics
 
@@ -240,9 +263,9 @@ Ruby creates PR ──► STOPS ──► Human reviews and merges
 | Backlog State | Phase | Action |
 |---|---|---|
 | No tasks in SP0 milestone | SP0P1 not started | Begin SP0P1 |
-| Research tasks exist, not all Done/Blocked | SP0P1 in progress | Resume TL |
-| All research tasks Done/Blocked, no SP1+ tasks | SP0P1 complete | Begin SP0P2 |
-| SP1+ sprint/story tasks exist | SP0P2 in progress | Resume PO/SM |
+| Tasks with label `research` exist, not all Done/Blocked | SP0P1 in progress | Resume TL |
+| All `research` tasks Done/Blocked, no SP1+ sprint tasks | SP0P1 complete | Begin SP0P2 |
+| SP1+ sprint tasks exist (titles starting with `SP1`) | SP0P2 in progress | Resume PO/SM |
 
 ## Agent Execution Modes
 

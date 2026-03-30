@@ -1,10 +1,10 @@
 ---
 id: TASK-31
 title: SP4 — Kafka Ecosystem Services
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-03-30 16:44'
-updated_date: '2026-03-30 17:09'
+updated_date: '2026-03-30 22:57'
 labels:
   - sprint
 milestone: m-4

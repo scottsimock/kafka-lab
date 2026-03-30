@@ -99,15 +99,15 @@ Each entry is a single line: `- {ISO timestamp} [SM] {brief description of revie
 
 ## Sprint Report
 
-After every sprint review (SP0P2 and onward), publish or update a cumulative sprint report as a backlog document.
+**MANDATORY** — After every sprint (SP1 and onward), Ruby re-invokes you specifically to publish or update the cumulative sprint report. This happens after the TL finishes execution and before the PR is created. Do NOT skip this step — the sprint is not closeable without an updated report.
 
-### First Sprint
+When invoked for the sprint report:
 
-Create the report using `backlog-document_create` with the title **"Sprint Report"**. Note the returned document ID.
-
-### Subsequent Sprints
-
-Update the existing document using `backlog-document_update` with the same document ID. Append the new sprint section — do not overwrite previous sprint data.
+1. Query all tasks in the sprint milestone to collect final statuses, scores, and notes.
+2. Search for the existing report using `backlog-document_search` with query `"Sprint Report"`.
+3. If no report exists, create it using `backlog-document_create` with the title **"Sprint Report"**.
+4. If the report exists, update it using `backlog-document_update` — append the new sprint section without overwriting previous sprint data.
+5. Update the **Project Summary** table at the top to reflect cumulative totals across all sprints.
 
 ### Report Format
 

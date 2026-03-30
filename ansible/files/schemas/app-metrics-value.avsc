@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "AppMetric",
+  "namespace": "com.kafkalab.metrics",
+  "fields": [
+    {"name": "metric_name", "type": "string", "doc": "Name of the metric (e.g., cpu.usage, request.latency)"},
+    {"name": "value", "type": "double", "doc": "Metric value"},
+    {"name": "unit", "type": "string", "doc": "Unit of measurement (e.g., percent, milliseconds)"},
+    {"name": "timestamp", "type": "long", "logicalType": "timestamp-millis", "doc": "Metric collection timestamp in milliseconds"}
+  ]
+}

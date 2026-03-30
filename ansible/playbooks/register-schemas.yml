@@ -1,0 +1,81 @@
+---
+# register-schemas.yml — Register Avro schemas with Schema Registry
+# Prerequisites: Schema Registry must be running (deployed via site.yml Play 3)
+
+- name: Register Avro schemas with Schema Registry
+  hosts: 'schema_registry[0]'
+  gather_facts: false
+  any_errors_fatal: true
+  vars:
+    sr_url: 'http://localhost:{{ schema_registry_port | default(8081) }}'
+    schema_subjects:
+      - subject: app-messages-value
+        schema_file: app-messages-value.avsc
+      - subject: app-events-value
+        schema_file: app-events-value.avsc
+      - subject: app-metrics-value
+        schema_file: app-metrics-value.avsc
+  tasks:
+    - name: Read schema file {{ item.subject }}
+      ansible.builtin.slurp:
+        src: "{{ playbook_dir }}/../files/schemas/{{ item.schema_file }}"
+      register: schema_contents
+      loop: "{{ schema_subjects }}"
+      loop_control:
+        label: "{{ item.subject }}"
+
+    - name: Set BACKWARD compatibility for {{ item.item.subject }}
+      ansible.builtin.uri:
+        url: "{{ sr_url }}/config/{{ item.item.subject }}"
+        method: PUT
+        body_format: json
+        body:
+          compatibility: BACKWARD
+        status_code: 200
+      loop: "{{ schema_contents.results }}"
+      loop_control:
+        label: "{{ item.item.subject }}"
+
+    - name: Register schema for {{ item.item.subject }}
+      ansible.builtin.uri:
+        url: "{{ sr_url }}/subjects/{{ item.item.subject }}/versions"
+        method: POST
+        body_format: json
+        body:
+          schema: "{{ item.content | b64decode }}"
+        status_code:
+          - 200
+          - 409
+        headers:
+          Content-Type: 'application/vnd.schemaregistry.v1+json'
+      loop: "{{ schema_contents.results }}"
+      loop_control:
+        label: "{{ item.item.subject }}"
+
+    - name: Verify all subjects are registered
+      ansible.builtin.uri:
+        url: "{{ sr_url }}/subjects"
+        method: GET
+        return_content: true
+        status_code: 200
+      register: subjects_list
+
+    - name: Assert all application schemas are registered
+      ansible.builtin.assert:
+        that:
+          - "'app-messages-value' in subjects_list.json"
+          - "'app-events-value' in subjects_list.json"
+          - "'app-metrics-value' in subjects_list.json"
+        fail_msg: "Not all schemas registered. Current subjects: {{ subjects_list.json }}"
+        success_msg: 'All application schemas verified'
+
+    - name: Display schema registration summary
+      ansible.builtin.debug:
+        msg: |
+          ============================================================
+          Schema registration complete
+          ============================================================
+          Subjects: app-messages-value, app-events-value, app-metrics-value
+          Compatibility: BACKWARD
+          Schema Registry: {{ sr_url }}
+          ============================================================

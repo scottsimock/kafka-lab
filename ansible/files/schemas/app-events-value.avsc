@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "AppEvent",
+  "namespace": "com.kafkalab.events",
+  "fields": [
+    {"name": "event_type", "type": "string", "doc": "Type of event (e.g., user.login, order.created)"},
+    {"name": "payload", "type": "string", "doc": "JSON-encoded event payload"},
+    {"name": "timestamp", "type": "long", "logicalType": "timestamp-millis", "doc": "Event timestamp in milliseconds"}
+  ]
+}

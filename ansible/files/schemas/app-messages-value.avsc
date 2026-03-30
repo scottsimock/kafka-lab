@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "AppMessage",
+  "namespace": "com.kafkalab.messages",
+  "fields": [
+    {"name": "id", "type": "string", "doc": "Unique message identifier"},
+    {"name": "content", "type": "string", "doc": "Message content"},
+    {"name": "timestamp", "type": "long", "logicalType": "timestamp-millis", "doc": "Message creation timestamp in milliseconds"},
+    {"name": "source", "type": "string", "doc": "Source system or component that produced the message"}
+  ]
+}

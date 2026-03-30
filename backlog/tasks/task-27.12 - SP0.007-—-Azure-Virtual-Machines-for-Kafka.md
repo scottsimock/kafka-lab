@@ -35,7 +35,7 @@ ordinal: 7000
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-## [Coder] 2026-03-30T15:53:00Z
+## [Coder] 2026-03-30T11:53:00 EDT
 - Completed research for SP0.007 — Azure Virtual Machines for Kafka
 - Created backlog document: doc-12
 - Sources consulted:
@@ -53,7 +53,7 @@ ordinal: 7000
   - AC#4: Accelerated Networking (SR-IOV, requirements, NIC config, latency impact) ✓
   - AC#5: OS hardening baseline (Ubuntu 22.04 LTS, kernel tuning, file descriptors, THP, disk scheduler, chrony) ✓
 
-## [Tester] 2026-03-30T16:10:00Z
+## [Tester] 2026-03-30T12:10:00 EDT
 - FAIL — Score: 94.5%
 - Accuracy: 92/100 (30%) — One clear inconsistency between documented recommendation and Terraform example: the NIC section text states "Private IP assigned statically from the subnet address space (set `privateIPAllocationMethod: Static` in the Terraform resource)" but the AzAPI NIC code block uses `privateIPAllocationMethod = "Dynamic"`. For Kafka brokers, static private IPs are production-critical; this contradiction would confuse implementers and could result in IP churn on VM restart.
 - Completeness: 98/100 (25%) — All 5 AC items fully addressed with additional bonus content (cloud-init YAML, full Terraform AzAPI example, Java setup). ZooKeeper quorum distribution and rack-awareness configuration are included beyond what was required.
@@ -68,14 +68,14 @@ ordinal: 7000
 - Fix NIC static IP: prose says privateIPAllocationMethod: Static but code uses Dynamic. Change the AzAPI NIC code block to use `"Static"` and include a `privateIPAddress` variable.
 - Replace non-primary sources: replace axonops.com and NetApp references with official Confluent or Microsoft primary docs (e.g., https://docs.confluent.io/platform/current/kafka/sizing.html).
 
-## [Coder] 2026-03-30T16:20:00Z — Cycle 2
+## [Coder] 2026-03-30T12:20:00 EDT — Cycle 2
 - Fixed NIC static IP allocation in AzAPI example: changed `privateIPAllocationMethod = "Dynamic"` to `"Static"` and added `privateIPAddress = var.broker_private_ip` to pin the IP
 - Replaced non-primary sources (axonops.com, NetApp) with official primary sources:
   - Confluent Platform Sizing Guide: https://docs.confluent.io/platform/current/kafka/sizing.html
   - Azure VM Networking — NIC reference: https://learn.microsoft.com/en-us/azure/virtual-network/virtual-network-network-interface
 - Updated doc-12 directly on disk (file-based backlog)
 
-## [Tester] 2026-03-30T16:35:00Z — Cycle 2 Review
+## [Tester] 2026-03-30T12:35:00 EDT — Cycle 2 Review
 - PASS — Score: 99.4%
 - **Accuracy: 99/100 (×0.30 = 29.7)** — Both cycle 2 fixes verified in document:
   1. NIC code block line 427: `privateIPAllocationMethod = "Static"` — now consistent with prose at line 129. `privateIPAddress = var.broker_private_ip` also added to demonstrate IP pinning. ✓

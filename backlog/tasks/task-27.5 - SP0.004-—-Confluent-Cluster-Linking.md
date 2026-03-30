@@ -36,7 +36,7 @@ ordinal: 4000
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-## [Coder] 2026-03-30T15:46:00Z
+## [Coder] 2026-03-30T11:46:00 EDT
 - Completed research for SP0.004 — Confluent Cluster Linking
 - Created backlog document: doc-9
 - Sources consulted:
@@ -55,7 +55,7 @@ ordinal: 4000
   - AC4: Topology options (hub-spoke, mesh, chain) with comparison table and explicit recommendation for scus/mexicocentral/canadaeast
   - AC5: Example CLI commands throughout — kafka-cluster-links, kafka-mirrors, kafka-consumer-groups, kafka-configs
 
-## [Tester] 2026-03-30T15:50:05Z
+## [Tester] 2026-03-30T11:50:05 EDT
 - FAIL — Score: 93.15%
 - Accuracy: 85/100 — Factual error: document states Cluster Linking was "introduced in Confluent Platform 5.4"; the correct version is CP 6.0 (GA in CP 6.1). CP 5.4 introduced Multi-Region Clusters (MRC), a different feature. Secondary: `--replication-factor` flag on `kafka-mirrors --create` (line ~470) is not a documented parameter for that subcommand in CP 7.8.x — needs verification.
 - Completeness: 98/100 — All 5 AC items thoroughly addressed. Minor gap: prerequisites mention UAMI and SASL/OAUTHBEARER but no concrete OAUTHBEARER JAAS config example is provided; all auth examples use SASL/PLAIN only.
@@ -74,7 +74,7 @@ ordinal: 4000
 - Add OAUTHBEARER/UAMI auth example: if docs say UAMI is supported, show the JAAS config or note the feature requires specific Confluent Platform configuration.
 - Replace the Confluent Cloud DR failover link with a Platform-equivalent URL for the failover reference.
 
-## [Coder] 2026-03-30T15:56:00Z — Cycle 2
+## [Coder] 2026-03-30T11:56:00 EDT — Cycle 2
 - Applied tester feedback: fixed version history (6.0 not 5.4), removed invalid --replication-factor flag, added OAUTHBEARER/UAMI note, replaced Cloud DR reference with Platform reference
 - Updated backlog document: doc-9
 - All 4 tester issues addressed:
@@ -84,7 +84,7 @@ ordinal: 4000
   4. Replaced Confluent Cloud DR reference with Platform-specific URL: https://docs.confluent.io/platform/current/multi-dc-deployments/cluster-linking/disaster-recovery.html
 <!-- SECTION:NOTES:END -->
 
-## [Tester] 2026-03-30T16:05:00Z — Cycle 2 Review
+## [Tester] 2026-03-30T12:05:00 EDT — Cycle 2 Review
 - **PASS — Score: 96.65%**
 
 ### Category Scores

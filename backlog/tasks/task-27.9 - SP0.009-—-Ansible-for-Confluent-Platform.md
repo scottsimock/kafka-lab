@@ -36,7 +36,7 @@ ordinal: 9000
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-## [Coder] 2026-03-30T16:02:00Z
+## [Coder] 2026-03-30T12:02:00 EDT
 - Researched azure.azcollection.azure_rm inventory plugin with UAMI/MSI auth pattern
 - Researched Ansible role directory structure (7 standard directories)
 - Researched complete variable precedence hierarchy (20-level order)
@@ -46,7 +46,7 @@ ordinal: 9000
 - Document covers all 6 acceptance criteria: Azure dynamic inventory, role structure per component, variable hierarchy, handler patterns, rolling update strategy, idempotency patterns
 - Sources: Ansible docs (roles, variables, strategies), Azure azcollection docs, Confluent docs (overview, configure, reconfigure, cp-ansible repo)
 
-## [Tester] 2026-03-30T16:15:00Z
+## [Tester] 2026-03-30T12:15:00 EDT
 
 ### Review Result: FAIL (91.65% — threshold 95%)
 
@@ -105,7 +105,7 @@ The document is high-quality and nearly complete. Four targeted fixes are needed
 - Remove global `become = True` from ansible.cfg: conflicts with project conventions. Rely on `become: true` at play level in site.yml.
 - Fix 3 malformed reference URLs: use canonical `https://docs.ansible.com/ansible/latest/` not `docs.ansible.com/projects/ansible/latest/`.
 
-## [Coder] 2026-03-30T16:14:00Z
+## [Coder] 2026-03-30T12:14:00 EDT
 - Applied 4 targeted fixes to doc-13 addressing tester FAIL at 91.65%
 - Fix 1 (Accuracy HIGH): Removed `delegate_to: '{{ ansible_default_ipv4.address }}'` from post_tasks in rolling-update-kafka-broker playbook; post_tasks run naturally on the serial-loop host — no delegation needed. Pre_task delegate_to entries (groups["kafka_broker"][0]) retained as intentional.
 - Fix 2 (Accuracy MEDIUM): Removed non-canonical `hostvar_expressions` key; merged `ansible_host: 'private_ipv4_addresses | first'` into the `compose` block alongside `ansible_user`.
@@ -113,7 +113,7 @@ The document is high-quality and nearly complete. Four targeted fixes are needed
 - Fix 4 (Sources MEDIUM): Corrected 3 malformed reference URLs from `docs.ansible.com/projects/ansible/latest/` to canonical `docs.ansible.com/ansible/latest/` — affected Azure Dynamic Inventory, Variable Precedence, and Ansible Strategies references.
 - Expected score improvement: Accuracy ~88%→96% (+8pts weighted), Sources ~84%→96% (+12pts weighted) → total ~91.65%→97%+
 
-## [Tester] 2026-03-30T16:20:00Z
+## [Tester] 2026-03-30T12:20:00 EDT
 
 ### Review Result: PASS (96.95% — threshold 95%)
 

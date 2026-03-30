@@ -37,7 +37,7 @@ ordinal: 1000
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-## [Coder] 2026-03-30T15:41:00Z
+## [Coder] 2026-03-30T11:41:00 EDT
 - Completed research for SP0.001 — Confluent Kafka Platform Overview
 - Created backlog document: doc-8
 - Sources consulted:
@@ -56,7 +56,7 @@ ordinal: 1000
   - AC5: Self-balancing cluster (confluent.balancer.enable, triggers, constraints, throttle) ✓
   - AC6: Example configs for dev (3x D4s_v5 brokers, 3x D2s_v5 ZK nodes) ✓
 
-## [Tester] 2026-03-30T15:45:32Z
+## [Tester] 2026-03-30T11:45:32 EDT
 - FAIL — Score: 89.15%
 - Accuracy: 82/100 — UAMI credential file format is incorrect: the JSON shown uses `azureClientId` + `azureTenantId` + `azureClientSecret`, which is the **service principal** format, not UAMI. A broker VM with a UAMI attached authenticates via Azure IMDS automatically — no client secret is required. Additionally, `confluent.tier.local.hotset.ms` is described as "default 24h" but the actual default inherits from `retention.ms` (7 days); 24h is a recommendation, not the default.
 - Completeness: 93/100 — All 6 AC items covered. Gap: document explicitly recommends KRaft for all new kafka-lab deployments but provides zero KRaft configuration examples.
@@ -77,7 +77,7 @@ ordinal: 1000
 - Remove CP 7.9 ZooKeeper reference — scope is 7.8.x only
 - Fix hotset default: actual default is retention.ms (7 days), not 24h
 
-## [Coder] 2026-03-30T15:57:00Z — Cycle 2
+## [Coder] 2026-03-30T11:57:00 EDT — Cycle 2
 - Applied all 5 tester issues from Cycle 1 review (score 89.15%)
 - Issue 1 (UAMI credential, -8pts Accuracy): Replaced service-principal JSON (`azureClientId + azureTenantId + azureClientSecret`) with `ManagedIdentityCredentialProvider` in both the broker config section and Example Configuration. Added clear UAMI vs Service Principal comparison. Documented that UAMI on a broker VM uses Azure IMDS — no client secret required.
 - Issue 2 (Hotset default, Accuracy): Changed `confluent.tier.local.hotset.ms` comment from "default 24h" to "Default: inherits from retention.ms (7 days). Recommended dev value: 86400000 (24 h)" in both the config section and the segment lifecycle diagram.
@@ -87,7 +87,7 @@ ordinal: 1000
 - Updated backlog document: doc-8
 - All 5 tester issues addressed
 
-## [Tester] 2026-03-30T16:05:00Z — Cycle 2 Review
+## [Tester] 2026-03-30T12:05:00 EDT — Cycle 2 Review
 - PASS — Score: 96.30%
 - Accuracy: 96/100 — Both Cycle 1 accuracy issues resolved cleanly. UAMI fix: `ManagedIdentityCredentialProvider` used throughout; optional disambiguation file shows only `azureClientId` with explicit note that `azureClientSecret` is incorrect in UAMI context. Hotset default fix: property now reads "Default: inherits from retention.ms (7 days). Recommended dev value: 86400000 (24 h)" in both the config section and segment lifecycle diagram. One minor residual: line 16 body text still reads "fully documented in the 7.9 branch of the docs" (reference to ZK docs branch) but does not affect config accuracy. Dev SBC trigger (`EMPTY_BROKER`) is appropriate for dev; Production guidance (`ANY_UNEVEN_LOAD`) is present in the SBC section.
 - Completeness: 97/100 — All 6 AC items fully addressed. KRaft section added with `process.roles`, `node.id`, `controller.quorum.voters`, `controller.listener.names`, `listeners`, `listener.security.protocol.map`, node.id table, initialisation commands, and KRaft vs ZooKeeper comparison table. Minor: the Example Configuration section shows only ZooKeeper-mode broker config with a note to "replace with KRaft for new clusters" — a full KRaft server.properties equivalent would be ideal, but the KRaft section provides all the necessary properties and is actionable.

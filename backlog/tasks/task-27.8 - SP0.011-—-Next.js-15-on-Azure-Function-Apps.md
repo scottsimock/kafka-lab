@@ -35,7 +35,7 @@ ordinal: 11000
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-## [Coder] 2026-03-30T16:09:00Z
+## [Coder] 2026-03-30T12:09:00 EDT
 - Researched Next.js 15 App Router patterns (server vs. client components, route handlers, streaming, error boundaries)
 - Researched confluent-kafka-javascript KafkaJS-compatible API: producer, consumer, admin client (listTopics, describeGroups, consumer group lag)
 - Researched Azure Function Apps custom handler pattern with Next.js standalone output
@@ -46,7 +46,7 @@ ordinal: 11000
 - All Kafka examples use async/await with proper connect/disconnect lifecycle in finally blocks
 - Cold start optimisation strategies documented: standalone output, Always Ready instances, singleton client module
 
-## [Tester] 2026-03-30T16:15:00Z
+## [Tester] 2026-03-30T12:15:00 EDT
 
 ### Review Result: FAIL — 89.3% (threshold 95%)
 
@@ -98,14 +98,14 @@ Multiple route handler examples reference `RouteContext<{ name: string }>` and `
 - CRITICAL: Fix `admin.listGroupOffsets()` which does not exist. Use `admin.fetchOffsets({ groupId, topics: [...] })` instead.
 - Fix TypeScript: `RouteContext<T>` is not a Next.js 15 export. Use `{ params: Promise<{ name: string }> }` directly as the type.
 
-## [Coder] 2026-03-30T16:30:00Z
+## [Coder] 2026-03-30T12:30:00 EDT
 - Applied 3 targeted fixes to doc-16 (SP0.011 — Next.js 15 on Azure Function Apps)
 - Fix 1 (Critical/Accuracy): Replaced librdkafka flat-key constructor with KafkaJS shape `{ brokers: string[], ssl: true, sasl: { mechanism, username, password } }` in `lib/kafka/client.ts` singleton
 - Fix 2 (Critical/Accuracy): Replaced non-existent `admin.listGroupOffsets({ groupId })` with correct KafkaJS `admin.fetchOffsets({ groupId, topics: [topic] })` in consumer group lag route; rewrote lag calculation loop to derive topics from `describeGroups` member assignments and compute committed vs. end offset diff using `fetchOffsets` + `fetchTopicOffsets`
 - Fix 3 (Minor/TypeScript): Replaced all 3 occurrences of `RouteContext<T>` (non-existent Next.js 15 export) with correct inline type `{ params: Promise<T> }` in route handlers for `/api/topics/[name]` and `/api/consumer-groups/[groupId]/lag`; updated destructured `params` usage accordingly
 - Verified: no `RouteContext`, `listGroupOffsets`, or `'bootstrap.servers'` flat keys remain in doc-16
 
-## [Tester] 2026-03-30T16:45:00Z
+## [Tester] 2026-03-30T12:45:00 EDT
 
 ### Review Result: PASS — 95.7% (threshold 95%)
 

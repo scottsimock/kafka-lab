@@ -35,7 +35,7 @@ ordinal: 12000
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-## [Coder] 2026-03-30T16:08:00Z
+## [Coder] 2026-03-30T12:08:00 EDT
 - Researched Azure Chaos Studio via official Microsoft Learn docs (overview, fault library, targets & capabilities, agent-based tutorial)
 - Verified all fault URNs, capability names, and parameters for VM-relevant faults: VM Shutdown, Network Disconnect/Latency/PacketLoss/Isolation, CPU Pressure, Physical Memory Pressure, Linux Disk IO Pressure, Kill Process, Stop Service, DNS Failure
 - Documented Linux-specific limitations: outbound-only for network agent faults; networkIsolation cannot be cancelled mid-run
@@ -47,7 +47,7 @@ ordinal: 12000
 - All 4 chaos scenarios scoped to kafka-lab topology (scus/mexicocentral/canadaeast)
 - Quality target: 95% (research task)
 
-## [Tester] 2026-03-30T16:15:00Z
+## [Tester] 2026-03-30T12:15:00 EDT
 
 ### Research Rubric Score — PASS ✅
 

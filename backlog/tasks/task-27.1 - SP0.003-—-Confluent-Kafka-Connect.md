@@ -35,7 +35,7 @@ ordinal: 3000
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-## [Coder] 2026-03-30T15:40:00Z
+## [Coder] 2026-03-30T11:40:00 EDT
 - Completed research for SP0.003 — Confluent Kafka Connect
 - Created backlog document: doc-7
 - Sources consulted:
@@ -54,7 +54,7 @@ ordinal: 3000
   - AC4: JMX MBeans documented for connector, task (common, sink, source, error), worker, and rebalance metrics with alert thresholds
   - AC5: Complete dev example config for D2s_v5 (worker.properties + connector JSON) included with JVM heap settings
 
-## [Tester] 2026-03-30T16:00:00Z
+## [Tester] 2026-03-30T12:00:00 EDT
 - PASS — Score: 95.8%
 - Accuracy: 93/100 (30%) — All core facts are correct for CP 7.8.x: REST API endpoints, HTTP methods, response codes, JMX MBean names, Azure Blob connector class, distributed mode properties, DLQ config. Minor uncertainty: `azblob.use.managed.identity` noted as unverified against specific connector version — document handles this honestly with a recommended SAS token workaround. Small deduction only.
 - Completeness: 97/100 (25%) — All 5 AC items fully addressed. Scope from task description (distributed mode, lifecycle, Azure Blob sink, monitoring, error handling, dev example) completely covered. Bonus: exactly-once delivery semantics, schema evolution, retry settings, object naming patterns.

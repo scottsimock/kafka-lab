@@ -36,7 +36,7 @@ ordinal: 8000
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-## [Coder] 2026-03-30T16:02:00Z
+## [Coder] 2026-03-30T12:02:00 EDT
 - Researched AzAPI provider using Microsoft Learn, web search, and official documentation
 - Sources consulted: overview-azapi-provider, get-started-azapi-resource, get-started-azapi-resource-action, store-state-in-azure-storage, Azure REST API specs, OIDC CI/CD samples
 - Created backlog document **doc-14** — `SP0.008 — Terraform AzAPI Provider`
@@ -48,7 +48,7 @@ ordinal: 8000
   5. CI/CD integration: Plan-on-PR workflow, Apply-on-merge workflow, scheduled drift detection workflow with -detailed-exitcode
 - All HCL follows project conventions: kebab-case files, snake_case resources/variables, // comments, no AzureRM
 
-## [Tester] 2026-03-30T16:15:00Z
+## [Tester] 2026-03-30T12:15:00 EDT
 
 ### Review Result: PASS — 96.25%
 

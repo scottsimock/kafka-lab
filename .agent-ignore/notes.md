@@ -36,3 +36,6 @@ At the end of SP0P1, the all SP0 tasks in the backlog will be completed and deta
 SP0 Part 2 (SP0P2) - This part is to populate the entire backlog to build out all sprints and tasks required to build the project. The PM will review all the great research in the backlog/docs folder and the REQUIREMENTS.md file and begin creating multiple sprints and mutiple tasks per sprint to build the entire project. Each task must be completed within two minutues and each sprint must not last longer than 25 mintues. THis step is not to actually do the work, just populate the backlog and determine how long we think the project will take to implement. If there is any ambiguity, please ask the human.
 
 -----------------------------------
+
+todo:
+- tell the TL to append to the sprint milestone everytime they assign a tasks to a coder or tester

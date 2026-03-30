@@ -36,7 +36,7 @@ ordinal: 5000
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-## [Coder] 2026-03-30T15:50:00Z
+## [Coder] 2026-03-30T11:50:00 EDT
 - Completed research for SP0.005 — Kafka Security and Authentication
 - Created backlog document: doc-11
 - Sources consulted:
@@ -56,7 +56,7 @@ ordinal: 5000
   - AC5: ACL patterns section covers topic-level, consumer group, transactional, inter-service examples
   - AC6: Inter-broker and Cluster Linking auth section covers KRaft controller SSL, broker SASL_SSL, link mTLS and SCRAM config
 
-## [Tester] 2026-03-30T16:05:00Z
+## [Tester] 2026-03-30T12:05:00 EDT
 - PASS — Score: 96.35%
 - Accuracy: 92/100 (30%) — Two minor issues: (1) MDS listener in the initial MDS Setup section uses `http://` while the complete server.properties config block correctly uses `https://` — inconsistency that could confuse implementers; (2) `confluent.authorizer.access.rule.providers=CONFLUENT,ZK_ACL` uses legacy ZooKeeper nomenclature — in KRaft-only deployments the canonical value is `CONFLUENT,KAFKAACL`; `ZK_ACL` still works in CP 7.8.x due to backward-compat aliasing but is misleading in a KRaft context. All other facts, CLI flags, version references (3.8, 7.8.x), and config key names are correct.
 - Completeness: 100/100 (25%) — All 6 AC items fully addressed: SASL/SCRAM setup + credential management + pros/cons table (AC1); mTLS CA setup + cert generation + leaf rotation + CA rotation procedure + pros/cons table (AC2); Confluent RBAC MDS setup + full predefined roles table + role binding commands + RBAC/ACL coexistence (AC3); Comparison matrix across SCRAM/mTLS/RBAC/combo + layered recommendation with 5-point rationale (AC4); Topic-level, consumer group, transactional, and inter-service ACL patterns (AC5); KRaft controller-to-controller SSL config + broker-to-broker SASL_SSL config + Cluster Linking mTLS and SCRAM alternatives (AC6).

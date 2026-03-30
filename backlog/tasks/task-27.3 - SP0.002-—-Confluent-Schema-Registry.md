@@ -35,7 +35,7 @@ ordinal: 2000
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-## [Coder] 2026-03-30T15:39:46Z
+## [Coder] 2026-03-30T11:39:46 EDT
 - Completed research for SP0.002 — Confluent Schema Registry
 - Created backlog document: doc-6
 - Sources consulted:
@@ -54,7 +54,7 @@ ordinal: 2000
   - AC4: Avro, JSON Schema, and Protobuf formats with SerDes classes and comparisons covered
   - AC5: Complete schema-registry.properties for dev D2s_v5 environment included
 
-## [Tester] 2026-03-30T15:45:00Z
+## [Tester] 2026-03-30T11:45:00 EDT
 - PASS — Score: 96.6%
 - Accuracy: 95/100 (30%) — All facts correct and version-specific to CP 7.8.x. ZooKeeper removal from leader election correctly attributed to CP 7.0.0. Config property names (`kafkastore.bootstrap.servers`, `leader.eligibility`, `schema.registry.group.id`, etc.) are accurate. The 5-byte magic prefix wire format is correctly described. One minor ambiguity: default value for `schema.registry.group.id` described as auto-generated `schema-registry-<host>-<port>` — the actual default is simply `schema-registry`, but this is a negligible concern.
 - Completeness: 98/100 (25%) — All 5 AC items addressed with substantial depth. AC1 (single-node dev deployment on D2s_v5), AC2 (HA patterns including single-DC and multi-DC active-passive with `leader.eligibility=false`), AC3 (all 7 compatibility modes: BACKWARD, BACKWARD_TRANSITIVE, FORWARD, FORWARD_TRANSITIVE, FULL, FULL_TRANSITIVE, NONE), AC4 (Avro, JSON Schema, Protobuf with SerDes classes and comparison table), AC5 (complete schema-registry.properties for dev D2s_v5 with JVM and systemd override). REST API section and backup/restore guidance exceed scope requirements.

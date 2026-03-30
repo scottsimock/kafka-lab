@@ -35,7 +35,7 @@ ordinal: 10000
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-## [Coder] 2026-03-30T16:09:00Z
+## [Coder] 2026-03-30T12:09:00 EDT
 - Researched GitHub Actions OIDC with Azure using primary sources: GitHub Docs, Microsoft Learn
 - Researched reusable workflows, Terraform plan/apply patterns, Ansible dynamic inventory with UAMI, Key Vault integration, and environment protection rules
 - Created backlog document `doc-17 — SP0.010 — GitHub Actions CI/CD for Azure`
@@ -49,7 +49,7 @@ ordinal: 10000
   - `secrets: inherit` on reusable workflow calls propagates environment secrets without explicit enumeration
 - Sources: 15 URLs cited in References section
 
-## [Tester] 2026-03-30T16:30:00Z
+## [Tester] 2026-03-30T12:30:00 EDT
 
 ### Research Rubric Score: 96.95% — PASS (threshold: 95%)
 

@@ -37,7 +37,7 @@ ordinal: 6000
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-## [Coder] 2026-03-30T15:47:00Z
+## [Coder] 2026-03-30T11:47:00 EDT
 - Completed research for SP0.006 — Azure Virtual Networks and Private Networking
 - Created backlog document: doc-10
 - Sources consulted:
@@ -57,7 +57,7 @@ ordinal: 6000
   - AC5 ✅ Private endpoint architecture: one PE per service, NIC IP assignment, DNS resolution flow
   - AC6 ✅ Private DNS zone design: canonical zone names, VNet links for all 3 regions, A record setup
 
-## [Tester] 2026-03-30T16:00:00Z
+## [Tester] 2026-03-30T12:00:00 EDT
 - FAIL — Score: 93.65%
 - Accuracy: 88/100 (30%) — Two factual errors: (1) The document (executive summary line, NSG note at end of NSG section, and Terraform code comment) states that `privateLinkServiceNetworkPolicies = "Disabled"` permits NSG enforcement on private endpoint NICs. This is incorrect. NSG enforcement on PE NICs is controlled by `privateEndpointNetworkPolicies`, and enabling it requires the value `"Enabled"` (or `"NetworkSecurityGroupEnabled"` in newer API versions). Setting `privateEndpointNetworkPolicies = "Disabled"` (the current code) means NSGs do NOT apply to PE NICs — the opposite of what the comment claims. (2) The HCL examples section contains a duplicate `resource "azapi_resource" "vnet_scus"` block (a leftover placeholder comment) which would cause `terraform validate` to fail with a duplicate resource error.
 - Completeness: 95/100 (25%) — All 6 AC items fully addressed with tables, explanations, and cross-region coverage. No meaningful gaps.
@@ -72,7 +72,7 @@ ordinal: 6000
 - CRITICAL FIX: Replace `privateLinkServiceNetworkPolicies = "Disabled"` with `privateEndpointNetworkPolicies = "Enabled"` (or `"NetworkSecurityGroupEnabled"` for AzAPI 2023-05-01+). The current code disables NSG enforcement instead of enabling it. This is a security-critical fix.
 - Remove the duplicate/empty `resource "azapi_resource" "vnet_scus"` placeholder block in the peering section — it would fail terraform validate.
 
-## [Coder] 2026-03-30T16:15:00Z — Cycle 2
+## [Coder] 2026-03-30T12:15:00 EDT — Cycle 2
 - Applied tester feedback: fixed privateEndpointNetworkPolicies (was incorrectly privateLinkServiceNetworkPolicies), removed duplicate HCL block
 - Updated backlog document: doc-10
 - Security-critical fix applied
@@ -82,7 +82,7 @@ ordinal: 6000
   3. Terraform code block: removed `privateLinkServiceNetworkPolicies = "Disabled"`, updated `privateEndpointNetworkPolicies` to `"NetworkSecurityGroupEnabled"`, fixed comment
   4. Peering section: removed duplicate `resource "azapi_resource" "vnet_scus"` placeholder block, replaced with plain comment `// klc-vnet-mxc is declared in a separate module`
 
-## [Tester] 2026-03-30T16:30:00Z — Cycle 2 Review
+## [Tester] 2026-03-30T12:30:00 EDT — Cycle 2 Review
 - PASS — Score: 97.05%
 - Accuracy: 97/100 (30%) — Both cycle 1 critical fixes confirmed:
   1. `privateEndpointNetworkPolicies = "NetworkSecurityGroupEnabled"` correctly set in executive summary (line 15), NSG note (line 176), and Terraform code (line 413). No remaining `privateLinkServiceNetworkPolicies` in any PE subnet context.

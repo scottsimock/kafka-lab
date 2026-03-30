@@ -1,10 +1,10 @@
 ---
 id: TASK-30.2
 title: SP3.009 — Cluster Verification Playbook
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-03-30 16:44'
-updated_date: '2026-03-30 22:32'
+updated_date: '2026-03-30 22:33'
 labels:
   - story
 milestone: m-3
@@ -30,14 +30,14 @@ Create an Ansible playbook or task file that performs end-to-end verification of
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Ansible playbook creates a test topic with RF=3 and 6 partitions
-- [ ] #2 kafka-topics --describe shows topic with correct configuration
-- [ ] #3 Producer can write messages to the test topic using SASL_SSL
-- [ ] #4 Consumer can read messages from the test topic using SASL_SSL
-- [ ] #5 Broker cluster status shows all 3 brokers registered
-- [ ] #6 ZooKeeper ensemble status shows leader elected and quorum healthy
-- [ ] #7 Playbook is idempotent — can be run multiple times without error
-- [ ] #8 Playbook uses admin.properties for SASL_SSL authentication
+- [x] #1 Ansible playbook creates a test topic with RF=3 and 6 partitions
+- [x] #2 kafka-topics --describe shows topic with correct configuration
+- [x] #3 Producer can write messages to the test topic using SASL_SSL
+- [x] #4 Consumer can read messages from the test topic using SASL_SSL
+- [x] #5 Broker cluster status shows all 3 brokers registered
+- [x] #6 ZooKeeper ensemble status shows leader elected and quorum healthy
+- [x] #7 Playbook is idempotent — can be run multiple times without error
+- [x] #8 Playbook uses admin.properties for SASL_SSL authentication
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -215,3 +215,9 @@ Tasks:
 - Console producer/consumer for end-to-end message flow test
 - ZooKeeper health via ruok/stat four-letter commands
 <!-- SECTION:PLAN:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Created ansible/playbooks/verify-cluster.yml with two plays: (1) ZooKeeper play targets all ZK nodes and checks ruok=imok + stat mode; (2) Kafka play on kafka_broker[0] checks API connectivity, creates kafkalab-verify-test topic (RF=3, 6p, --if-not-exists for idempotency), describes topic to verify configuration, produces 3 messages, consumes 3 messages (--from-beginning, --max-messages 3, --timeout-ms 30000). All Kafka commands use admin.properties for SASL_SSL auth. Verification summary displayed on success.
+<!-- SECTION:FINAL_SUMMARY:END -->

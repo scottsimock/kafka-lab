@@ -1,10 +1,10 @@
 ---
 id: TASK-30.3
 title: SP3.010 — Kafka ACL Configuration
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-03-30 16:44'
-updated_date: '2026-03-30 22:32'
+updated_date: '2026-03-30 22:33'
 labels:
   - story
 milestone: m-3
@@ -28,14 +28,14 @@ Configure Kafka ACLs for all service principals created in SP3.006. Define least
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Kafka ACLs configured for each service principal (web-app, schema-registry, connect-worker)
-- [ ] #2 web-app user has read/write on application topics, read on consumer groups
-- [ ] #3 schema-registry user has full access to _schemas topic
-- [ ] #4 connect-worker user has access to connect-* internal topics and configured data topics
-- [ ] #5 admin user has cluster-wide access
-- [ ] #6 ACLs verified with kafka-acls --list
-- [ ] #7 ACL task file is idempotent — kafka-acls --add is safe to re-run
-- [ ] #8 Each service principal follows least-privilege principle
+- [x] #1 Kafka ACLs configured for each service principal (web-app, schema-registry, connect-worker)
+- [x] #2 web-app user has read/write on application topics, read on consumer groups
+- [x] #3 schema-registry user has full access to _schemas topic
+- [x] #4 connect-worker user has access to connect-* internal topics and configured data topics
+- [x] #5 admin user has cluster-wide access
+- [x] #6 ACLs verified with kafka-acls --list
+- [x] #7 ACL task file is idempotent — kafka-acls --add is safe to re-run
+- [x] #8 Each service principal follows least-privilege principle
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -263,3 +263,9 @@ Or create a standalone playbook `ansible/playbooks/configure-acls.yml`.
 - admin: already super.user, explicit ACLs for completeness
 - doc-11: ACL Configuration Patterns section
 <!-- SECTION:PLAN:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Created ansible/roles/kafka-broker/tasks/acls.yml with least-privilege ACLs for all service principals. web-app: Write+Describe+Read on kafkalab.* (prefixed) + Read on webapp-* groups. schema-registry: full access to _schemas + Read on schema-registry group. connect-worker: Read+Write+Create+Describe on connect-* topics+groups + Describe on cluster. admin: All ops on cluster/topics/groups. Verification via kafka-acls --list with assert tasks. kafka-acls --add is idempotent. Wired into main.yml via when: kafka_broker_acl_enabled guard; kafka_broker_acl_enabled=true in group_vars.
+<!-- SECTION:FINAL_SUMMARY:END -->

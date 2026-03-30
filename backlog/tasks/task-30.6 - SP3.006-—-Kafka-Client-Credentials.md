@@ -1,7 +1,7 @@
 ---
 id: TASK-30.6
 title: SP3.006 — Kafka Client Credentials
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-03-30 16:44'
 updated_date: '2026-03-30 22:31'
@@ -27,13 +27,13 @@ Create SCRAM-SHA-512 credentials for all Kafka client services: web-app (Next.js
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 SCRAM credentials created for web-app, schema-registry, and connect-worker users
-- [ ] #2 client.properties files generated for each service with SASL_SSL config
-- [ ] #3 Uses admin.properties already created by SP3.005 for kafka-configs commands (does not recreate it)
-- [ ] #4 Credentials stored in Ansible vault or referenced from Key Vault
-- [ ] #5 kafka-configs --describe verifies credentials exist for all users
-- [ ] #6 Truststore distributed to all client service nodes
-- [ ] #7 Client properties files use mode 0640 owned by kafka:kafka
+- [x] #1 SCRAM credentials created for web-app, schema-registry, and connect-worker users
+- [x] #2 client.properties files generated for each service with SASL_SSL config
+- [x] #3 Uses admin.properties already created by SP3.005 for kafka-configs commands (does not recreate it)
+- [x] #4 Credentials stored in Ansible vault or referenced from Key Vault
+- [x] #5 kafka-configs --describe verifies credentials exist for all users
+- [x] #6 Truststore distributed to all client service nodes
+- [x] #7 Client properties files use mode 0640 owned by kafka:kafka
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -177,3 +177,9 @@ Add a new play in site.yml (after broker play) or create `ansible/playbooks/clie
 - Fixed AC #3: admin.properties is already created by SP3.005 (AC #9). This task should use it, not recreate it. Updated AC to reference SP3.005's output.
 - Implementation plan Step 6 (admin.properties template) should be removed or converted to a validation step — the file already exists from SP3.005.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Created ansible/roles/kafka-client-creds/ role with SCRAM user creation (via --bootstrap-server using admin.properties from SP3.005) and client.properties deployment. scram-users.yml creates web-app, schema-registry, connect-worker credentials with SCRAM-SHA-512/iterations=8192, then verifies with --describe. client-properties.yml renders per-service properties files (0640, kafka:kafka) to /etc/kafka/client/. client.properties.j2 template. ansible/playbooks/client-credentials.yml standalone playbook created.
+<!-- SECTION:FINAL_SUMMARY:END -->

@@ -1,0 +1,133 @@
+---
+# verify-cluster.yml — End-to-end cluster verification playbook
+# Validates ZooKeeper ensemble, Kafka brokers, security, and message flow.
+# Prerequisites: ZooKeeper, Kafka brokers, TLS, and SASL_SSL must all be configured.
+
+- name: Verify ZooKeeper ensemble health
+  hosts: zookeeper
+  gather_facts: false
+  any_errors_fatal: true
+  tasks:
+    - name: Check ZooKeeper health via ruok
+      ansible.builtin.command:
+        cmd: bash -c "echo ruok | nc -w 5 localhost {{ zookeeper_client_port | default(2181) }}"
+      register: zk_ruok
+      changed_when: false
+      failed_when: "zk_ruok.stdout != 'imok'"
+
+    - name: Check ZooKeeper mode via stat
+      ansible.builtin.command:
+        cmd: bash -c "echo stat | nc -w 5 localhost {{ zookeeper_client_port | default(2181) }}"
+      register: zk_stat
+      changed_when: false
+      failed_when: "'Mode:' not in zk_stat.stdout"
+
+    - name: Display ZooKeeper node mode
+      ansible.builtin.debug:
+        msg: >-
+          {{ inventory_hostname }} mode:
+          {{ zk_stat.stdout_lines | select('match', 'Mode:.*') | list | first | default('unknown') }}
+
+- name: Verify Kafka cluster health and end-to-end message flow
+  hosts: 'kafka_broker[0]'
+  gather_facts: true
+  any_errors_fatal: true
+  vars:
+    verify_bin_dir: "{{ confluent_current_link | default('/opt/confluent/current') }}/bin"
+    verify_admin_config: "{{ kafka_broker_config_dir | default('/opt/confluent/current/etc/kafka') }}/admin.properties"
+    verify_topic_name: kafkalab-verify-test
+    verify_topic_partitions: 6
+    verify_topic_replication_factor: 3
+    verify_bootstrap_server: 'localhost:{{ kafka_broker_client_port | default(9092) }}'
+  tasks:
+    - name: Verify broker API connectivity
+      ansible.builtin.command:
+        cmd: >-
+          {{ verify_bin_dir }}/kafka-broker-api-versions
+          --bootstrap-server {{ verify_bootstrap_server }}
+          --command-config {{ verify_admin_config }}
+      register: broker_api
+      failed_when: broker_api.rc != 0
+      changed_when: false
+      become: true
+      become_user: '{{ kafka_user }}'
+
+    - name: List broker registrations
+      ansible.builtin.command:
+        cmd: >-
+          {{ verify_bin_dir }}/kafka-topics
+          --bootstrap-server {{ verify_bootstrap_server }}
+          --command-config {{ verify_admin_config }}
+          --list
+      register: topic_list
+      failed_when: topic_list.rc != 0
+      changed_when: false
+      become: true
+      become_user: '{{ kafka_user }}'
+
+    - name: Create verification test topic (idempotent)
+      ansible.builtin.command:
+        cmd: >-
+          {{ verify_bin_dir }}/kafka-topics
+          --bootstrap-server {{ verify_bootstrap_server }}
+          --command-config {{ verify_admin_config }}
+          --create --if-not-exists
+          --topic {{ verify_topic_name }}
+          --partitions {{ verify_topic_partitions }}
+          --replication-factor {{ verify_topic_replication_factor }}
+      changed_when: true
+      become: true
+      become_user: '{{ kafka_user }}'
+
+    - name: Describe verification test topic
+      ansible.builtin.command:
+        cmd: >-
+          {{ verify_bin_dir }}/kafka-topics
+          --bootstrap-server {{ verify_bootstrap_server }}
+          --command-config {{ verify_admin_config }}
+          --describe --topic {{ verify_topic_name }}
+      register: topic_describe
+      failed_when: "'ReplicationFactor: 3' not in topic_describe.stdout"
+      changed_when: false
+      become: true
+      become_user: '{{ kafka_user }}'
+
+    - name: Produce test messages via SASL_SSL
+      ansible.builtin.shell:
+        cmd: >-
+          printf 'test-message-1\ntest-message-2\ntest-message-3\n' |
+          {{ verify_bin_dir }}/kafka-console-producer
+          --bootstrap-server {{ verify_bootstrap_server }}
+          --producer.config {{ verify_admin_config }}
+          --topic {{ verify_topic_name }}
+      changed_when: true
+      become: true
+      become_user: '{{ kafka_user }}'
+
+    - name: Consume test messages via SASL_SSL
+      ansible.builtin.command:
+        cmd: >-
+          {{ verify_bin_dir }}/kafka-console-consumer
+          --bootstrap-server {{ verify_bootstrap_server }}
+          --consumer.config {{ verify_admin_config }}
+          --topic {{ verify_topic_name }}
+          --from-beginning
+          --max-messages 3
+          --timeout-ms 30000
+      register: consumed
+      failed_when: consumed.stdout_lines | length < 3
+      changed_when: false
+      become: true
+      become_user: '{{ kafka_user }}'
+
+    - name: Display cluster verification summary
+      ansible.builtin.debug:
+        msg: |
+          ============================================================
+          Cluster verification PASSED
+          ============================================================
+          - ZooKeeper ensemble: healthy (ruok=imok on all nodes)
+          - Brokers registered: connectivity confirmed via API versions
+          - Topic created: {{ verify_topic_name }} (RF={{ verify_topic_replication_factor }}, partitions={{ verify_topic_partitions }})
+          - Messages produced and consumed via SASL_SSL: OK
+          ============================================================

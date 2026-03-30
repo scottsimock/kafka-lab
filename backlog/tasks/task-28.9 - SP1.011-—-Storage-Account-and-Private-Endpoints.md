@@ -1,11 +1,11 @@
 ---
 id: TASK-28.9
 title: SP1.011 — Storage Account and Private Endpoints
-status: Done
+status: Dev Complete
 assignee:
   - tester-1
 created_date: '2026-03-30 16:40'
-updated_date: '2026-03-30 20:01'
+updated_date: '2026-03-30 20:03'
 labels:
   - story
 milestone: m-1
@@ -52,20 +52,20 @@ Both PEs auto-register DNS A records in their respective Private DNS zones via t
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Storage account provisioned via azapi_resource with type Microsoft.Storage/storageAccounts@2023-01-01
-- [ ] #2 Storage account named klcstgkafkalabscus (no hyphens, storage account naming rules)
-- [ ] #3 Storage account kind is StorageV2 with Standard_LRS replication
-- [ ] #4 CMEK encryption configured using Key Vault key from TASK-28.4 via encryption.keySource Microsoft.Keyvault and encryption.keyvaultproperties
-- [ ] #5 UAMI from TASK-28.3 assigned to storage account via identity block (type UserAssigned)
-- [ ] #6 publicNetworkAccess set to Disabled on the storage account
-- [ ] #7 minimumTlsVersion set to TLS1_2
-- [ ] #8 allowBlobPublicAccess set to false
-- [ ] #9 Blob container named tfstate created via azapi_resource with type Microsoft.Storage/storageAccounts/blobServices/containers@2023-01-01
-- [ ] #10 Private endpoint for storage account (group_id blob) created in snet-private-endpoints using PE module from TASK-28.7
-- [ ] #11 Private DNS A record auto-registered in privatelink.blob.core.windows.net zone via PE DNS zone group
-- [ ] #12 Private endpoint for Key Vault (group_id vault) created in snet-private-endpoints using PE module from TASK-28.7
-- [ ] #13 Private DNS A record auto-registered in privatelink.vaultcore.azure.net zone via PE DNS zone group
-- [ ] #14 terraform validate passes in terraform/environments/dev/
+- [x] #1 Storage account provisioned via azapi_resource with type Microsoft.Storage/storageAccounts@2023-01-01
+- [x] #2 Storage account named klcstgkafkalabscus (no hyphens, storage account naming rules)
+- [x] #3 Storage account kind is StorageV2 with Standard_LRS replication
+- [x] #4 CMEK encryption configured using Key Vault key from TASK-28.4 via encryption.keySource Microsoft.Keyvault and encryption.keyvaultproperties
+- [x] #5 UAMI from TASK-28.3 assigned to storage account via identity block (type UserAssigned)
+- [x] #6 publicNetworkAccess set to Disabled on the storage account
+- [x] #7 minimumTlsVersion set to TLS1_2
+- [x] #8 allowBlobPublicAccess set to false
+- [x] #9 Blob container named tfstate created via azapi_resource with type Microsoft.Storage/storageAccounts/blobServices/containers@2023-01-01
+- [x] #10 Private endpoint for storage account (group_id blob) created in snet-private-endpoints using PE module from TASK-28.7
+- [x] #11 Private DNS A record auto-registered in privatelink.blob.core.windows.net zone via PE DNS zone group
+- [x] #12 Private endpoint for Key Vault (group_id vault) created in snet-private-endpoints using PE module from TASK-28.7
+- [x] #13 Private DNS A record auto-registered in privatelink.vaultcore.azure.net zone via PE DNS zone group
+- [x] #14 terraform validate passes in terraform/environments/dev/
 <!-- AC:END -->
 
 ## Implementation Notes
@@ -110,4 +110,14 @@ Both PEs auto-register DNS A records in their respective Private DNS zones via t
 | Documentation | 15 | 15 | All 3 new outputs (storage_account_id, pe_storage_blob_id, pe_key_vault_id) have descriptions. |
 | Dependencies | 10 | 10 | All 5 task dependencies wired correctly. Module paths valid. No broken references. |
 | **Total** | **100** | **98** | **PASS (threshold: 90%)** |
+
+## [Coder] 2026-03-30T20:10:00Z
+- Verified implementation already present in commit e3a45cf (feat(SP1.011))
+- Storage account `klcstgkafkalabscus`: StorageV2, Standard_LRS, CMEK via Key Vault, UAMI identity, publicNetworkAccess=Disabled, TLS1_2, allowBlobPublicAccess=false
+- Blob container `tfstate` created via azapi_resource with publicAccess=None
+- PE `klc-pe-storage-blob-scus`: group_id=blob, snet-private-endpoints, DNS zone privatelink.blob.core.windows.net
+- PE `klc-pe-keyvault-scus`: group_id=vault, snet-private-endpoints, DNS zone privatelink.vaultcore.azure.net
+- Outputs added: storage_account_id, pe_storage_blob_id, pe_key_vault_id
+- terraform fmt: clean, terraform validate: Success
+- All 14 AC items satisfied
 <!-- SECTION:NOTES:END -->

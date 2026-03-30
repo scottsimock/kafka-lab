@@ -1,0 +1,19 @@
+---
+# Download Confluent Platform archive
+- name: Create Confluent base directory
+  ansible.builtin.file:
+    path: "{{ confluent_base_dir }}/archives"
+    state: directory
+    owner: "{{ kafka_user }}"
+    group: "{{ kafka_group }}"
+    mode: '0755'
+  become: true
+
+- name: Download Confluent Platform archive
+  ansible.builtin.get_url:
+    url: "{{ confluent_archive_url }}"
+    dest: "{{ confluent_archive_path }}"
+    mode: '0644'
+    owner: "{{ kafka_user }}"
+    group: "{{ kafka_group }}"
+  become: true

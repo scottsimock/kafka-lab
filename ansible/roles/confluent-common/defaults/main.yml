@@ -1,0 +1,6 @@
+---
+# Default variables for confluent-common role
+confluent_version: '7.9.0'
+confluent_base_dir: '/opt/confluent'
+kafka_user: kafka
+kafka_group: kafka

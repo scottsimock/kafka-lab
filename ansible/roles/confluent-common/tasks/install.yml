@@ -1,0 +1,38 @@
+---
+# Extract and install Confluent Platform
+- name: Create Confluent installation directory
+  ansible.builtin.file:
+    path: "{{ confluent_base_dir }}"
+    state: directory
+    owner: "{{ kafka_user }}"
+    group: "{{ kafka_group }}"
+    mode: '0755'
+  become: true
+
+- name: Extract Confluent Platform archive
+  ansible.builtin.unarchive:
+    src: "{{ confluent_archive_path }}"
+    dest: "{{ confluent_base_dir }}"
+    remote_src: true
+    owner: "{{ kafka_user }}"
+    group: "{{ kafka_group }}"
+    creates: "{{ confluent_install_dir }}"
+  become: true
+
+- name: Create current symlink
+  ansible.builtin.file:
+    src: "{{ confluent_install_dir }}"
+    dest: "{{ confluent_current_link }}"
+    state: link
+    owner: "{{ kafka_user }}"
+    group: "{{ kafka_group }}"
+  become: true
+
+- name: Set ownership on Confluent installation
+  ansible.builtin.file:
+    path: "{{ confluent_base_dir }}"
+    state: directory
+    recurse: true
+    owner: "{{ kafka_user }}"
+    group: "{{ kafka_group }}"
+  become: true

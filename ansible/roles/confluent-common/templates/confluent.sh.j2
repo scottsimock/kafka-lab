@@ -1,0 +1,4 @@
+#!/bin/bash
+# Confluent Platform environment configuration — managed by Ansible
+export CONFLUENT_HOME={{ confluent_current_link }}
+export PATH=$CONFLUENT_HOME/bin:$PATH

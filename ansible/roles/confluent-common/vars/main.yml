@@ -1,0 +1,7 @@
+---
+# Computed variables for confluent-common role
+confluent_major_minor: "{{ confluent_version | regex_replace('^(\\d+\\.\\d+).*', '\\1') }}"
+confluent_archive_url: "https://packages.confluent.io/archive/{{ confluent_major_minor }}/confluent-{{ confluent_version }}.tar.gz"
+confluent_install_dir: "{{ confluent_base_dir }}/confluent-{{ confluent_version }}"
+confluent_current_link: "{{ confluent_base_dir }}/current"
+confluent_archive_path: "{{ confluent_base_dir }}/archives/confluent-{{ confluent_version }}.tar.gz"

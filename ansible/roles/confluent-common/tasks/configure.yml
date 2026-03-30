@@ -1,0 +1,10 @@
+---
+# Configure Confluent Platform PATH and environment
+- name: Deploy Confluent PATH configuration
+  ansible.builtin.template:
+    src: confluent.sh.j2
+    dest: /etc/profile.d/confluent.sh
+    owner: root
+    group: root
+    mode: '0644'
+  become: true

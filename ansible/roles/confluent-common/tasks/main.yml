@@ -1,0 +1,10 @@
+---
+# Main task file — imports download, install, and configure tasks
+- name: Import Confluent Platform download tasks
+  ansible.builtin.import_tasks: download.yml
+
+- name: Import Confluent Platform install tasks
+  ansible.builtin.import_tasks: install.yml
+
+- name: Import Confluent Platform configuration tasks
+  ansible.builtin.import_tasks: configure.yml

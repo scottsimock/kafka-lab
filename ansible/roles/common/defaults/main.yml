@@ -1,0 +1,18 @@
+---
+# Default variables for common role
+common_packages:
+  - ca-certificates
+  - curl
+  - gnupg
+  - lsb-release
+  - jq
+  - unzip
+  - net-tools
+  - chrony
+  - xfsprogs
+  - acl
+
+kafka_user: kafka
+kafka_group: kafka
+kafka_nofile_limit: 100000
+kafka_nproc_limit: 32768

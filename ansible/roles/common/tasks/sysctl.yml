@@ -1,0 +1,49 @@
+---
+# Kernel tuning for Kafka and ZooKeeper workloads
+- name: Set vm.swappiness to minimize swap usage
+  ansible.builtin.sysctl:
+    name: vm.swappiness
+    value: '1'
+    state: present
+    reload: true
+  become: true
+
+- name: Set vm.max_map_count for Kafka and ZooKeeper
+  ansible.builtin.sysctl:
+    name: vm.max_map_count
+    value: '262144'
+    state: present
+    reload: true
+  become: true
+
+- name: Set net.core.wmem_max for socket write buffer
+  ansible.builtin.sysctl:
+    name: net.core.wmem_max
+    value: '2097152'
+    state: present
+    reload: true
+  become: true
+
+- name: Set net.core.rmem_max for socket read buffer
+  ansible.builtin.sysctl:
+    name: net.core.rmem_max
+    value: '2097152'
+    state: present
+    reload: true
+  become: true
+
+- name: Enable TCP window scaling
+  ansible.builtin.sysctl:
+    name: net.ipv4.tcp_window_scaling
+    value: '1'
+    state: present
+    reload: true
+  become: true
+
+- name: Set TCP max SYN backlog
+  ansible.builtin.sysctl:
+    name: net.ipv4.tcp_max_syn_backlog
+    value: '4096'
+    state: present
+    reload: true
+  become: true

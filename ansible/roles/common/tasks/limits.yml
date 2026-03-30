@@ -1,0 +1,10 @@
+---
+# Deploy ulimits configuration for kafka user
+- name: Deploy kafka user ulimits configuration
+  ansible.builtin.template:
+    src: kafka-limits.conf.j2
+    dest: /etc/security/limits.d/90-kafka.conf
+    owner: root
+    group: root
+    mode: '0644'
+  become: true

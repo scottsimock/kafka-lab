@@ -1,0 +1,13 @@
+---
+# Main task file for common role — imports all sub-task files
+- name: Import package installation tasks
+  ansible.builtin.import_tasks: packages.yml
+
+- name: Import user and group creation tasks
+  ansible.builtin.import_tasks: users.yml
+
+- name: Import kernel tuning tasks
+  ansible.builtin.import_tasks: sysctl.yml
+
+- name: Import ulimits configuration tasks
+  ansible.builtin.import_tasks: limits.yml

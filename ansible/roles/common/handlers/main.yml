@@ -1,0 +1,6 @@
+---
+# Handlers for common role
+- name: Reload sysctl settings
+  ansible.builtin.command: sysctl --system
+  become: true
+  changed_when: true

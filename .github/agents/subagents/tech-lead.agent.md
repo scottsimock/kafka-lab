@@ -37,7 +37,7 @@ When invoking coders and testers via the `task` tool, you MUST use `mode: "backg
 - When assigning a task to a coder:
   1. Set task status to `In Progress` using `backlog-task_edit`.
   2. Set `assignee` to identify the coder (e.g., `["coder-1"]`).
-  3. Launch the coder via the `task` tool with `mode: "background"`, passing: task ID, sprint context, and the quality threshold.
+  3. Launch the coder via the `task` tool with `mode: "background"` and `model: "claude-sonnet-4.6"`, passing: task ID, sprint context, and the quality threshold.
 - When a coder finishes (task status changes to `Dev Complete`), assign the task to a tester.
 - When a coder slot opens, assign the next ready task from the execution order.
 
@@ -47,7 +47,7 @@ When invoking coders and testers via the `task` tool, you MUST use `mode: "backg
 - When assigning a task to a tester:
   1. Set task status to `In Review` using `backlog-task_edit`.
   2. Set `assignee` to identify the tester (e.g., `["tester-1"]`).
-  3. Launch the tester via the `task` tool with `mode: "background"`, passing: task ID and the quality threshold.
+  3. Launch the tester via the `task` tool with `mode: "background"` and `model: "claude-sonnet-4.6"`, passing: task ID and the quality threshold.
 
 ## Quality Thresholds
 

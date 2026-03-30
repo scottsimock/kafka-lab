@@ -1,0 +1,44 @@
+---
+# Data disk detection, formatting, mounting, and subdirectory creation
+
+- name: Get data disk UUID
+  ansible.builtin.command:
+    cmd: "blkid -s UUID -o value {{ data_disk_device }}"
+  register: disk_uuid_check
+  changed_when: false
+  failed_when: false
+  become: true
+
+- name: Format data disk with XFS filesystem
+  ansible.builtin.filesystem:
+    fstype: "{{ data_disk_fstype }}"
+    dev: "{{ data_disk_device }}"
+    force: false
+  become: true
+
+- name: Get data disk UUID after formatting
+  ansible.builtin.command:
+    cmd: "blkid -s UUID -o value {{ data_disk_device }}"
+  register: disk_uuid
+  changed_when: false
+  become: true
+
+- name: Mount data disk
+  ansible.builtin.mount:
+    src: "UUID={{ disk_uuid.stdout }}"
+    path: "{{ data_mount_path }}"
+    fstype: "{{ data_disk_fstype }}"
+    opts: "{{ data_disk_mount_opts }}"
+    state: mounted
+  become: true
+
+- name: Create data subdirectories
+  ansible.builtin.file:
+    path: "{{ data_mount_path }}/{{ item }}"
+    state: directory
+    owner: "{{ kafka_user }}"
+    group: "{{ kafka_group }}"
+    mode: '0750'
+  loop: "{{ data_subdirectories }}"
+  become: true
+  when: data_subdirectories | length > 0

@@ -1,0 +1,7 @@
+---
+# Default variables for disk-setup role
+data_mount_path: /data
+data_disk_device: /dev/sdc
+data_disk_fstype: xfs
+data_disk_mount_opts: 'noatime,nodiratime'
+data_subdirectories: []

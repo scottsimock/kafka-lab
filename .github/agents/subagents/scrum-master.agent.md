@@ -75,6 +75,28 @@ If a task is too trivial (e.g., "add a comment"):
 - Recommendation: {Pass / Needs PO revision}
 ```
 
+## Milestone Status Updates
+
+Append a one-line status update to the sprint milestone file when you complete your review and hand off. This provides a persistent activity log on the milestone.
+
+### Mechanism
+
+Find the milestone file in `backlog/milestones/` for the current sprint (e.g., the file corresponding to milestone `SP{N}`). If a `## Status Updates` section does not exist in the file, append one. Then append a single status line.
+
+```bash
+MILESTONE_FILE=$(find backlog/milestones -maxdepth 1 -type f -iname "*sp${SPRINT_NUM}*" | head -1)
+if [ -n "$MILESTONE_FILE" ]; then
+  grep -q "## Status Updates" "$MILESTONE_FILE" || printf '\n## Status Updates\n' >> "$MILESTONE_FILE"
+  echo "- $(date -u +%Y-%m-%dT%H:%M:%SZ) [SM] <brief description>" >> "$MILESTONE_FILE"
+fi
+```
+
+### When to Append
+
+- After completing a review pass (whether tasks passed or need PO revision)
+
+Each entry is a single line: `- {ISO timestamp} [SM] {brief description of review outcome}`.
+
 ## Rules
 
 - You do NOT write code or create tasks. You review tasks created by the PO.

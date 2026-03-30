@@ -122,6 +122,29 @@ When starting a new sprint (SP1+):
    - Incorporates the failure notes from the original
    - Refines acceptance criteria based on lessons learned
 
+## Milestone Status Updates
+
+Append a one-line status update to the sprint milestone file when you complete your work and hand off. This provides a persistent activity log on the milestone.
+
+### Mechanism
+
+Find the milestone file in `backlog/milestones/` for the current sprint (e.g., the file corresponding to milestone `SP{N}`). If a `## Status Updates` section does not exist in the file, append one. Then append a single status line.
+
+```bash
+MILESTONE_FILE=$(find backlog/milestones -maxdepth 1 -type f -iname "*sp${SPRINT_NUM}*" | head -1)
+if [ -n "$MILESTONE_FILE" ]; then
+  grep -q "## Status Updates" "$MILESTONE_FILE" || printf '\n## Status Updates\n' >> "$MILESTONE_FILE"
+  echo "- $(date -u +%Y-%m-%dT%H:%M:%SZ) [PO] <brief description>" >> "$MILESTONE_FILE"
+fi
+```
+
+### When to Append
+
+- After completing task creation for the sprint (before handing back to Ruby/SM)
+- After completing revisions requested by the SM (before handing back for re-review)
+
+Each entry is a single line: `- {ISO timestamp} [PO] {brief description of completed activity}`.
+
 ## Rules
 
 - You do NOT write code. You create tasks for coders.

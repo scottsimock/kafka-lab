@@ -1,0 +1,80 @@
+---
+# Default variables for kafka-broker role — operator-overrideable
+
+# PLAINTEXT defaults (overridden by security block when kafka_broker_security_enabled=true)
+kafka_broker_port: 9092
+kafka_broker_listeners: 'PLAINTEXT://0.0.0.0:{{ kafka_broker_port }}'
+kafka_broker_inter_broker_listener_name: PLAINTEXT
+kafka_broker_listener_security_protocol_map: 'PLAINTEXT:PLAINTEXT'
+
+# Log / storage
+kafka_broker_log_dirs: '{{ data_mount_path }}/kafka/logs'
+kafka_broker_log_segment_bytes: 1073741824
+kafka_broker_log_retention_hours: 168
+kafka_broker_log_retention_bytes: -1
+kafka_broker_log_cleaner_threads: 2
+
+# Replication
+kafka_broker_default_replication_factor: 3
+kafka_broker_min_insync_replicas: 2
+kafka_broker_num_partitions: 6
+
+# Network / IO
+kafka_broker_num_network_threads: 4
+kafka_broker_num_io_threads: 8
+kafka_broker_socket_send_buffer_bytes: 102400
+kafka_broker_socket_receive_buffer_bytes: 102400
+kafka_broker_socket_request_max_bytes: 104857600
+
+# Shutdown
+kafka_broker_controlled_shutdown_enable: true
+
+# JVM
+kafka_broker_heap_size: '6g'
+
+# Paths
+kafka_broker_config_dir: "{{ confluent_current_link | default('/opt/confluent/current') }}/etc/kafka"
+
+# ZooKeeper
+kafka_broker_zookeeper_connect: "{{ groups['zookeeper'] | map('extract', hostvars, 'ansible_host') | join(':2181,') }}:2181/kafka"
+kafka_broker_zookeeper_connection_timeout_ms: 18000
+
+# Security (populated by SP3.005)
+kafka_broker_security_enabled: false
+kafka_broker_security_protocol: SASL_SSL
+kafka_broker_sasl_mechanism: SCRAM-SHA-512
+kafka_broker_ssl_dir: /etc/kafka/ssl
+kafka_broker_ssl_keystore_file: '{{ inventory_hostname }}.keystore.jks'
+kafka_broker_ssl_truststore_file: kafka.truststore.jks
+kafka_broker_ssl_keystore_password: "{{ vault_kafka_broker_keystore_password | default('changeit') }}"
+kafka_broker_ssl_truststore_password: "{{ vault_kafka_broker_truststore_password | default('changeit') }}"
+kafka_broker_ssl_key_password: "{{ vault_kafka_broker_key_password | default('changeit') }}"
+kafka_broker_client_listener_name: CLIENT
+kafka_broker_internal_listener_name: INTERNAL
+kafka_broker_client_port: 9092
+kafka_broker_internal_port: 9093
+kafka_broker_internal_user: broker-internal
+kafka_broker_internal_password: "{{ vault_kafka_broker_internal_password | default('changeit') }}"
+kafka_broker_admin_user: admin
+kafka_broker_admin_password: "{{ vault_kafka_broker_admin_password | default('changeit') }}"
+
+# Tiered storage (populated by SP3.007)
+kafka_broker_tiered_storage_enabled: false
+kafka_broker_tier_backend: AzureBlockBlob
+kafka_broker_tier_azure_container: klc-kafka-tiered-storage
+kafka_broker_tier_azure_credentials_provider: 'com.microsoft.azure.storage.auth.ManagedIdentityCredentialProvider'
+kafka_broker_tier_metadata_replication_factor: 3
+kafka_broker_tier_local_hotset_ms: 86400000
+kafka_broker_tier_archiver_num_threads: 8
+kafka_broker_tier_fetcher_num_threads: 8
+
+# Self-balancing (populated by SP3.008)
+kafka_broker_self_balancing_enabled: false
+kafka_broker_balancer_trigger: ANY_UNEVEN_LOAD
+kafka_broker_balancer_throttle_bytes_per_second: 10485760
+kafka_broker_balancer_heal_broker_failure_threshold_ms: 300000
+
+# ACL enforcement (populated by SP3.010)
+kafka_broker_acl_enabled: false
+kafka_broker_acl_admin_config: '{{ kafka_broker_config_dir }}/admin.properties'
+kafka_broker_acl_bootstrap_server: 'localhost:{{ kafka_broker_client_port }}'

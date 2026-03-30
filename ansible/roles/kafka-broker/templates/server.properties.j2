@@ -1,0 +1,97 @@
+broker.id={{ kafka_broker_id }}
+broker.rack={{ kafka_broker_rack | default('1') }}
+
+# =====================================================
+# Listeners
+# =====================================================
+{% if kafka_broker_security_enabled | default(false) %}
+listeners={{ kafka_broker_client_listener_name }}://0.0.0.0:{{ kafka_broker_client_port }},{{ kafka_broker_internal_listener_name }}://0.0.0.0:{{ kafka_broker_internal_port }}
+advertised.listeners={{ kafka_broker_client_listener_name }}://{{ ansible_host }}:{{ kafka_broker_client_port }},{{ kafka_broker_internal_listener_name }}://{{ ansible_host }}:{{ kafka_broker_internal_port }}
+listener.security.protocol.map={{ kafka_broker_internal_listener_name }}:{{ kafka_broker_security_protocol }},{{ kafka_broker_client_listener_name }}:{{ kafka_broker_security_protocol }}
+inter.broker.listener.name={{ kafka_broker_internal_listener_name }}
+{% else %}
+listeners={{ kafka_broker_listeners }}
+advertised.listeners=PLAINTEXT://{{ ansible_host }}:{{ kafka_broker_port }}
+inter.broker.listener.name={{ kafka_broker_inter_broker_listener_name }}
+listener.security.protocol.map={{ kafka_broker_listener_security_protocol_map }}
+{% endif %}
+
+# =====================================================
+# Log / Storage
+# =====================================================
+log.dirs={{ kafka_broker_log_dirs }}
+log.segment.bytes={{ kafka_broker_log_segment_bytes }}
+log.retention.hours={{ kafka_broker_log_retention_hours }}
+log.retention.bytes={{ kafka_broker_log_retention_bytes }}
+log.cleaner.threads={{ kafka_broker_log_cleaner_threads }}
+
+# =====================================================
+# Replication
+# =====================================================
+default.replication.factor={{ kafka_broker_default_replication_factor }}
+min.insync.replicas={{ kafka_broker_min_insync_replicas }}
+num.partitions={{ kafka_broker_num_partitions }}
+
+# =====================================================
+# Network / IO
+# =====================================================
+num.network.threads={{ kafka_broker_num_network_threads }}
+num.io.threads={{ kafka_broker_num_io_threads }}
+socket.send.buffer.bytes={{ kafka_broker_socket_send_buffer_bytes }}
+socket.receive.buffer.bytes={{ kafka_broker_socket_receive_buffer_bytes }}
+socket.request.max.bytes={{ kafka_broker_socket_request_max_bytes }}
+controlled.shutdown.enable={{ kafka_broker_controlled_shutdown_enable | lower }}
+
+# =====================================================
+# ZooKeeper
+# =====================================================
+zookeeper.connect={{ kafka_broker_zookeeper_connect }}
+zookeeper.connection.timeout.ms={{ kafka_broker_zookeeper_connection_timeout_ms }}
+
+# =====================================================
+# SASL / Security
+# =====================================================
+{% if kafka_broker_security_enabled | default(false) %}
+security.inter.broker.protocol={{ kafka_broker_security_protocol }}
+sasl.mechanism.inter.broker.protocol={{ kafka_broker_sasl_mechanism }}
+sasl.enabled.mechanisms={{ kafka_broker_sasl_mechanism }}
+
+listener.name.{{ kafka_broker_internal_listener_name | lower }}.{{ kafka_broker_sasl_mechanism | lower | replace('-', '.') }}.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="{{ kafka_broker_internal_user }}" password="{{ kafka_broker_internal_password }}";
+listener.name.{{ kafka_broker_client_listener_name | lower }}.{{ kafka_broker_sasl_mechanism | lower | replace('-', '.') }}.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="{{ kafka_broker_internal_user }}" password="{{ kafka_broker_internal_password }}";
+
+ssl.keystore.location={{ kafka_broker_ssl_dir }}/{{ kafka_broker_ssl_keystore_file }}
+ssl.keystore.password={{ kafka_broker_ssl_keystore_password }}
+ssl.key.password={{ kafka_broker_ssl_key_password }}
+ssl.truststore.location={{ kafka_broker_ssl_dir }}/{{ kafka_broker_ssl_truststore_file }}
+ssl.truststore.password={{ kafka_broker_ssl_truststore_password }}
+ssl.endpoint.identification.algorithm=https
+ssl.client.auth=required
+
+authorizer.class.name=kafka.security.authorizer.AclAuthorizer
+super.users=User:{{ kafka_broker_internal_user }};User:{{ kafka_broker_admin_user }}
+{% endif %}
+
+# =====================================================
+# Tiered Storage
+# =====================================================
+{% if kafka_broker_tiered_storage_enabled | default(false) %}
+confluent.tier.feature=true
+confluent.tier.enable=true
+confluent.tier.backend={{ kafka_broker_tier_backend }}
+confluent.tier.azure.block.blob.container={{ kafka_broker_tier_azure_container }}
+confluent.tier.azure.block.blob.credentials.provider={{ kafka_broker_tier_azure_credentials_provider }}
+confluent.tier.metadata.replication.factor={{ kafka_broker_tier_metadata_replication_factor }}
+confluent.tier.local.hotset.ms={{ kafka_broker_tier_local_hotset_ms }}
+confluent.tier.archiver.num.threads={{ kafka_broker_tier_archiver_num_threads }}
+confluent.tier.fetcher.num.threads={{ kafka_broker_tier_fetcher_num_threads }}
+{% endif %}
+
+# =====================================================
+# Self-Balancing Clusters
+# =====================================================
+{% if kafka_broker_self_balancing_enabled | default(false) %}
+confluent.balancer.enable=true
+confluent.balancer.heal.uneven.load.trigger={{ kafka_broker_balancer_trigger }}
+confluent.balancer.throttle.bytes.per.second={{ kafka_broker_balancer_throttle_bytes_per_second }}
+confluent.balancer.heal.broker.failure.threshold.ms={{ kafka_broker_balancer_heal_broker_failure_threshold_ms }}
+{% endif %}

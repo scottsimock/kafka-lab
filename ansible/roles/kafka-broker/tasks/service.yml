@@ -1,0 +1,28 @@
+---
+# Kafka broker service tasks
+- name: Create GC log directory
+  ansible.builtin.file:
+    path: '/var/log/kafka'
+    state: directory
+    owner: '{{ kafka_user }}'
+    group: '{{ kafka_group }}'
+    mode: '0755'
+  become: true
+
+- name: Deploy confluent-kafka systemd unit
+  ansible.builtin.template:
+    src: 'confluent-kafka.service.j2'
+    dest: '/etc/systemd/system/confluent-kafka.service'
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  notify: 'Restart confluent-kafka'
+
+- name: Enable and start confluent-kafka service
+  ansible.builtin.systemd:
+    name: '{{ kafka_broker_service_name }}'
+    enabled: true
+    state: started
+    daemon_reload: true
+  become: true

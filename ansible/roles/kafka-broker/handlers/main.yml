@@ -1,0 +1,27 @@
+---
+# Handlers for kafka-broker role
+- name: Restart confluent-kafka
+  ansible.builtin.systemd:
+    name: '{{ kafka_broker_service_name }}'
+    state: restarted
+    daemon_reload: true
+  become: true
+  listen: 'Restart confluent-kafka'
+  notify: 'Verify kafka broker health'
+
+- name: Verify kafka broker health
+  ansible.builtin.command:
+    cmd: >-
+      {{ kafka_broker_bin_dir }}/kafka-broker-api-versions
+      --bootstrap-server localhost:{{ kafka_broker_client_port | default(kafka_broker_port) }}
+      {% if kafka_broker_security_enabled | default(false) %}
+      --command-config {{ kafka_broker_config_dir }}/admin.properties
+      {% endif %}
+  register: broker_health
+  until: broker_health.rc == 0
+  retries: 6
+  delay: 10
+  changed_when: false
+  become: true
+  become_user: '{{ kafka_user }}'
+  listen: 'Verify kafka broker health'

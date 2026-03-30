@@ -1,0 +1,18 @@
+[Unit]
+Description=Confluent Kafka Broker
+After=network.target confluent-zookeeper.service
+Wants=confluent-zookeeper.service
+
+[Service]
+Type=simple
+User={{ kafka_user }}
+Group={{ kafka_group }}
+EnvironmentFile={{ kafka_broker_env_file }}
+ExecStart={{ kafka_broker_bin_dir }}/kafka-server-start {{ kafka_broker_config_file }}
+Restart=on-failure
+RestartSec=10
+LimitNOFILE={{ kafka_nofile_limit | default(100000) }}
+TimeoutStopSec=180
+
+[Install]
+WantedBy=multi-user.target

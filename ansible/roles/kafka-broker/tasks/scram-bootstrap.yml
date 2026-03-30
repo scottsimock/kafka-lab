@@ -1,0 +1,33 @@
+---
+# SCRAM credential bootstrap tasks
+# Bootstraps ZooKeeper-stored SCRAM credentials before brokers start with SASL enabled.
+# Uses --zookeeper flag (ZK mode) so this runs before brokers are up.
+- name: Bootstrap broker-internal SCRAM credential in ZooKeeper
+  ansible.builtin.command:
+    cmd: >-
+      {{ kafka_broker_bin_dir }}/kafka-configs
+      --zookeeper {{ kafka_broker_zookeeper_connect }}
+      --alter
+      --add-config 'SCRAM-SHA-512=[iterations=8192,password={{ kafka_broker_internal_password }}]'
+      --entity-type users
+      --entity-name {{ kafka_broker_internal_user }}
+  run_once: true
+  become: true
+  become_user: '{{ kafka_user }}'
+  changed_when: true
+  when: kafka_broker_security_enabled | default(false)
+
+- name: Bootstrap admin SCRAM credential in ZooKeeper
+  ansible.builtin.command:
+    cmd: >-
+      {{ kafka_broker_bin_dir }}/kafka-configs
+      --zookeeper {{ kafka_broker_zookeeper_connect }}
+      --alter
+      --add-config 'SCRAM-SHA-512=[iterations=8192,password={{ kafka_broker_admin_password }}]'
+      --entity-type users
+      --entity-name {{ kafka_broker_admin_user }}
+  run_once: true
+  become: true
+  become_user: '{{ kafka_user }}'
+  changed_when: true
+  when: kafka_broker_security_enabled | default(false)

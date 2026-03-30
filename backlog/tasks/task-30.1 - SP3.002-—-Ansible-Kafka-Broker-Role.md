@@ -1,10 +1,10 @@
 ---
 id: TASK-30.1
 title: SP3.002 — Ansible Kafka Broker Role
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-03-30 16:44'
-updated_date: '2026-03-30 22:10'
+updated_date: '2026-03-30 22:27'
 labels:
   - story
 milestone: m-3

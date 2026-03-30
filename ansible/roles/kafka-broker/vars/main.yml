@@ -1,0 +1,6 @@
+---
+# Computed variables for kafka-broker role — not operator-tunable
+kafka_broker_config_file: '{{ kafka_broker_config_dir }}/server.properties'
+kafka_broker_env_file: '{{ kafka_broker_config_dir }}/kafka-env.sh'
+kafka_broker_service_name: confluent-kafka
+kafka_broker_bin_dir: "{{ confluent_current_link | default('/opt/confluent/current') }}/bin"

@@ -1,0 +1,14 @@
+---
+# Main task file for kafka-broker role — imports sub-task files
+- name: Import Kafka broker configuration tasks
+  ansible.builtin.import_tasks: configure.yml
+
+- name: Import SCRAM credential bootstrap tasks
+  ansible.builtin.import_tasks: scram-bootstrap.yml
+
+- name: Import Kafka broker service tasks
+  ansible.builtin.import_tasks: service.yml
+
+- name: Import ACL configuration tasks
+  ansible.builtin.import_tasks: acls.yml
+  when: kafka_broker_acl_enabled | default(false)

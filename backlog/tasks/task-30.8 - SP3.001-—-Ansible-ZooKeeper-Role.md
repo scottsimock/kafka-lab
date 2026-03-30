@@ -1,10 +1,10 @@
 ---
 id: TASK-30.8
 title: SP3.001 — Ansible ZooKeeper Role
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-03-30 16:44'
-updated_date: '2026-03-30 22:26'
+updated_date: '2026-03-30 22:27'
 labels:
   - story
 milestone: m-3
@@ -28,16 +28,16 @@ Create the ZooKeeper Ansible role at ansible/roles/zookeeper/ that configures an
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Role exists at ansible/roles/zookeeper/ with tasks/, handlers/, defaults/, templates/ directories
-- [ ] #2 Renders zookeeper.properties from Jinja2 template with configurable tickTime, initLimit, syncLimit
-- [ ] #3 Creates myid file with unique server ID for each node
-- [ ] #4 Creates data and txn log directories at /data/zookeeper/data and /data/zookeeper/log
-- [ ] #5 Configures ensemble membership (server.1, server.2, server.3) with correct IPs
-- [ ] #6 Creates systemd unit file confluent-zookeeper.service
-- [ ] #7 Handler restarts and verifies ZK health via ruok four-letter command
-- [ ] #8 Handler retries health check up to 6 times with 10s delay before failing
-- [ ] #9 ZooKeeper JVM configured with 1 GB heap and G1GC per doc-8
-- [ ] #10 site.yml updated to include zookeeper role in ZooKeeper play after confluent-common
+- [x] #1 Role exists at ansible/roles/zookeeper/ with tasks/, handlers/, defaults/, templates/ directories
+- [x] #2 Renders zookeeper.properties from Jinja2 template with configurable tickTime, initLimit, syncLimit
+- [x] #3 Creates myid file with unique server ID for each node
+- [x] #4 Creates data and txn log directories at /data/zookeeper/data and /data/zookeeper/log
+- [x] #5 Configures ensemble membership (server.1, server.2, server.3) with correct IPs
+- [x] #6 Creates systemd unit file confluent-zookeeper.service
+- [x] #7 Handler restarts and verifies ZK health via ruok four-letter command
+- [x] #8 Handler retries health check up to 6 times with 10s delay before failing
+- [x] #9 ZooKeeper JVM configured with 1 GB heap and G1GC per doc-8
+- [x] #10 site.yml updated to include zookeeper role in ZooKeeper play after confluent-common
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -231,3 +231,9 @@ Add `zookeeper` to the ZooKeeper play's roles list (after `confluent-common`):
 - Added dependency on TASK-30.4 (SP3.003 — Group/Host Variables). The ZK role template references `zookeeper_myid` from host_vars which SP3.003 creates. host_vars/ directory does not yet exist in the repo.
 - **File contention**: site.yml is also modified by SP3.002 and SP3.004. TL should serialize tasks that update site.yml.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Created ansible/roles/zookeeper/ with full structure. zookeeper.properties.j2 renders ensemble server lines using hostvars loop over zookeeper group (sorted). myid file written per-host from host_vars. JVM env script sets 1g heap with G1GC. Systemd unit created. Handler chain: restart → ruok health check with 6 retries/10s delay. site.yml updated to include zookeeper role in ZooKeeper play after confluent-common.
+<!-- SECTION:FINAL_SUMMARY:END -->

@@ -1,0 +1,31 @@
+---
+# Kafka broker configuration tasks
+- name: Render server.properties
+  ansible.builtin.template:
+    src: 'server.properties.j2'
+    dest: '{{ kafka_broker_config_file }}'
+    owner: '{{ kafka_user }}'
+    group: '{{ kafka_group }}'
+    mode: '0640'
+  become: true
+  notify: 'Restart confluent-kafka'
+
+- name: Deploy Kafka JVM environment script
+  ansible.builtin.template:
+    src: 'kafka-env.sh.j2'
+    dest: '{{ kafka_broker_env_file }}'
+    owner: '{{ kafka_user }}'
+    group: '{{ kafka_group }}'
+    mode: '0755'
+  become: true
+  notify: 'Restart confluent-kafka'
+
+- name: Deploy admin.properties for CLI operations
+  ansible.builtin.template:
+    src: 'admin.properties.j2'
+    dest: '{{ kafka_broker_config_dir }}/admin.properties'
+    owner: '{{ kafka_user }}'
+    group: '{{ kafka_group }}'
+    mode: '0640'
+  become: true
+  when: kafka_broker_security_enabled | default(false)

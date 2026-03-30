@@ -30,6 +30,7 @@
     - disk-setup
     - java
     - confluent-common
+    - kafka-broker
 
 # Play 3: Schema Registry nodes — no data disk, no serial constraint
 - name: Configure Schema Registry nodes

@@ -81,6 +81,29 @@ Every story and research task MUST be created as a child of its sprint task by p
 |---|---|
 | `sprint/SP{N}-{description}` | `sprint/SP0-research-and-planning` |
 
+## Sprint Branch Lifecycle
+
+Every sprint follows a branch-per-sprint workflow. All sprint work lives on a dedicated branch; main is updated only via pull request at sprint close.
+
+### Sprint Start
+
+1. Create a sprint branch from `main`: `git checkout -b sprint/SP{N}-{description} main`
+2. Push the branch: `git push -u origin sprint/SP{N}-{description}`
+3. All agents commit sprint work to this branch — never directly to `main`.
+
+### During Sprint
+
+- All task commits go to the sprint branch using the commit message format `feat(SP{N}.{NNN}): {description}`.
+- Scribe commits `.squad/` state to the sprint branch.
+- The sprint branch is the working branch for all agents throughout the sprint.
+
+### Sprint End
+
+1. Ensure all sprint tasks are at Dev Complete or Done.
+2. Create a pull request from the sprint branch to `main`: `gh pr create --base main --head sprint/SP{N}-{description} --title "SP{N} — {Goal}" --body "{summary of sprint deliverables}"`
+3. The PR description includes a summary of all tasks completed, key deliverables, and test results.
+4. After review and merge, the sprint branch may be deleted.
+
 ### Milestones
 
 One milestone per sprint: `SP0`, `SP1`, `SP2`, etc. All tasks within a sprint carry the sprint milestone.

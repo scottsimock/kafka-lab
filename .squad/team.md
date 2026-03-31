@@ -12,9 +12,9 @@
 
 | Name | Role | Charter | Status |
 |------|------|---------|--------|
-| Smiley | Lead | `.squad/agents/smiley/charter.md` | 🏗️ Active |
+| Drexl | Lead | `.squad/agents/drexl/charter.md` | 🏗️ Active |
 | Zorg | Infra Dev | `.squad/agents/zorg/charter.md` | ⚙️ Active |
-| Drexl | Frontend Dev | `.squad/agents/drexl/charter.md` | ⚛️ Active |
+| Smiley | Frontend Dev | `.squad/agents/smiley/charter.md` | ⚛️ Active |
 | Sid | Tester | `.squad/agents/sid/charter.md` | 🧪 Active |
 | Scribe | Scribe | `.squad/agents/scribe/charter.md` | 📋 Active |
 | Ralph | Work Monitor | `.squad/agents/ralph/charter.md` | 🔄 Active |

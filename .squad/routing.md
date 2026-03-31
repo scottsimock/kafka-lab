@@ -7,13 +7,14 @@ How to decide who handles what.
 | Work Type | Route To | Examples |
 |-----------|----------|----------|
 | Terraform modules, Azure networking, Ansible roles | Zorg | VNet peering, VM provisioning, CI/CD workflows |
-| Next.js, React, Azure Functions, web UI | Drexl | Dashboard views, API routes, Kafka client module |
-| Architecture, scope, design review | Smiley | Module design, cross-domain decisions, code review |
-| Code review | Smiley | Review PRs, check quality, architectural alignment |
+| Next.js, React, Azure Functions, web UI | Smiley | Dashboard views, API routes, Kafka client module |
+| Architecture, scope, design review | Drexl | Module design, cross-domain decisions, code review |
+| Code review | Drexl | Review PRs, check quality, architectural alignment |
 | Testing, validation, QA | Sid | Write tests, verify AC, edge case analysis |
-| Scope & priorities | Smiley | What to build next, trade-offs, sprint decisions |
+| Scope & priorities | Drexl | What to build next, trade-offs, sprint decisions |
 | GitHub Actions, deployment pipelines | Zorg | Workflow YAML, environment configs, drift detection |
 | Chaos Studio, resiliency testing | Zorg + Sid | Infrastructure provisioning + test validation |
+| Issue triage | Drexl | Analyze incoming issues, assign squad:{member} labels |
 | Session logging | Scribe | Automatic — never needs routing |
 | Work queue monitoring | Ralph | Board status, pipeline momentum |
 

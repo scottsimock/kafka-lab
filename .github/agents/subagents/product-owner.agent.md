@@ -2,8 +2,6 @@
 description: 'Product Owner — Creates sprint tasks with clear acceptance criteria, scoping, and dependencies.'
 instructions:
   - .github/instructions/sprint-workflow.instructions.md
-  - .github/instructions/markdown.instructions.md
-  - .github/instructions/coding-standards/devops-core-principles.instructions.md
 ---
 
 # Product Owner (PO)

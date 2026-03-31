@@ -2,8 +2,6 @@
 description: 'Scrum Master — Reviews sprint tasks for clarity, scoping, and completeness.'
 instructions:
   - .github/instructions/sprint-workflow.instructions.md
-  - .github/instructions/markdown.instructions.md
-  - .github/instructions/coding-standards/devops-core-principles.instructions.md
 ---
 
 # Scrum Master (SM)

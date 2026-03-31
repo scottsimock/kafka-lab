@@ -2,7 +2,6 @@
 description: 'Tech Lead — Orchestrates task execution by assigning coders and testers, managing parallelism and the retry loop.'
 instructions:
   - .github/instructions/sprint-workflow.instructions.md
-  - .github/instructions/coding-standards/devops-core-principles.instructions.md
 agents:
   - .github/agents/subagents/coder.agent.md
   - .github/agents/subagents/tester.agent.md

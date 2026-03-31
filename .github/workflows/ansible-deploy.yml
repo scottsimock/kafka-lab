@@ -1,0 +1,107 @@
+---
+name: Ansible Deploy
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: Target deployment environment
+        required: true
+        type: string
+      playbook_path:
+        description: Path to Ansible playbook
+        required: false
+        type: string
+        default: ansible/site.yml
+      inventory_path:
+        description: Path to Ansible inventory
+        required: false
+        type: string
+        default: ansible/inventory/azure_rm.yml
+    secrets:
+      AZURE_CLIENT_ID:
+        required: true
+      AZURE_TENANT_ID:
+        required: true
+      AZURE_SUBSCRIPTION_ID:
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: Run Ansible Playbook
+    runs-on: [self-hosted, linux, azure, ansible]
+    environment: ${{ inputs.environment }}
+
+    env:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AZURE_USE_MSI: "true"
+      TARGET_ENV: ${{ inputs.environment }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install Ansible and Azure collection
+        run: |
+          pip install --quiet --upgrade pip
+          pip install --quiet ansible
+          ansible-galaxy collection install azure.azcollection --force
+          pip install --quiet -r ~/.ansible/collections/ansible_collections/azure/azcollection/requirements.txt
+
+      - name: Retrieve SSH key from Key Vault
+        run: |
+          SSH_KEY=$(az keyvault secret show \
+            --name ansible-ssh-private-key \
+            --vault-name klc-kv-kafkalab-scus \
+            --query value -o tsv)
+          echo "::add-mask::$SSH_KEY"
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/ansible_id_rsa
+          chmod 600 ~/.ssh/ansible_id_rsa
+          echo "ANSIBLE_PRIVATE_KEY_FILE=$HOME/.ssh/ansible_id_rsa" >> "$GITHUB_ENV"
+
+      - name: Retrieve Ansible Vault password from Key Vault
+        run: |
+          VAULT_PASS=$(az keyvault secret show \
+            --name ansible-vault-password \
+            --vault-name klc-kv-kafkalab-scus \
+            --query value -o tsv)
+          echo "::add-mask::$VAULT_PASS"
+          echo "$VAULT_PASS" > ~/.ansible_vault_password
+          chmod 600 ~/.ansible_vault_password
+          echo "ANSIBLE_VAULT_PASSWORD_FILE=$HOME/.ansible_vault_password" >> "$GITHUB_ENV"
+
+      - name: Run Ansible playbook
+        run: |
+          ansible-playbook \
+            -i ${{ inputs.inventory_path }} \
+            --private-key "$ANSIBLE_PRIVATE_KEY_FILE" \
+            --vault-password-file "$ANSIBLE_VAULT_PASSWORD_FILE" \
+            ${{ inputs.playbook_path }} \
+            2>&1 | tee ansible-playbook-output.log
+
+      - name: Upload playbook output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ansible-playbook-output-${{ inputs.environment }}
+          path: ansible-playbook-output.log
+          retention-days: 30
+
+      - name: Clean up secrets
+        if: always()
+        run: |
+          rm -f ~/.ssh/ansible_id_rsa
+          rm -f ~/.ansible_vault_password

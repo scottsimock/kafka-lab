@@ -42,3 +42,14 @@ Rewrote `.github/instructions/sprint-workflow.instructions.md` to strip out Ruby
 - **Updated:** Title and description to reflect conventions-only scope, task status machine to be orchestrator-agnostic, technical debt section removed PO references, task assignment tracking updated to Squad agent names
 
 The file is now 138 lines (down from 333). Orchestration rules now live exclusively in `.github/agents/squad.agent.md` and `.squad/` files where Squad agents manage them.
+
+### Azure Environment Consolidation (2026-03-31)
+
+Consolidated Azure environment compliance documentation into REQUIREMENTS.md:
+
+- **Merged:** `.github/instructions/coding-standards/azure-environment.instructions.md` content into new `## Azure Environment` section in REQUIREMENTS.md (placed between Project Overview and References)
+- **Content preserved:** All compliance requirements (CMEK per resource, UAMI per workflow, TLS 1.2+ minimum, private VNets, private endpoints, private DNS zones, public ingress restrictions for web app only, Let's Encrypt automation)
+- **Code examples retained:** All HCL compliance tag examples kept intact for agent reference when writing Terraform
+- **Reference updated:** Line 7 of REQUIREMENTS.md changed from "azure-environment instructions file" to "Azure Environment section below"
+- **Cleanup:** Deleted redundant instructions file; removed empty `coding-standards/` directory
+- **Rationale:** REQUIREMENTS.md is the single source of truth for project requirements. Inlining compliance context eliminates instruction file fragmentation and ensures compliance guidance is always visible alongside project scope and architecture choices

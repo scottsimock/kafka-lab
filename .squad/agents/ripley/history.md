@@ -53,3 +53,24 @@ Consolidated Azure environment compliance documentation into REQUIREMENTS.md:
 - **Reference updated:** Line 7 of REQUIREMENTS.md changed from "azure-environment instructions file" to "Azure Environment section below"
 - **Cleanup:** Deleted redundant instructions file; removed empty `coding-standards/` directory
 - **Rationale:** REQUIREMENTS.md is the single source of truth for project requirements. Inlining compliance context eliminates instruction file fragmentation and ensures compliance guidance is always visible alongside project scope and architecture choices
+
+### SP5 Web Application Review (2026-04-01)
+
+Reviewed full SP5 sprint branch (`sprint/SP5-web-application` vs `main`) — 114 files, ~15K lines covering Terraform Function App module and Next.js 15 webapp.
+
+**Verdict:** APPROVE WITH CONDITIONS (3 critical items to fix before merge)
+
+**Critical findings:**
+1. **Storage connection string broken** — `terraform/modules/function-app/main.tf` line 119 constructs `AzureWebJobsStorage` using `primaryEndpoints.blob` (a URL) where it needs an account key. Function App will fail at runtime.
+2. **Missing `SCHEMA_REGISTRY_URL` in Function App appSettings** — The webapp reads this env var but Terraform never sets it. Schema browser will only work if internal DNS resolves the hardcoded hostname.
+3. **`formatConsumerGroupState` case mismatch** — Function uppercases state strings but the page compares against mixed-case `'Stable'`. State badges always show yellow.
+
+**Warnings:**
+- Schema browser and message views use Tailwind CSS classes but Tailwind is not installed (no visual styling)
+- Ephemeral consumer groups created per consume request accumulate in broker metadata
+- SSE stream abort handler needs additional try/catch around `controller.close()`
+- `any` type used for consumer group member assignments
+
+**Architecture assessment:** Sound. Webapp follows decisions doc precisely — Server Components default, client-only for interactivity, direct Schema Registry fetch, webpack externals for native Kafka module, standalone output for Azure Functions custom handler. Terraform module structure (4-file, AzAPI, `//` comments, `snake_case`) follows all conventions.
+
+**Build result:** `npm run build` passes clean. All 20 routes compile. Terraform `fmt` clean, no `#` comments.

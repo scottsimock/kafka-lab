@@ -479,3 +479,10 @@ docs/docusaurus/node_modules/
 !*.tfvars.example
 .terraformrc
 terraform.rc
+# Squad: ignore runtime state (logs, inbox, sessions)
+.squad/orchestration-log/
+.squad/log/
+.squad/decisions/inbox/
+.squad/sessions/
+# Squad: SubSquad activation file (local to this machine)
+.squad-workstream

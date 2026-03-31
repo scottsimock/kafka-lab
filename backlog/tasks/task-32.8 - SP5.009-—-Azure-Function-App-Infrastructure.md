@@ -1,10 +1,11 @@
 ---
 id: TASK-32.8
 title: SP5.009 — Azure Function App Infrastructure
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - Parker
 created_date: '2026-03-30 16:46'
-updated_date: '2026-03-30 16:47'
+updated_date: '2026-03-31 18:59'
 labels:
   - story
 milestone: m-5

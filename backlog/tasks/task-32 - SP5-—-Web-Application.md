@@ -1,10 +1,10 @@
 ---
 id: TASK-32
 title: SP5 — Web Application
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-03-30 16:45'
-updated_date: '2026-03-30 17:09'
+updated_date: '2026-03-31 18:59'
 labels:
   - sprint
 milestone: m-5
@@ -26,3 +26,12 @@ Web application sprint covering Next.js 15 project scaffolding, Azure Function A
 - [ ] #3 Four dashboard views are implemented: Cluster Overview, Topic Detail, Consumer Groups, and Message Browser
 - [ ] #4 Azure Function App infrastructure is provisioned with private networking and UAMI authentication
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+## Squad 2026-03-31T14:57:00-04:00
+- SP5 sprint started
+- Branch: sprint/SP5-web-application
+- Wave 1: SP5.001 (Dallas — scaffolding) + SP5.009 (Parker — Function App infra) in parallel
+<!-- SECTION:NOTES:END -->

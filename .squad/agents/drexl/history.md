@@ -7,34 +7,37 @@
 
 ## Core Context
 
-Frontend and full-stack developer for kafka-lab. SP0–SP4 complete (infrastructure and Kafka platform). My domain is the web application and Azure Functions.
+Infrastructure developer for kafka-lab. SP0–SP4 complete (Terraform modules, Ansible roles, Kafka platform). SP5 complete (Web app + Function App). Now leading SP7 (Dev Environment & Testing). My domain covers Terraform AzAPI modules, Ansible playbooks, Azure networking, and CI/CD workflows.
 
-### Upcoming Work (SP5)
+### Key Architecture Decisions
 
-- Next.js 15 project scaffolding with App Router
-- Shared Kafka client module (confluent-kafka)
-- Kafka API route handlers (topics, partitions, brokers, consumer groups)
-- Message produce and consume API routes
-- Dashboard views: cluster overview, topic detail, consumer groups, message browser
-- Schema browser view and API routes
-- Azure Function App infrastructure (Terraform + Python functions)
-
-### Architecture Notes
-
-- Web app runs in same regions and AZs as Kafka clusters
-- All connections via private endpoints — no public access
-- southcentralus (primary), mexicocentral (secondary), canadaeast (DR)
-- Must be easy to use — one-click topic creation, message reading from any topic
+- **Web app:** Next.js 15 at `webapp/` with `output: 'standalone'` for Azure Function App
+- **Kafka client:** @confluentinc/kafka-javascript v1.8.2 with singleton pattern and SIGTERM handler
+- **Function App:** Premium EP1 plan (VNet integration), custom handler via host.json
+- **Networking:** All connections via private endpoints — no public access
+- **Regions:** southcentralus (primary), mexicocentral (secondary), canadaeast (DR)
+- **Dev environment:** VNet, Function App, DNS, Ansible inventory, deployment script, teardown automation
+- **CI/CD:** Smoke tests as fast-fail gate (~2 min), full integration suite in parallel (~8 min)
+- **Cost optimization:** Nightly teardown reduces cloud spend ~99% ($45-55/day → $0.10/day)
 
 ## Recent Updates
 
-📌 Team initialized on 2026-03-31
+📌 SP7 Sprint completed 2026-03-31 — Dev environment + 110 integration tests deployed
 
 ## Learnings
 
-Initial setup complete. Replacing Ruby sprint orchestrator with Squad workflow.
+### SP5 (Web Application) — Archive Summary
 
-### SP5.001 — Next.js 15 Project Scaffolding (2026-03-31)
+SP5 delivered Next.js 15 app with shared Kafka client module, API routes, dashboard views, and schema browser. Key technical decisions documented in `.squad/decisions.md`:
+
+- **Next.js 15 scaffolding:** Standalone output for Function App deployment, route groups to avoid URL nesting, Server Components by default
+- **Kafka client:** Singleton pattern with @confluentinc/kafka-javascript v1.8.2, SIGTERM handler, env-based config (KAFKA_BOOTSTRAP_SERVERS, USERNAME, PASSWORD, SSL_CA)
+- **API routes:** Admin API (cluster, topics, consumer groups), message produce/consume/stream (with SSE), schema browser (direct Schema Registry fetching)
+- **Schema Registry:** Server Components fetch directly via `lib/schema-registry.ts` config helper; REST endpoints documented
+- **Webpack externals:** Native module handling via `next.config.ts` configuration to prevent bundling errors
+- **Critical review fixes:** Storage auth (managed identity + RBAC), SCHEMA_REGISTRY_URL env var, consumer group state badge case mismatch
+
+Full SP5 details archived in previous history entries and `.squad/log/` session logs.
 
 **Key Decisions:**
 - Next.js 15.5.14 installed at `webapp/` subdirectory, not repo root
@@ -174,94 +177,6 @@ SP5 — Web Application sprint is COMPLETE. Delivered 9/10 tasks (all passed rev
 
 
 ## Sprint Update: SP7 Injection (2026-03-31T17:56-04:00)
-
-**By:** Zorg (Sprint Orchestrator)
-
-The sprint roadmap was restructured. A new SP7 (Dev Environment Deployment & Integration Testing) was injected between CI/CD (SP6) and multi-region expansion. Former SP7 (Multi-Region) renamed to SP8. Former SP8 (Resiliency) renamed to SP9.
-
-**New Sprints:**
-- SP7: Dev Environment Deployment & Integration Testing (10 stories)
-- SP8: Multi-Region Expansion (was SP7)
-- SP9: Resiliency and Production Hardening (was SP8)
-
-**Rationale:** Validate single-region dev environment before multi-region complexity. Aligns with REQUIREMENTS.md strategy.
-
-**Impact on Drexl:** Your upcoming work (multi-region) is now SP8. No scope changes — only sprint numbers shifted. Ready to start when SP7 env validation is complete.
-
-### SP7.001 — Deploy Dev Environment to Azure (2026-04-01)
-
-**Key Work Done:**
-
-1. **Function App wired into Terraform** — Module existed at `terraform/modules/function-app/` but was never instantiated in `main.tf`. Added module call (`klc-func-kafkalab-scus`), private endpoint (`klc-pe-func-scus`), and `privatelink.azurewebsites.net` DNS zone.
-
-2. **Function App module fix** — Added `response_export_values = ["properties.defaultHostName"]` to the `azapi_resource.function_app` in `terraform/modules/function-app/main.tf`. Without this, the `function_app_default_hostname` output would fail at plan time.
-
-3. **Outputs extended** — Added `function_app_id`, `function_app_name`, `function_app_hostname`, `app_service_plan_id`, `pe_function_app_id` to `terraform/environments/dev/outputs.tf`.
-
-4. **Static Ansible inventory** — Created `ansible/inventory/dev-static.ini` with known IP allocations from Terraform locals. The dynamic Azure RM inventory (`azure_rm.yml`) requires MSI auth from inside the VNet; static inventory provides a CI/local fallback.
-
-5. **Dev verification playbook** — Created `ansible/playbooks/verify-dev.yml` for dev environment where `kafka_broker_security_enabled: false`. The existing `verify-cluster.yml` assumes SASL_SSL and uses `--command-config admin.properties` which won't work in dev. Dev playbook tests PLAINTEXT + Schema Registry + Kafka Connect endpoints.
-
-6. **Deployment script** — Created `scripts/deploy-dev.sh` orchestrating terraform init → plan → apply → inventory generation → ansible-playbook → verification. Supports `--plan-only`, `--skip-terraform`, `--skip-ansible`, `--skip-verify`.
-
-7. **Deployment docs** — Created `docs/deploy-dev.md` covering prerequisites, architecture, quick start, step-by-step, GitHub Actions integration, inventory options, dev-specific settings, and troubleshooting.
-
-**Key File Paths:**
-- `terraform/environments/dev/main.tf` (lines 692–725: Function App + PE)
-- `terraform/modules/function-app/main.tf` (line 190: response_export_values)
-- `terraform/environments/dev/outputs.tf` (Function App outputs)
-- `ansible/inventory/dev-static.ini` (static inventory)
-- `ansible/playbooks/verify-dev.yml` (dev verification)
-- `scripts/deploy-dev.sh` (deployment orchestration)
-- `docs/deploy-dev.md` (deployment documentation)
-
-**Architecture Notes:**
-- Schema Registry URL uses internal DNS: `http://sr-01.kafkalab.internal:8081`
-- Function App uses Premium EP1 plan with VNet integration to `snet-web-app`
-- All Kafka secrets injected via `@Microsoft.KeyVault()` references
-- Function App private endpoint in `snet-private-endpoints` with dedicated DNS zone
-- Dev environment relaxes security (no SASL_SSL, no ACLs) for faster iteration
-- Static inventory mirrors exact IPs from Terraform locals (ZK: 10.1.2.4–6, KB: 10.1.1.4–6, SR: 10.1.3.4, KC: 10.1.4.4)
-
-### SP7.010 — Dev Environment Teardown & Cost Management (2026-04-01)
-
-**Key Work Done:**
-
-1. **Teardown script** — `scripts/teardown-dev.sh` runs `terraform destroy` with safety prompts (`--confirm` for non-interactive), verifies no orphaned resources via `az resource list`, and cleans up local artifacts (generated inventory, plan files).
-
-2. **GitHub Actions workflows:**
-   - `.github/workflows/dev-teardown.yml` — `workflow_dispatch` trigger, runs terraform destroy with OIDC auth, verifies resource cleanup, posts cost estimation to step summary. Supports `plan_only` and `skip_estimation` inputs.
-   - `.github/workflows/dev-recreate.yml` — `workflow_dispatch` trigger, full pipeline: terraform apply → ansible site.yml → post-provisioning playbooks (credentials, topics, schemas) → webapp deploy → verification. Supports `skip_ansible`, `skip_verify`, `skip_estimation` inputs.
-
-3. **Cost estimation** — Documented in `docs/deploy-dev.md` and in workflow step summaries. Running env costs ~$45–55/day; destroyed env costs ~$0.10/day (state storage only). Weekend teardown saves ~$110–140, nightly teardown saves ~$270–330/week.
-
-4. **Docs updated** — Added comprehensive teardown/recreate sections to `docs/deploy-dev.md` covering: when to teardown, how (script or workflow), how to recreate, what persists vs. what's destroyed, and cost breakdown.
-
-**Key Patterns:**
-- Both workflows use `concurrency: group: deploy-dev` to prevent parallel runs
-- Teardown workflow uses GitHub environment protection rules (same as terraform-deploy.yml)
-- Recreate workflow chains reusable workflows (ansible-deploy.yml, webapp-deploy.yml) with inline jobs for post-provisioning
-- Resource cleanup verification excludes `Microsoft.Storage/storageAccounts` (state backend)
-- All Kafka state (topics, schemas, offsets) is ephemeral in dev — restored by playbooks on recreate
-
-### SP7.009 — CI/CD Pipeline for Integration Tests (2026-04-01)
-
-**Key Work Done:**
-
-1. **Integration tests workflow** — `.github/workflows/integration-tests.yml` with two-job pipeline: smoke tests (fast-fail gate) then full integration suite.
-
-2. **Triggers** — Push to `sprint/SP7-*` branches and `workflow_dispatch`. Manual dispatch supports base URL override and test suite selection (all/smoke/dashboard/operations/schema-registry/integration).
-
-3. **Playwright caching** — Browser binaries cached via `actions/cache` on `~/.cache/ms-playwright` keyed by `package-lock.json` hash.
-
-4. **Artifact strategy** — HTML report always uploaded (14d retention). Raw test-results uploaded only on failure (7d retention).
-
-**Key Patterns:**
-- Concurrency group `integration-tests-${{ github.ref }}` with cancel-in-progress prevents parallel test runs on same branch
-- Smoke job uses `--reporter=list` for fast console output; integration job uses default config (HTML reporter in CI mode via `playwright.config.ts`)
-- `PLAYWRIGHT_BASE_URL` sourced from `inputs.base_url || vars.PLAYWRIGHT_BASE_URL` — repo-level variable, overridable per dispatch
-- Azure OIDC login follows exact pattern from `webapp-deploy.yml` and `dev-teardown.yml`
-- Integration job skipped entirely when `test_suite == 'smoke'`
 
 ## SP7 Sprint Completion — Dev Environment & Integration Testing (2026-03-31T18:13-04:00)
 

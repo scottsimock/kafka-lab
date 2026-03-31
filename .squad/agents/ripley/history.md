@@ -32,3 +32,13 @@ Lead agent for kafka-lab. SP0–SP4 complete (foundation infra, compute, Kafka p
 ## Learnings
 
 Initial setup complete. Replacing Ruby sprint orchestrator with Squad workflow.
+
+### Sprint Workflow Instructions Rewrite (2026-03-31)
+
+Rewrote `.github/instructions/sprint-workflow.instructions.md` to strip out Ruby/PO/SM/TL/Coder/Tester orchestration content. The file now focuses exclusively on conventions that all agents need:
+
+- **Kept:** Naming conventions (backlog IDs, task titles, labels, parent-child structure), git branches (`sprint/SP{N}-{description}`), commit message format (`feat(SP{N}.{NNN}): {description}`), milestones, quality rubrics (coding 90%, research 95%), task status machine, work logging format, documents pattern, technical debt/carryover rules
+- **Removed:** Architecture diagram, sprint lifecycle phases, agent execution modes table, Sprint 0 special structure, SP0 state detection, agent communication with role tags, Ruby-owned PR lifecycle, execution rules table (concurrent limits, retry cycles)
+- **Updated:** Title and description to reflect conventions-only scope, task status machine to be orchestrator-agnostic, technical debt section removed PO references, task assignment tracking updated to Squad agent names
+
+The file is now 138 lines (down from 333). Orchestration rules now live exclusively in `.github/agents/squad.agent.md` and `.squad/` files where Squad agents manage them.

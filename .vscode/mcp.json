@@ -6,6 +6,11 @@
       "env": {
         "BACKLOG_CWD": "/home/simock/kafka-lab"
       }
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest", "--headless"],
+      "cwd": "${workspaceFolder}/webapp"
     }
   }
 }

@@ -152,3 +152,50 @@ The sprint roadmap was restructured. A new SP7 (Dev Environment Deployment & Int
 **Rationale:** Validate single-region dev environment before multi-region complexity. Aligns with REQUIREMENTS.md strategy.
 
 **Impact on Smiley:** Your resiliency work is now SP9. No scope changes — only sprint numbers shifted. Ready to start after multi-region (SP8) validation is complete.
+
+### Playwright E2E Framework Setup (SP7.002)
+
+Configured Playwright as the E2E testing framework for the Next.js webapp:
+
+- **Config:** `webapp/playwright.config.ts` — base URL from `PLAYWRIGHT_BASE_URL` env var (defaults to `localhost:3000`), Chromium project, Firefox/WebKit commented out as options
+- **Timeouts:** Action 30s, navigation 60s, expect 10s — tuned for remote Azure latency
+- **CI behavior:** 1 retry, sequential workers, HTML reporter to `playwright-report/`; locally: 0 retries, parallel workers, list reporter
+- **Test structure:** `webapp/tests/e2e/` with `smoke/`, `integration/`, `fixtures/` subdirectories
+- **Sample test:** `smoke/health.spec.ts` — hits base URL and asserts non-500 response
+- **Scripts:** `test:e2e`, `test:e2e:ui`, `test:e2e:report` added to `package.json`
+- **Gitignore:** `test-results/`, `playwright-report/`, `blob-report/`, `.playwright/` excluded
+- **CI note:** GitHub Actions needs `npx playwright install --with-deps chromium` before running tests
+
+### Playwright MCP Integration (SP7.003)
+
+Configured Playwright MCP server for AI-assisted testing of the webapp:
+
+- **Package:** `@playwright/mcp@^0.0.69` added as devDependency in `webapp/package.json`
+- **VS Code config:** `.vscode/mcp.json` updated with `playwright` server entry — runs `npx @playwright/mcp@latest --headless` with cwd set to webapp
+- **NPM script:** `mcp:playwright` added to `webapp/package.json` for standalone CLI launch
+- **Headless mode:** `--headless` flag used by default so it works in CI and remote environments
+- **Documentation:** `docs/playwright-mcp-setup.md` covers setup, agent capabilities (navigate, click, snapshot, screenshot), dev environment connection, MCP vs E2E test relationship, and troubleshooting
+- **Independence:** MCP server and `npx playwright test` are fully independent — each manages its own browser instance, no config conflicts
+- **Key tools exposed:** `browser_navigate`, `browser_click`, `browser_type`, `browser_snapshot`, `browser_screenshot`, `browser_console_messages`, `browser_network_requests` among others
+
+## SP7 Sprint Completion — Dev Environment & Integration Testing (2026-03-31T18:13-04:00)
+
+**Sprint Status:** COMPLETE (10/10 tasks)
+
+**Tasks Completed:**
+- **SP7.002 (Wave 1):** Playwright framework configured for Azure remote testing — `webapp/playwright.config.ts`, test directory structure, health test
+- **SP7.003 (Wave 2):** Playwright MCP integration enabled — `@playwright/mcp` installed, `.vscode/mcp.json` configured, setup docs created
+
+**Deliverables:**
+- `webapp/playwright.config.ts` — Playwright framework configuration with remote Chrome, screenshots on failure
+- `webapp/e2e/` — Test directory structure (18 total spec files written by team)
+- `webapp/e2e/health.spec.ts` — Sample health test
+- `.vscode/mcp.json` — Playwright MCP configuration
+- `docs/playwright-mcp.md` — MCP setup and usage documentation
+
+**Testing Infrastructure:**
+- 110 total Playwright tests across 18 spec files
+- Smoke tests (37) fast-fail gate in CI/CD
+- Integration tests (73) cover dashboard, operations, schema registry
+
+**Next Steps (SP8):** Multi-region test execution, cross-region connectivity validation, VNet peering tests

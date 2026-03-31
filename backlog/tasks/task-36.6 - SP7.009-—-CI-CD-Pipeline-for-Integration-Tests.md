@@ -1,10 +1,11 @@
 ---
 id: TASK-36.6
 title: SP7.009 — CI/CD Pipeline for Integration Tests
-status: To Do
-assignee: []
+status: Dev Complete
+assignee:
+  - Drexl
 created_date: '2026-03-31 22:01'
-updated_date: '2026-03-31 22:01'
+updated_date: '2026-03-31 22:32'
 labels:
   - story
 milestone: m-9
@@ -36,3 +37,19 @@ Create a GitHub Actions workflow that runs the Playwright integration tests agai
 - [ ] #6 Workflow uses Playwright GitHub Actions caching for fast startup
 - [ ] #7 Pipeline completes within reasonable time (under 15 min for full suite)
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+## [Drexl] 2026-04-01T02:33:00Z
+- Created `.github/workflows/integration-tests.yml`
+- Two-job pipeline: smoke (fast-fail gate, 10m timeout) → integration (full suite, 15m timeout)
+- Triggers: push to `sprint/SP7-*` branches + `workflow_dispatch`
+- workflow_dispatch inputs: base_url override, test_suite selector (all/smoke/dashboard/operations/schema-registry/integration)
+- Azure OIDC auth matching existing workflow patterns
+- Playwright browser cache via `actions/cache` on `~/.cache/ms-playwright`
+- HTML report artifact (14d retention), test-results artifact on failure (7d retention)
+- Concurrency group prevents parallel runs on same branch
+- YAML syntax validated; actionlint not available in env
+- Commit: feat(SP7.009) on main
+<!-- SECTION:NOTES:END -->

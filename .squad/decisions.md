@@ -2,6 +2,25 @@
 
 ## Active Decisions
 
+### Function App Module Wired into Dev Environment
+
+**Author:** Drexl  
+**Date:** 2026-03-31  
+**Task:** SP7.001  
+**Status:** Implemented
+
+The Function App module (`terraform/modules/function-app/`) defined in SP5 was instantiated in the dev environment's Terraform config:
+
+- Module call added as `klc-func-kafkalab-scus` with Premium EP1 plan
+- Private endpoint `klc-pe-func-scus` routes traffic through `snet-private-endpoints`
+- DNS zone `privatelink.azurewebsites.net` resolves Function App hostname privately
+- Schema Registry URL configured as `http://sr-01.kafkalab.internal:8081` (internal DNS)
+- All Kafka secrets injected via `@Microsoft.KeyVault()` references from Key Vault
+
+**Impact:** Function App deployable for Smiley (Frontend). Integration tests can target Function App private endpoint. Dev verification uses PLAINTEXT (not SASL_SSL).
+
+---
+
 ### Consolidate Ansible instructions into SKILL.md
 
 **Author:** Parker (Infra Dev)  

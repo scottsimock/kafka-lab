@@ -187,3 +187,38 @@ The sprint roadmap was restructured. A new SP7 (Dev Environment Deployment & Int
 **Rationale:** Validate single-region dev environment before multi-region complexity. Aligns with REQUIREMENTS.md strategy.
 
 **Impact on Drexl:** Your upcoming work (multi-region) is now SP8. No scope changes — only sprint numbers shifted. Ready to start when SP7 env validation is complete.
+
+### SP7.001 — Deploy Dev Environment to Azure (2026-04-01)
+
+**Key Work Done:**
+
+1. **Function App wired into Terraform** — Module existed at `terraform/modules/function-app/` but was never instantiated in `main.tf`. Added module call (`klc-func-kafkalab-scus`), private endpoint (`klc-pe-func-scus`), and `privatelink.azurewebsites.net` DNS zone.
+
+2. **Function App module fix** — Added `response_export_values = ["properties.defaultHostName"]` to the `azapi_resource.function_app` in `terraform/modules/function-app/main.tf`. Without this, the `function_app_default_hostname` output would fail at plan time.
+
+3. **Outputs extended** — Added `function_app_id`, `function_app_name`, `function_app_hostname`, `app_service_plan_id`, `pe_function_app_id` to `terraform/environments/dev/outputs.tf`.
+
+4. **Static Ansible inventory** — Created `ansible/inventory/dev-static.ini` with known IP allocations from Terraform locals. The dynamic Azure RM inventory (`azure_rm.yml`) requires MSI auth from inside the VNet; static inventory provides a CI/local fallback.
+
+5. **Dev verification playbook** — Created `ansible/playbooks/verify-dev.yml` for dev environment where `kafka_broker_security_enabled: false`. The existing `verify-cluster.yml` assumes SASL_SSL and uses `--command-config admin.properties` which won't work in dev. Dev playbook tests PLAINTEXT + Schema Registry + Kafka Connect endpoints.
+
+6. **Deployment script** — Created `scripts/deploy-dev.sh` orchestrating terraform init → plan → apply → inventory generation → ansible-playbook → verification. Supports `--plan-only`, `--skip-terraform`, `--skip-ansible`, `--skip-verify`.
+
+7. **Deployment docs** — Created `docs/deploy-dev.md` covering prerequisites, architecture, quick start, step-by-step, GitHub Actions integration, inventory options, dev-specific settings, and troubleshooting.
+
+**Key File Paths:**
+- `terraform/environments/dev/main.tf` (lines 692–725: Function App + PE)
+- `terraform/modules/function-app/main.tf` (line 190: response_export_values)
+- `terraform/environments/dev/outputs.tf` (Function App outputs)
+- `ansible/inventory/dev-static.ini` (static inventory)
+- `ansible/playbooks/verify-dev.yml` (dev verification)
+- `scripts/deploy-dev.sh` (deployment orchestration)
+- `docs/deploy-dev.md` (deployment documentation)
+
+**Architecture Notes:**
+- Schema Registry URL uses internal DNS: `http://sr-01.kafkalab.internal:8081`
+- Function App uses Premium EP1 plan with VNet integration to `snet-web-app`
+- All Kafka secrets injected via `@Microsoft.KeyVault()` references
+- Function App private endpoint in `snet-private-endpoints` with dedicated DNS zone
+- Dev environment relaxes security (no SASL_SSL, no ACLs) for faster iteration
+- Static inventory mirrors exact IPs from Terraform locals (ZK: 10.1.2.4–6, KB: 10.1.1.4–6, SR: 10.1.3.4, KC: 10.1.4.4)

@@ -86,3 +86,28 @@ output "kafka_connect_private_ips" {
   description = "Map of Kafka Connect VM name to private IP address"
   value       = { for k, v in module.kafka_connect_vms : k => v.private_ip_address }
 }
+
+output "function_app_id" {
+  description = "Resource ID of the Function App"
+  value       = module.function_app.function_app_id
+}
+
+output "function_app_name" {
+  description = "Name of the Function App"
+  value       = module.function_app.function_app_name
+}
+
+output "function_app_hostname" {
+  description = "Default hostname of the Function App"
+  value       = module.function_app.function_app_default_hostname
+}
+
+output "app_service_plan_id" {
+  description = "Resource ID of the App Service Plan"
+  value       = module.function_app.app_service_plan_id
+}
+
+output "pe_function_app_id" {
+  description = "Resource ID of the Function App private endpoint"
+  value       = module.pe_function_app.private_endpoint_id
+}

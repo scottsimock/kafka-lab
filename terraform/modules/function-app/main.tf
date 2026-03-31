@@ -187,6 +187,8 @@ resource "azapi_resource" "function_app" {
     }
   }
 
+  response_export_values = ["properties.defaultHostName"]
+
   depends_on = [
     azapi_resource.kv_role_assignment,
     azapi_resource.storage_blob_role,

@@ -1,0 +1,176 @@
+---
+# verify-dev.yml — Dev environment verification playbook
+# Validates cluster health without SASL_SSL (security disabled in dev).
+# For production verification with security, use verify-cluster.yml.
+
+- name: Verify ZooKeeper ensemble health
+  hosts: zookeeper
+  gather_facts: false
+  any_errors_fatal: true
+  tasks:
+    - name: Check ZooKeeper health via ruok
+      ansible.builtin.command:
+        cmd: bash -c "echo ruok | nc -w 5 localhost {{ zookeeper_client_port | default(2181) }}"
+      register: zk_ruok
+      changed_when: false
+      failed_when: "zk_ruok.stdout != 'imok'"
+
+    - name: Check ZooKeeper mode via stat
+      ansible.builtin.command:
+        cmd: bash -c "echo stat | nc -w 5 localhost {{ zookeeper_client_port | default(2181) }}"
+      register: zk_stat
+      changed_when: false
+      failed_when: "'Mode:' not in zk_stat.stdout"
+
+    - name: Display ZooKeeper node mode
+      ansible.builtin.debug:
+        msg: >-
+          {{ inventory_hostname }} mode:
+          {{ zk_stat.stdout_lines | select('match', 'Mode:.*') | list | first | default('unknown') }}
+
+- name: Verify Kafka cluster health (dev — no security)
+  hosts: 'kafka_broker[0]'
+  gather_facts: true
+  any_errors_fatal: true
+  vars:
+    verify_bin_dir: "{{ confluent_current_link | default('/opt/confluent/current') }}/bin"
+    verify_topic_name: kafkalab-verify-test
+    verify_topic_partitions: 6
+    verify_topic_replication_factor: 3
+    verify_bootstrap_server: 'localhost:{{ kafka_broker_client_port | default(9092) }}'
+  tasks:
+    - name: Verify broker API connectivity
+      ansible.builtin.command:
+        cmd: >-
+          {{ verify_bin_dir }}/kafka-broker-api-versions
+          --bootstrap-server {{ verify_bootstrap_server }}
+      register: broker_api
+      failed_when: broker_api.rc != 0
+      changed_when: false
+      become: true
+      become_user: '{{ kafka_user }}'
+
+    - name: List existing topics
+      ansible.builtin.command:
+        cmd: >-
+          {{ verify_bin_dir }}/kafka-topics
+          --bootstrap-server {{ verify_bootstrap_server }}
+          --list
+      register: topic_list
+      failed_when: topic_list.rc != 0
+      changed_when: false
+      become: true
+      become_user: '{{ kafka_user }}'
+
+    - name: Create verification test topic (idempotent)
+      ansible.builtin.command:
+        cmd: >-
+          {{ verify_bin_dir }}/kafka-topics
+          --bootstrap-server {{ verify_bootstrap_server }}
+          --create --if-not-exists
+          --topic {{ verify_topic_name }}
+          --partitions {{ verify_topic_partitions }}
+          --replication-factor {{ verify_topic_replication_factor }}
+      changed_when: true
+      become: true
+      become_user: '{{ kafka_user }}'
+
+    - name: Describe verification test topic
+      ansible.builtin.command:
+        cmd: >-
+          {{ verify_bin_dir }}/kafka-topics
+          --bootstrap-server {{ verify_bootstrap_server }}
+          --describe --topic {{ verify_topic_name }}
+      register: topic_describe
+      failed_when: "'ReplicationFactor: 3' not in topic_describe.stdout"
+      changed_when: false
+      become: true
+      become_user: '{{ kafka_user }}'
+
+    - name: Produce test messages (PLAINTEXT)
+      ansible.builtin.shell:
+        cmd: >-
+          printf 'dev-test-1\ndev-test-2\ndev-test-3\n' |
+          {{ verify_bin_dir }}/kafka-console-producer
+          --bootstrap-server {{ verify_bootstrap_server }}
+          --topic {{ verify_topic_name }}
+      changed_when: true
+      become: true
+      become_user: '{{ kafka_user }}'
+
+    - name: Consume test messages (PLAINTEXT)
+      ansible.builtin.command:
+        cmd: >-
+          {{ verify_bin_dir }}/kafka-console-consumer
+          --bootstrap-server {{ verify_bootstrap_server }}
+          --topic {{ verify_topic_name }}
+          --from-beginning
+          --max-messages 3
+          --timeout-ms 30000
+      register: consumed
+      failed_when: consumed.stdout_lines | length < 3
+      changed_when: false
+      become: true
+      become_user: '{{ kafka_user }}'
+
+- name: Verify Schema Registry health (dev)
+  hosts: schema_registry
+  gather_facts: false
+  any_errors_fatal: true
+  tasks:
+    - name: Check Schema Registry subjects endpoint
+      ansible.builtin.uri:
+        url: 'http://localhost:8081/subjects'
+        method: GET
+        return_content: true
+      register: sr_subjects
+      failed_when: sr_subjects.status != 200
+
+    - name: Check Schema Registry config endpoint
+      ansible.builtin.uri:
+        url: 'http://localhost:8081/config'
+        method: GET
+        return_content: true
+      register: sr_config
+      failed_when: sr_config.status != 200
+
+- name: Verify Kafka Connect health (dev)
+  hosts: kafka_connect
+  gather_facts: false
+  any_errors_fatal: true
+  tasks:
+    - name: Check Kafka Connect root endpoint
+      ansible.builtin.uri:
+        url: 'http://localhost:8083/'
+        method: GET
+        return_content: true
+      register: kc_root
+      failed_when: kc_root.status != 200
+
+    - name: Check Kafka Connect connector plugins
+      ansible.builtin.uri:
+        url: 'http://localhost:8083/connector-plugins'
+        method: GET
+        return_content: true
+      register: kc_plugins
+      failed_when: kc_plugins.status != 200
+
+- name: Display dev verification summary
+  hosts: 'kafka_broker[0]'
+  gather_facts: false
+  tasks:
+    - name: Print summary
+      ansible.builtin.debug:
+        msg: |
+          ============================================================
+          Dev environment verification PASSED
+          ============================================================
+          - ZooKeeper ensemble: healthy (ruok=imok on all nodes)
+          - Kafka brokers: API connectivity confirmed
+          - Topic created: {{ verify_topic_name }} (RF=3, partitions=6)
+          - Messages produced and consumed (PLAINTEXT): OK
+          - Schema Registry: responding on port 8081
+          - Kafka Connect: responding on port 8083
+          ============================================================
+      vars:
+        verify_topic_name: kafkalab-verify-test

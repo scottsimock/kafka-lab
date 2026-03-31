@@ -579,6 +579,7 @@ locals {
   private_dns_zones = {
     "blob"     = "privatelink.blob.core.windows.net"
     "vault"    = "privatelink.vaultcore.azure.net"
+    "sites"    = "privatelink.azurewebsites.net"
     "internal" = "kafkalab.internal"
   }
 }
@@ -684,6 +685,41 @@ module "pe_key_vault" {
   group_ids          = ["vault"]
   dns_zone_ids = {
     "vault" = module.private_dns_zones["vault"].dns_zone_id
+  }
+  tags = local.common_tags
+}
+
+// =====================================================
+// Function App (Web Application)
+// =====================================================
+
+module "function_app" {
+  source = "../../modules/function-app"
+
+  name                                = "klc-func-kafkalab-scus"
+  location                            = var.primary_location
+  resource_group_id                   = data.azapi_resource.resource_group.id
+  web_app_subnet_id                   = module.vnet_scus.subnet_ids["snet-web-app"]
+  user_assigned_identity_id           = module.uami_kafkalab.uami_id
+  user_assigned_identity_principal_id = module.uami_kafkalab.uami_principal_id
+  user_assigned_identity_client_id    = module.uami_kafkalab.uami_client_id
+  key_vault_name                      = module.key_vault.key_vault_name
+  key_vault_id                        = module.key_vault.key_vault_id
+  schema_registry_url                 = "http://sr-01.kafkalab.internal:8081"
+  tags                                = merge(local.common_tags, { component = "webapp" })
+}
+
+module "pe_function_app" {
+  source = "../../modules/private-endpoint"
+
+  name               = "klc-pe-func-scus"
+  location           = var.primary_location
+  resource_group_id  = data.azapi_resource.resource_group.id
+  subnet_id          = module.vnet_scus.subnet_ids["snet-private-endpoints"]
+  target_resource_id = module.function_app.function_app_id
+  group_ids          = ["sites"]
+  dns_zone_ids = {
+    "sites" = module.private_dns_zones["sites"].dns_zone_id
   }
   tags = local.common_tags
 }

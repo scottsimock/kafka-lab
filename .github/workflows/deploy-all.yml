@@ -1,0 +1,87 @@
+# One-Click Deployment Orchestration Workflow
+#
+# Chains terraform → ansible → webapp reusable workflows with component
+# selection and environment targeting.  Dry-run mode plans infrastructure
+# without applying or deploying.
+#
+# Usage:
+#   Trigger manually via Actions → Deploy All → Run workflow.
+
+name: Deploy All
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target deployment environment'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+        default: dev
+      component:
+        description: 'Component(s) to deploy'
+        required: true
+        type: choice
+        options:
+          - all
+          - terraform-only
+          - ansible-only
+          - webapp-only
+        default: all
+      terraform_action:
+        description: 'Terraform action'
+        required: false
+        type: choice
+        options:
+          - plan
+          - apply
+        default: plan
+      dry_run:
+        description: 'Dry run — plan only, no apply or deploy'
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: deploy-${{ github.event.inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  # ── Infrastructure ───────────────────────────────────────────────────
+  terraform:
+    if: >-
+      inputs.component == 'all' || inputs.component == 'terraform-only'
+    uses: ./.github/workflows/terraform-deploy.yml
+    with:
+      environment: ${{ inputs.environment }}
+      working_directory: terraform/environments/${{ inputs.environment }}
+      plan_only: ${{ inputs.dry_run || inputs.terraform_action == 'plan' }}
+    secrets: inherit
+
+  # ── Configuration Management ─────────────────────────────────────────
+  ansible:
+    needs: terraform
+    if: >-
+      always() && !failure() &&
+      (inputs.component == 'all' || inputs.component == 'ansible-only')
+    uses: ./.github/workflows/ansible-deploy.yml
+    with:
+      environment: ${{ inputs.environment }}
+      playbook_path: ansible/site.yml
+      inventory_path: ansible/inventory/azure_rm.yml
+    secrets: inherit
+
+  # ── Web Application ──────────────────────────────────────────────────
+  webapp:
+    needs: ansible
+    if: >-
+      always() && !failure() &&
+      (inputs.component == 'all' || inputs.component == 'webapp-only') &&
+      !inputs.dry_run
+    uses: ./.github/workflows/webapp-deploy.yml
+    with:
+      environment: ${{ inputs.environment }}
+    secrets: inherit

@@ -24,6 +24,6 @@
 - **Project:** kafka-lab
 - **User:** simock
 - **Stack:** Terraform (AzAPI), Ansible, Next.js 15, GitHub Actions, Azure VMs
-- **Progress:** SP0–SP4 complete (foundation, compute, Kafka platform, ecosystem)
-- **Remaining:** SP5 (Web App), SP6 (CI/CD), SP7 (Multi-Region), SP8 (Resiliency)
+- **Progress:** SP0–SP6 complete (foundation, compute, Kafka platform, ecosystem, web app, CI/CD)
+- **Remaining:** SP7 (Multi-Region), SP8 (Resiliency)
 - **Created:** 2026-03-31

@@ -1,0 +1,171 @@
+# Integration Tests Workflow
+#
+# Runs Playwright E2E tests against the dev environment. Smoke tests
+# run first as a fast-fail gate — if they fail, the full integration
+# suite is skipped entirely.
+#
+# Triggers on pushes to sprint/SP7-* branches and manual dispatch.
+# Manual dispatch supports base URL override and test suite selection.
+
+name: Integration Tests
+
+on:
+  push:
+    branches:
+      - 'sprint/SP7-*'
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Override PLAYWRIGHT_BASE_URL (leave empty for default from vars)'
+        required: false
+        type: string
+      test_suite:
+        description: 'Test suite to run'
+        required: false
+        type: choice
+        options:
+          - all
+          - smoke
+          - dashboard
+          - operations
+          - schema-registry
+          - integration
+        default: all
+
+concurrency:
+  group: integration-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # ── Smoke Tests (fast-fail gate) ──────────────────────────────────────
+  smoke:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: webapp
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: webapp/package-lock.json
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('webapp/package-lock.json') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: Install Playwright (Chromium)
+        run: npx playwright install --with-deps chromium
+
+      - name: Run smoke tests
+        env:
+          CI: 'true'
+          PLAYWRIGHT_BASE_URL: ${{ inputs.base_url || vars.PLAYWRIGHT_BASE_URL }}
+        run: npx playwright test tests/e2e/smoke/ --reporter=list
+
+  # ── Integration Tests (full suite) ────────────────────────────────────
+  integration:
+    name: Integration Tests
+    needs: smoke
+    # Skip when user explicitly requested smoke-only via workflow_dispatch.
+    # On push triggers inputs.test_suite is empty, so this always runs.
+    if: inputs.test_suite != 'smoke'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: webapp
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: webapp/package-lock.json
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('webapp/package-lock.json') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: Install Playwright (Chromium)
+        run: npx playwright install --with-deps chromium
+
+      - name: Determine test path
+        id: test-path
+        run: |
+          SUITE="${{ inputs.test_suite }}"
+          case "${SUITE}" in
+            dashboard)        echo "path=tests/e2e/dashboard/" >> "$GITHUB_OUTPUT" ;;
+            operations)       echo "path=tests/e2e/operations/" >> "$GITHUB_OUTPUT" ;;
+            schema-registry)  echo "path=tests/e2e/schema-registry/" >> "$GITHUB_OUTPUT" ;;
+            integration)      echo "path=tests/e2e/integration/" >> "$GITHUB_OUTPUT" ;;
+            *)                echo "path=" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      - name: Run integration tests
+        env:
+          CI: 'true'
+          PLAYWRIGHT_BASE_URL: ${{ inputs.base_url || vars.PLAYWRIGHT_BASE_URL }}
+        run: npx playwright test ${{ steps.test-path.outputs.path }}
+
+      - name: Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: webapp/playwright-report/
+          retention-days: 14
+
+      - name: Upload test results on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: webapp/test-results/
+          retention-days: 7

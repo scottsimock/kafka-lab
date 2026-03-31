@@ -1,11 +1,11 @@
 ---
 id: TASK-36.1
 title: SP7.001 — Deploy Dev Environment to Azure
-status: In Progress
+status: Dev Complete
 assignee:
   - Drexl
 created_date: '2026-03-31 22:00'
-updated_date: '2026-03-31 22:22'
+updated_date: '2026-03-31 22:23'
 labels:
   - story
 milestone: m-9

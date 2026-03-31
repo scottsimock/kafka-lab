@@ -1,9 +1,10 @@
 ---
 id: TASK-36
 title: SP7 — Dev Environment Deployment & Integration Testing
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-03-31 21:59'
+updated_date: '2026-03-31 22:13'
 labels:
   - sprint
 milestone: SP7

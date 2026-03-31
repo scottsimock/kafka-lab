@@ -50,3 +50,6 @@ todo:
 - ﻿When starting a new sprint, I'm noticing that its taking a while for ruby to complete the initial step and pass control to the PO. Looking at the Status Update section in the
 backlog/milestone file, appears ruby is taking about 10 minutes even when the human is not in the loop. How can we decrease the time it takes to for ruby to do her work and pass
 control to the PO.
+
+
+﻿ hi squad, we need to refactor our sprint work to inject a new sprint 7 (SP7) to actually deploy the code into our azure subscription and do so integration testing. 

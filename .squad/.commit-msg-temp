@@ -1,0 +1,12 @@
+feat(squad): add task documentation standard and process template
+
+- Formalized task documentation pattern from SP0-SP4 backlog analysis
+- Created .squad/templates/task-documentation.md (398 lines) with core fields, agent responsibilities, handoff documentation, quality rubrics, status discipline, and verification checklist
+- Merged 2 inbox decisions into decisions.md (Smiley task documentation standard, Ripley SP5 web application sprint review)
+- Added orchestration log (.squad/orchestration-log/2026-03-31T20-34-00Z-smiley-task-docs.md)
+- Added session log (.squad/log/2026-03-31T20-34-00Z-task-documentation-standard.md)
+- Deleted inbox files after merge
+
+All squad agents now follow consistent documentation patterns for backlog task completion: acceptance criteria checkmarks, agent-stamped implementation notes, artifact tracking, quality scoring, and visible handoffs.
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>

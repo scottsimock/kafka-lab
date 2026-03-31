@@ -99,3 +99,41 @@ Generated comprehensive sprint reports for SP0 through SP5:
 - **Architecture:** Progressive delivery from foundation infrastructure → compute → Kafka platform → ecosystem → web app
 
 Reports serve as historical record for retrospectives, progress tracking, and knowledge transfer. Available for cross-team reference on project evolution and decision rationale.
+
+### Task Documentation Standard (2026-04-01)
+
+Reviewed SP0–SP4 backlog tasks to understand how agents document work completion. Found consistent patterns across all completed tasks:
+
+**Patterns observed:**
+1. **Acceptance criteria:** Agents progressively check off items (`[x]`) as they complete work using `acceptanceCriteriaCheck` parameter
+2. **Implementation notes:** Agent-stamped log entries with ISO 8601 timestamps documenting work summary, decisions, artifacts (file paths, document IDs, commits), and quality metrics
+3. **Handoff visibility:** Notes trace work lifecycle — TL assignment → Implementor execution → Reviewer verification → Done status
+4. **Quality recording:** Structured rubric breakdowns (Research: 95% threshold with Accuracy/Completeness/Sources/Documentation/Actionability; Coding: 90% threshold with AC/Tests/Code Quality/Documentation/Dependencies)
+5. **Status discipline:** Task status field synchronized with AC completion and review outcomes
+
+**Examples reviewed:**
+- TASK-27.6 (Research): 2-cycle review with score breakdowns, UAMI fix, KRaft additions, URL versioning corrections — final 96.30% PASS
+- TASK-28.5 (VNet Module): Single-cycle review, all AC met, 100% score, clean handoff from Coder-2 → Tester-2
+- TASK-29.1 (VM Module): TL assignment note → Coder implementation → Tester structured checklist (14/14), 100% PASS
+- TASK-30.1 (Kafka Broker): Multi-section implementation plan, extensibility design for future tasks, final summary with all artifacts
+- TASK-31.3 (Schema Registry): Dependencies tracked, TLS integration documented, SASL_SSL config following broker pattern
+
+**Decision:**
+Formalized this pattern in `.squad/templates/task-documentation.md` (12KB, 400+ lines) covering:
+- Core fields: Acceptance Criteria, Implementation Notes, Implementation Plan, Final Summary
+- Agent responsibilities: Implementor (append notes, check AC, set Dev Complete), Reviewer (document findings, check/uncheck AC, set Done/In Progress), Lead (document assignments and handoffs)
+- Handoff documentation: TL→Implementor, Implementor→Reviewer, Reviewer→Implementor (retry), Reviewer→Done
+- Quality score recording: Structured rubric formats for research (5 categories) and coding (5 categories)
+- Status discipline: Mandatory status updates at lifecycle boundaries
+- Documentation Check: Reviewers verify 6 items before marking Done (all AC checked, 2+ notes, timestamps, artifacts, status alignment, handoffs traceable)
+- Tools reference: `acceptanceCriteriaCheck`, `notesAppend`, status updates, combined edits
+- Anti-patterns: Examples of what NOT to do (generic notes, missing timestamps, status/AC misalignment)
+
+**Impact:**
+- Humans can now see handoffs happening by scanning backlog tasks
+- Quality transparency: review scores and pass/fail verdicts are durable
+- Artifact traceability: every task links to files, commits, document IDs
+- Sprint reports have richer source data for retrospectives
+
+**Implementation:**
+Created `.squad/templates/task-documentation.md` and decision record in `.squad/decisions/inbox/smiley-task-documentation-standard.md`. All squad agents now have a single reference for backlog documentation conventions. Existing SP0–SP4 tasks already follow this pattern — standard codifies observed practice.

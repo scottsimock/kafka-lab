@@ -1,0 +1,155 @@
+# Reusable Terraform Deployment Workflow
+#
+# Performs plan (and optionally apply) for Azure infrastructure managed with
+# the AzAPI provider.  Authentication uses OIDC federated credentials — no
+# long-lived secrets are stored.
+#
+# Usage from a caller workflow:
+#
+#   jobs:
+#     deploy:
+#       uses: ./.github/workflows/terraform-deploy.yml
+#       with:
+#         environment: dev
+#       secrets: inherit
+
+name: Terraform Deploy
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "Target environment (e.g. dev, staging, prod)"
+        required: true
+        type: string
+      working_directory:
+        description: "Path to the Terraform root module"
+        required: false
+        type: string
+        default: "terraform/environments/dev"
+      plan_only:
+        description: "When true, skip the apply job"
+        required: false
+        type: boolean
+        default: false
+
+# OIDC + AzureRM/AzAPI environment variables shared by all jobs.
+# ARM_USE_OIDC tells the providers to exchange the GitHub-issued
+# ID token for an Azure access token — no client secret needed.
+env:
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  ARM_USE_OIDC: "true"
+  ARM_USE_AZUREAD: "true"
+  TF_IN_AUTOMATION: "true"
+
+jobs:
+  # ── Plan ────────────────────────────────────────────────────────────
+  plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Cache Terraform providers
+        uses: actions/cache@v4
+        with:
+          path: ${{ inputs.working_directory }}/.terraform/providers
+          key: terraform-providers-${{ hashFiles(format('{0}/.terraform.lock.hcl', inputs.working_directory)) }}
+          restore-keys: |
+            terraform-providers-
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -backend-config="key=kafka-lab/${{ inputs.environment }}.tfstate"
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        run: terraform validate -no-color
+
+      - name: Terraform Plan
+        run: |
+          terraform plan -no-color -input=false -out=tfplan \
+            | tee plan-output.txt
+
+      - name: Upload Plan Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-${{ inputs.environment }}
+          path: |
+            ${{ inputs.working_directory }}/tfplan
+            ${{ inputs.working_directory }}/plan-output.txt
+          retention-days: 7
+
+  # ── Apply ───────────────────────────────────────────────────────────
+  # Runs only when plan_only is false.  The `environment` key enables
+  # GitHub environment protection rules (required reviewers, wait timers).
+  apply:
+    name: Terraform Apply
+    if: inputs.plan_only == false
+    needs: plan
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Cache Terraform providers
+        uses: actions/cache@v4
+        with:
+          path: ${{ inputs.working_directory }}/.terraform/providers
+          key: terraform-providers-${{ hashFiles(format('{0}/.terraform.lock.hcl', inputs.working_directory)) }}
+          restore-keys: |
+            terraform-providers-
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -backend-config="key=kafka-lab/${{ inputs.environment }}.tfstate"
+
+      - name: Download Plan Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan-${{ inputs.environment }}
+          path: ${{ inputs.working_directory }}
+
+      - name: Terraform Apply
+        run: terraform apply -no-color -input=false tfplan

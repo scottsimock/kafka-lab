@@ -1,0 +1,107 @@
+name: Deploy Web Application
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: Deployment environment (e.g., dev, staging, prod)
+        type: string
+        required: true
+      function_app_name:
+        description: Azure Function App name
+        type: string
+        default: klc-func-kafkalab-${{ inputs.environment }}-scus
+      slot_name:
+        description: Deployment slot name for zero-downtime updates
+        type: string
+        required: false
+    secrets:
+      AZURE_CLIENT_ID:
+        required: true
+      AZURE_TENANT_ID:
+        required: true
+      AZURE_SUBSCRIPTION_ID:
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: webapp/package-lock.json
+
+      - name: Install dependencies
+        working-directory: webapp
+        run: npm ci
+
+      - name: Build Next.js application
+        working-directory: webapp
+        env:
+          NODE_ENV: production
+          NEXT_PUBLIC_ENV: ${{ inputs.environment }}
+        run: npm run build
+
+      - name: Package standalone output for Function App
+        working-directory: webapp
+        run: |
+          mkdir -p deploy-package/.next/static
+
+          # Standalone server and its bundled node_modules
+          cp -r .next/standalone/. deploy-package/
+
+          # Static assets produced by the build
+          cp -r .next/static/. deploy-package/.next/static/
+
+          # Public assets (if any exist)
+          if [ -d public ] && [ "$(ls -A public 2>/dev/null)" ]; then
+            cp -r public deploy-package/
+          fi
+
+          # Azure Functions configuration
+          cp host.json deploy-package/
+          cp local.settings.json deploy-package/
+
+      - name: Upload deployment artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: webapp-${{ inputs.environment }}
+          path: webapp/deploy-package/
+          retention-days: 5
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to Azure Function App
+        uses: azure/functions-action@v2
+        with:
+          app-name: ${{ inputs.function_app_name }}
+          package: webapp/deploy-package
+          slot-name: ${{ inputs.slot_name || 'production' }}
+
+      - name: Swap deployment slot to production
+        if: inputs.slot_name != '' && inputs.slot_name != 'production'
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            az functionapp deployment slot swap \
+              --name "${{ inputs.function_app_name }}" \
+              --resource-group "klc-rg-kafkalab-${{ inputs.environment }}-scus" \
+              --slot "${{ inputs.slot_name }}" \
+              --target-slot production

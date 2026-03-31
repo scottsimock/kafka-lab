@@ -243,3 +243,22 @@ The sprint roadmap was restructured. A new SP7 (Dev Environment Deployment & Int
 - Recreate workflow chains reusable workflows (ansible-deploy.yml, webapp-deploy.yml) with inline jobs for post-provisioning
 - Resource cleanup verification excludes `Microsoft.Storage/storageAccounts` (state backend)
 - All Kafka state (topics, schemas, offsets) is ephemeral in dev — restored by playbooks on recreate
+
+### SP7.009 — CI/CD Pipeline for Integration Tests (2026-04-01)
+
+**Key Work Done:**
+
+1. **Integration tests workflow** — `.github/workflows/integration-tests.yml` with two-job pipeline: smoke tests (fast-fail gate) then full integration suite.
+
+2. **Triggers** — Push to `sprint/SP7-*` branches and `workflow_dispatch`. Manual dispatch supports base URL override and test suite selection (all/smoke/dashboard/operations/schema-registry/integration).
+
+3. **Playwright caching** — Browser binaries cached via `actions/cache` on `~/.cache/ms-playwright` keyed by `package-lock.json` hash.
+
+4. **Artifact strategy** — HTML report always uploaded (14d retention). Raw test-results uploaded only on failure (7d retention).
+
+**Key Patterns:**
+- Concurrency group `integration-tests-${{ github.ref }}` with cancel-in-progress prevents parallel test runs on same branch
+- Smoke job uses `--reporter=list` for fast console output; integration job uses default config (HTML reporter in CI mode via `playwright.config.ts`)
+- `PLAYWRIGHT_BASE_URL` sourced from `inputs.base_url || vars.PLAYWRIGHT_BASE_URL` — repo-level variable, overridable per dispatch
+- Azure OIDC login follows exact pattern from `webapp-deploy.yml` and `dev-teardown.yml`
+- Integration job skipped entirely when `test_suite == 'smoke'`

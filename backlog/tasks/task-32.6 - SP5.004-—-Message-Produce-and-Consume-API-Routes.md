@@ -1,10 +1,11 @@
 ---
 id: TASK-32.6
 title: SP5.004 — Message Produce and Consume API Routes
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - Dallas
 created_date: '2026-03-30 16:46'
-updated_date: '2026-03-30 16:47'
+updated_date: '2026-03-31 19:12'
 labels:
   - story
 milestone: m-5

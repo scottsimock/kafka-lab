@@ -1,11 +1,11 @@
 ---
 id: TASK-32.4
 title: SP5.001 — Next.js 15 Project Scaffolding
-status: In Progress
+status: Dev Complete
 assignee:
   - Dallas
 created_date: '2026-03-30 16:46'
-updated_date: '2026-03-31 18:59'
+updated_date: '2026-03-31 19:06'
 labels:
   - story
 milestone: m-5

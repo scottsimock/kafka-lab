@@ -6,7 +6,6 @@ instructions:
   - .github/instructions/context7.instructions.md
   - .github/instructions/coding-standards/ansible.instructions.md
   - .github/instructions/coding-standards/azure-environment.instructions.md
-  - .github/instructions/coding-standards/devops-core-principles.instructions.md
   - .github/instructions/coding-standards/terraform.instructions.md
 ---
 

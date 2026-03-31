@@ -23,7 +23,6 @@ jobs:
   detect-drift:
     name: Detect Drift — dev
     runs-on: ubuntu-latest
-    environment: prod
     permissions:
       id-token: write
       contents: read
@@ -63,7 +62,11 @@ jobs:
         continue-on-error: true
         run: |
           set +e
-          terraform plan -detailed-exitcode -no-color -input=false -out=tfplan 2>&1 | tee drift-output.txt
+          terraform plan -detailed-exitcode -no-color -input=false -out=tfplan \
+            -var-file="terraform.dev.tfvars" \
+            -var="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+            -var="ssh_public_key=${{ secrets.SSH_PUBLIC_KEY }}" \
+            2>&1 | tee drift-output.txt
           echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub issue on drift

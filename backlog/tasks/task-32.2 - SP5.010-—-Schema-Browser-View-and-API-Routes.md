@@ -1,11 +1,11 @@
 ---
 id: TASK-32.2
 title: SP5.010 — Schema Browser View and API Routes
-status: In Progress
+status: Dev Complete
 assignee:
   - Dallas
 created_date: '2026-03-30 16:46'
-updated_date: '2026-03-31 19:12'
+updated_date: '2026-03-31 19:22'
 labels:
   - story
 milestone: m-5

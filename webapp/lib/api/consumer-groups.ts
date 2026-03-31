@@ -31,9 +31,10 @@ export interface ConsumerGroupDetail {
   partitions: ConsumerGroupPartition[];
 }
 
-export function formatConsumerGroupState(state: string): string {
-  // Format consumer group state for display
-  return state.toUpperCase();
+export function formatConsumerGroupState(state: string | number): string {
+  // Convert numeric state to uppercase string for display
+  const stateStr = String(state).toUpperCase();
+  return stateStr;
 }
 
 export async function fetchConsumerGroups(): Promise<ConsumerGroupSummary[]> {

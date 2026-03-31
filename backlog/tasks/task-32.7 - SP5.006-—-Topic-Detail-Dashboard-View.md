@@ -1,10 +1,11 @@
 ---
 id: TASK-32.7
 title: SP5.006 — Topic Detail Dashboard View
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - Dallas
 created_date: '2026-03-30 16:46'
-updated_date: '2026-03-30 16:47'
+updated_date: '2026-03-31 19:23'
 labels:
   - story
 milestone: m-5

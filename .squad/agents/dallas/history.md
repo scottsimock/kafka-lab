@@ -134,3 +134,37 @@ The @confluentinc/kafka-javascript library exports via namespaces (`KafkaJS`, `R
 - `webapp/app/api/messages/stream/route.ts` — SSE streaming
 - `webapp/next.config.ts` — webpack configuration for native modules
 
+### SP5.010 — Schema Browser View and API Routes (2026-03-31)
+
+**Key Patterns:**
+- Schema Registry is a separate HTTP service with REST API — use `fetch()`, NOT the Kafka client
+- Config helper pattern: `lib/schema-registry.ts` exports `getSchemaRegistryUrl()` function
+- Schema Registry REST API endpoints:
+  - `GET /subjects` — list all subject names
+  - `GET /subjects/{subject}/versions` — list version numbers for a subject
+  - `GET /subjects/{subject}/versions/{version}` — get schema for specific version
+  - `GET /config/{subject}` — get compatibility mode for subject
+- Server Components can fetch directly from Schema Registry — no need to route through our API
+- Use `cache: 'no-store'` in fetch calls to prevent stale data
+- Schema formatting: parse and pretty-print JSON for AVRO and JSON schema types
+- Error handling: 502 when Schema Registry unavailable, 404 for missing subjects
+- Dynamic routes use `params: Promise<{ subject: string }>` — always await
+
+**API Response Structures:**
+- Schemas list: `{ subjects: [{ name, latestVersion, compatibility }] }`
+- Subject detail: `{ subject, compatibility, versions: [{ version, id, schema, schemaType }] }`
+
+**Dashboard Views:**
+- Schema list page: table with subject name (linked), latest version, compatibility
+- Subject detail page: compatibility mode, version history, formatted schema definitions
+- Loading and error states for better UX
+
+**File Paths:**
+- `webapp/lib/schema-registry.ts` — config helper
+- `webapp/app/api/schemas/route.ts` — list subjects API
+- `webapp/app/api/schemas/[subject]/route.ts` — subject detail API
+- `webapp/app/dashboard/(views)/schemas/page.tsx` — schema list view
+- `webapp/app/dashboard/(views)/schemas/[subject]/page.tsx` — subject detail view
+- `webapp/app/dashboard/(views)/schemas/loading.tsx` — loading state
+- `webapp/app/dashboard/(views)/schemas/error.tsx` — error boundary
+

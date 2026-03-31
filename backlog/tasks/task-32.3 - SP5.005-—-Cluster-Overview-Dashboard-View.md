@@ -1,10 +1,11 @@
 ---
 id: TASK-32.3
 title: SP5.005 — Cluster Overview Dashboard View
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - Dallas
 created_date: '2026-03-30 16:46'
-updated_date: '2026-03-30 16:47'
+updated_date: '2026-03-31 19:23'
 labels:
   - story
 milestone: m-5

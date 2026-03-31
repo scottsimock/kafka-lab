@@ -80,3 +80,57 @@ Initial setup complete. Replacing Ruby sprint orchestrator with Squad workflow.
 **Key Learning:**
 The @confluentinc/kafka-javascript library exports via namespaces (`KafkaJS`, `RdKafka`), not directly. Use `KafkaJS` namespace for KafkaJS-compatible API. The constructor takes `CommonConstructorConfig` which extends `GlobalConfig` and includes optional `kafkaJS: KafkaConfig` property.
 
+### SP5.003 — Kafka API Route Handlers (2026-03-31)
+
+**Key Patterns:**
+- Admin API method signatures differ from standard KafkaJS — consult type definitions in `node_modules/@confluentinc/kafka-javascript/types/kafkajs.d.ts`
+- `fetchTopicMetadata()` returns `{ topics: ITopicMetadata[] }` — no direct broker list
+- Extract broker info from `partition.leaderNode` and `partition.replicaNodes` (type `Node` with `id`, `host`, `port`)
+- Node type uses `id` property, not `nodeId`
+- `describeConfigs()` method not available in KafkaJS compatibility layer
+- Next.js 15 dynamic route params are `Promise<{ param }>` — MUST await before use
+- Pattern: `{ params }: { params: Promise<{ name: string }> }` then `const { name } = await params`
+- Native module builds fail at "Collecting page data" phase — TypeScript validation with `npx tsc --noEmit` is sufficient
+- Routes work fine at runtime despite build-time native binding errors
+
+**API Response Structures:**
+- Cluster: brokers, topicCount, partitionCount, underReplicatedPartitions, offlinePartitions
+- Topics list: topics array with name, partitionCount, replicationFactor
+- Topic detail: name, partitions (with leader, replicas, isr, offsets), isInternal
+- Consumer groups list: groups array with groupId, state, protocolType, memberCount
+- Consumer group detail: groupId, state, members, partitions (with offset and lag)
+
+**File Paths:**
+- `webapp/app/api/cluster/route.ts` — cluster metadata
+- `webapp/app/api/topics/route.ts` — topics list
+- `webapp/app/api/topics/[name]/route.ts` — topic detail
+- `webapp/app/api/consumer-groups/route.ts` — consumer groups list
+- `webapp/app/api/consumer-groups/[id]/route.ts` — consumer group detail
+
+### SP5.004 — Message Produce and Consume API Routes (2026-03-31)
+
+**Key Patterns:**
+- Consumer subscribe() method takes `{ topic: string }` or `{ topics: string[] }` — no `fromBeginning` option
+- Use unique consumer group IDs for ephemeral browser-based consumption: `kafka-lab-browser-${Date.now()}`
+- Batch consume pattern: Promise wrapper with timeout (5 seconds) and message limit check
+- SSE streaming uses Web ReadableStream API with TextEncoder for event formatting
+- Handle client disconnect via `req.signal.addEventListener('abort', ...)` to clean up consumer
+- Always disconnect producer/consumer in finally blocks to prevent connection leaks
+- Webpack externals required for native modules: prevent Next.js from bundling `@confluentinc/kafka-javascript`
+
+**API Routes:**
+- POST `/api/messages/produce` — Accepts `{ topic, key, value, headers }`, returns `{ result }` with partition/offset
+- GET `/api/messages/consume?topic=X&limit=20` — Batch consume with timeout, returns `{ messages: [...] }`
+- GET `/api/messages/stream?topic=X` — Server-Sent Events streaming with format `data: {...}\n\n`
+
+**Next.js Configuration:**
+- `next.config.ts` webpack externals: `'@confluentinc/kafka-javascript': 'commonjs @confluentinc/kafka-javascript'`
+- Prevents native module bundling issues during build
+- `.env.local` required for build-time env vars (gitignored)
+
+**File Paths:**
+- `webapp/app/api/messages/produce/route.ts` — message production
+- `webapp/app/api/messages/consume/route.ts` — batch message consumption
+- `webapp/app/api/messages/stream/route.ts` — SSE streaming
+- `webapp/next.config.ts` — webpack configuration for native modules
+

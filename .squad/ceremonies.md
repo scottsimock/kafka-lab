@@ -39,3 +39,25 @@
 2. Root cause analysis
 3. What should change?
 4. Action items for next iteration
+
+---
+
+## Sprint Report
+
+| Field | Value |
+|-------|-------|
+| **Trigger** | auto |
+| **When** | after |
+| **Condition** | all tasks in a sprint reach Done status |
+| **Facilitator** | lead |
+| **Participants** | lead-only |
+| **Time budget** | focused |
+| **Enabled** | ✅ yes |
+
+**Output:** `.squad/reports/SP{N}-report.md` (individual) + `.squad/reports/sprint-summary.md` (consolidated)
+
+**Agenda:**
+1. Gather task data from backlog (counts, quality scores, priorities)
+2. Write individual sprint report with summary, deliverables, tasks table, decisions, and team contributions
+3. Update consolidated sprint summary with new row and cumulative stats
+4. Record report in decisions inbox

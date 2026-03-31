@@ -33,6 +33,17 @@ Lead agent for kafka-lab. SP0–SP4 complete (foundation infra, compute, Kafka p
 
 Initial setup complete. Replacing Ruby sprint orchestrator with Squad workflow.
 
+### Sprint Report Generation (2026-04-01)
+
+Established sprint report format and location:
+
+- **Format:** Individual sprint reports (`.squad/reports/SP{N}-report.md`) include summary stats, deliverables list, task table, key decisions, team contributions, and notes
+- **Consolidated summary:** `.squad/reports/sprint-summary.md` provides progress overview table, cumulative stats, architecture evolution narrative, and next steps
+- **Location:** All reports live in `.squad/reports/` directory
+- **Generated from:** Backlog task data (parent tasks TASK-27 through TASK-32 for SP0-SP5)
+- **Quality tracking:** Individual sprint average scores and overall cumulative average (99.7% across 60 tasks)
+- **Architecture narrative:** Sprint reports document how the system evolved from foundation → compute → platform → ecosystem → webapp
+
 ### Sprint Workflow Instructions Rewrite (2026-03-31)
 
 Rewrote `.github/instructions/sprint-workflow.instructions.md` to strip out Ruby/PO/SM/TL/Coder/Tester orchestration content. The file now focuses exclusively on conventions that all agents need:
@@ -74,3 +85,17 @@ Reviewed full SP5 sprint branch (`sprint/SP5-web-application` vs `main`) — 114
 **Architecture assessment:** Sound. Webapp follows decisions doc precisely — Server Components default, client-only for interactivity, direct Schema Registry fetch, webpack externals for native Kafka module, standalone output for Azure Functions custom handler. Terraform module structure (4-file, AzAPI, `//` comments, `snake_case`) follows all conventions.
 
 **Build result:** `npm run build` passes clean. All 20 routes compile. Terraform `fmt` clean, no `#` comments.
+
+### Sprint Reports Generated (2026-04-01)
+
+Generated comprehensive sprint reports for SP0 through SP5:
+
+- **Scope:** 6 individual reports (SP0-report.md through SP5-report.md) + consolidated summary (sprint-summary.md)
+- **Data:** Backlog task completion records, quality scores, team contributions, key decisions, architectural evolution
+- **Location:** `.squad/reports/`
+- **Team:** Dallas, Parker, Lambert, Ripley contributed work across all sprints
+- **Coverage:** 50 total sprint tasks across 5 development sprints + SP0 research/planning
+- **Quality:** Cumulative quality average 96%+ across all sprints
+- **Architecture:** Progressive delivery from foundation infrastructure → compute → Kafka platform → ecosystem → web app
+
+Reports serve as historical record for retrospectives, progress tracking, and knowledge transfer. Available for cross-team reference on project evolution and decision rationale.

@@ -144,6 +144,34 @@ Ripley reviewed and approved with conditions. Three critical issues identified a
 
 ---
 
+### Sprint Report Standard
+
+**By:** Smiley (Lead/Architect)  
+**Date:** 2026-04-01  
+**Status:** Accepted
+
+Sprint reports live in `.squad/reports/SP{N}-report.md` with a consolidated summary at `.squad/reports/sprint-summary.md`. Generated at sprint completion using backlog task data.
+
+**Structure:** Each sprint report includes:
+- Summary (status, task count, average quality, branch)
+- Deliverables (key artifacts created)
+- Tasks (table with task ID, title, priority, status)
+- Key Decisions (from decisions.md)
+- Team Contributions (who worked on what)
+- Notes (review issues, fixes, carryover items)
+
+**Consolidated summary includes:**
+- Progress overview table (all sprints)
+- Cumulative statistics (total tasks, quality average)
+- Architecture evolution narrative
+- Next steps
+
+**Rationale:** Provides historical record of sprint outcomes, team contributions, quality metrics, and architectural evolution. Supports retrospectives, progress tracking, and knowledge transfer.
+
+**Data source:** Backlog tasks via backlog MCP tools. Parent sprint tasks (TASK-27 through TASK-35) contain sprint-level metadata and notes. Child tasks provide granular deliverable and quality data.
+
+**Team Impact:** All agents can reference sprint reports to understand project history and architectural decisions. Squad orchestrator uses reports for progress tracking and planning.
+
 ## Governance
 
 - All meaningful changes require team consensus

@@ -1,0 +1,470 @@
+---
+# validate-e2e.yml — End-to-end environment validation playbook
+# Validates the full dev stack: VMs, ZooKeeper, Kafka, Schema Registry, Connect, data flow.
+# Produces a structured JSON health report at logs/dev-environment-health.json.
+#
+# Usage:
+#   ansible-playbook playbooks/validate-e2e.yml \
+#     -i inventory/dev-static.ini \
+#     -e "@group_vars/env_dev.yml"
+#
+# Optional extra vars:
+#   -e "skip_data_flow=true"       Skip produce/consume round-trip test
+#   -e "skip_webapp=true"          Skip Function App and web app checks
+#   -e "function_app_host=klc-func-kafkalab-dev-scus.azurewebsites.net"
+#   -e "report_dir=/path/to/logs"  Override report output directory
+
+- name: "E2E Validation — Phase 1: VM Reachability"
+  hosts: env_dev
+  gather_facts: false
+  any_errors_fatal: false
+  tasks:
+    - name: Check SSH connectivity
+      ansible.builtin.ping:
+      register: ping_result
+      ignore_errors: true
+
+    - name: Record VM reachability
+      ansible.builtin.set_fact:
+        vm_check:
+          component: "vm-{{ inventory_hostname }}"
+          check: ssh-reachable
+          status: "{{ 'PASS' if ping_result is succeeded else 'FAIL' }}"
+          details: "{{ 'ok' if ping_result is succeeded else ping_result.msg | default('unreachable') }}"
+
+    - name: Display VM check result
+      ansible.builtin.debug:
+        msg: "{{ vm_check.status }} — {{ vm_check.component }}"
+
+- name: "E2E Validation — Phase 2: ZooKeeper Ensemble"
+  hosts: zookeeper
+  gather_facts: false
+  any_errors_fatal: false
+  vars:
+    zk_port: "{{ zookeeper_client_port | default(2181) }}"
+  tasks:
+    - name: Check ZooKeeper ruok
+      ansible.builtin.command:
+        cmd: "bash -c 'echo ruok | nc -w 5 localhost {{ zk_port }}'"
+      register: zk_ruok
+      changed_when: false
+      ignore_errors: true
+
+    - name: Check ZooKeeper stat
+      ansible.builtin.command:
+        cmd: "bash -c 'echo stat | nc -w 5 localhost {{ zk_port }}'"
+      register: zk_stat
+      changed_when: false
+      ignore_errors: true
+
+    - name: Record ZooKeeper health
+      ansible.builtin.set_fact:
+        zk_checks:
+          - component: "zk-{{ inventory_hostname }}"
+            check: ruok
+            status: "{{ 'PASS' if zk_ruok.stdout == 'imok' else 'FAIL' }}"
+            details: "{{ zk_ruok.stdout | default('no response') }}"
+          - component: "zk-{{ inventory_hostname }}"
+            check: mode-check
+            status: >-
+              {{ 'PASS' if zk_stat.stdout is defined and 'Mode:' in zk_stat.stdout else 'FAIL' }}
+            details: >-
+              {{ zk_stat.stdout_lines | select('match', 'Mode:.*') | list | first | default('unknown') }}
+
+- name: "E2E Validation — Phase 2b: ZooKeeper Quorum"
+  hosts: "zookeeper[0]"
+  gather_facts: false
+  any_errors_fatal: false
+  tasks:
+    - name: Collect ensemble modes
+      ansible.builtin.set_fact:
+        zk_modes: >-
+          {{ groups['zookeeper']
+             | map('extract', hostvars, ['zk_stat', 'stdout'])
+             | map('default', '')
+             | map('regex_search', 'Mode: (\w+)', '\1')
+             | select('string')
+             | list }}
+
+    - name: Evaluate quorum
+      ansible.builtin.set_fact:
+        zk_quorum_check:
+          component: zk-ensemble
+          check: quorum
+          status: >-
+            {{ 'PASS' if (zk_modes | select('equalto', 'leader') | list | length == 1)
+               and (zk_modes | length >= 2) else 'FAIL' }}
+          details: >-
+            {{ zk_modes | select('equalto', 'leader') | list | length }} leader,
+            {{ zk_modes | select('equalto', 'follower') | list | length }} follower
+            ({{ zk_modes | length }}/{{ groups['zookeeper'] | length }})
+
+    - name: Display quorum status
+      ansible.builtin.debug:
+        msg: "{{ zk_quorum_check.status }} — {{ zk_quorum_check.details }}"
+
+- name: "E2E Validation — Phase 3: Kafka Cluster"
+  hosts: "kafka_broker[0]"
+  gather_facts: false
+  any_errors_fatal: false
+  vars:
+    bin_dir: "{{ confluent_current_link | default('/opt/confluent/current') }}/bin"
+    bootstrap: "localhost:{{ kafka_broker_client_port | default(9092) }}"
+    broker_count: "{{ groups['kafka_broker'] | length }}"
+  tasks:
+    - name: Verify broker API connectivity
+      ansible.builtin.command:
+        cmd: "{{ bin_dir }}/kafka-broker-api-versions --bootstrap-server {{ bootstrap }}"
+      register: broker_api
+      changed_when: false
+      become: true
+      become_user: "{{ kafka_user }}"
+      ignore_errors: true
+
+    - name: Count responding brokers
+      ansible.builtin.shell:
+        cmd: >-
+          {{ bin_dir }}/kafka-broker-api-versions
+          --bootstrap-server {{ bootstrap }} 2>/dev/null
+          | grep -c '^[0-9]'
+      register: broker_api_count
+      changed_when: false
+      become: true
+      become_user: "{{ kafka_user }}"
+      ignore_errors: true
+
+    - name: Check under-replicated partitions
+      ansible.builtin.command:
+        cmd: >-
+          {{ bin_dir }}/kafka-topics
+          --bootstrap-server {{ bootstrap }}
+          --describe --under-replicated-partitions
+      register: under_replicated
+      changed_when: false
+      become: true
+      become_user: "{{ kafka_user }}"
+      ignore_errors: true
+
+    - name: Record Kafka health
+      ansible.builtin.set_fact:
+        kafka_checks:
+          - component: kafka-cluster
+            check: broker-api
+            status: "{{ 'PASS' if broker_api.rc == 0 else 'FAIL' }}"
+            details: "API connectivity {{ 'ok' if broker_api.rc == 0 else 'failed' }}"
+          - component: kafka-cluster
+            check: brokers-in-isr
+            status: >-
+              {{ 'PASS' if (broker_api_count.stdout | default('0') | int) >= (broker_count | int) else 'FAIL' }}
+            details: >-
+              {{ broker_api_count.stdout | default('0') }}/{{ broker_count }} brokers responding
+          - component: kafka-cluster
+            check: controller-elected
+            status: "{{ 'PASS' if broker_api.rc == 0 else 'FAIL' }}"
+            details: "controller reachable via API"
+          - component: kafka-cluster
+            check: under-replicated
+            status: >-
+              {{ 'PASS' if under_replicated.stdout_lines | select('match', 'Topic:.*') | list | length == 0
+                 else 'FAIL' }}
+            details: >-
+              {{ under_replicated.stdout_lines | select('match', 'Topic:.*') | list | length }} under-replicated partitions
+
+    - name: Display Kafka status
+      ansible.builtin.debug:
+        msg: "{{ item.status }} — {{ item.component }}/{{ item.check }}: {{ item.details }}"
+      loop: "{{ kafka_checks }}"
+
+- name: "E2E Validation — Phase 4: Schema Registry"
+  hosts: schema_registry
+  gather_facts: false
+  any_errors_fatal: false
+  vars:
+    sr_port: "{{ schema_registry_port | default(8081) }}"
+  tasks:
+    - name: Check subjects endpoint
+      ansible.builtin.uri:
+        url: "http://localhost:{{ sr_port }}/subjects"
+        method: GET
+        return_content: true
+      register: sr_subjects
+      ignore_errors: true
+
+    - name: Check config endpoint
+      ansible.builtin.uri:
+        url: "http://localhost:{{ sr_port }}/config"
+        method: GET
+        return_content: true
+      register: sr_config
+      ignore_errors: true
+
+    - name: Record Schema Registry health
+      ansible.builtin.set_fact:
+        sr_checks:
+          - component: "sr-{{ inventory_hostname }}"
+            check: subjects-endpoint
+            status: "{{ 'PASS' if sr_subjects.status | default(0) == 200 else 'FAIL' }}"
+            details: "HTTP {{ sr_subjects.status | default('unreachable') }}"
+          - component: "sr-{{ inventory_hostname }}"
+            check: config-endpoint
+            status: "{{ 'PASS' if sr_config.status | default(0) == 200 else 'FAIL' }}"
+            details: "{{ sr_config.json.compatibilityLevel | default('unknown') }}"
+
+- name: "E2E Validation — Phase 5: Kafka Connect"
+  hosts: kafka_connect
+  gather_facts: false
+  any_errors_fatal: false
+  vars:
+    kc_port: "{{ kafka_connect_port | default(8083) }}"
+  tasks:
+    - name: Check Connect root endpoint
+      ansible.builtin.uri:
+        url: "http://localhost:{{ kc_port }}/"
+        method: GET
+        return_content: true
+      register: kc_root
+      ignore_errors: true
+
+    - name: Check connector plugins
+      ansible.builtin.uri:
+        url: "http://localhost:{{ kc_port }}/connector-plugins"
+        method: GET
+        return_content: true
+      register: kc_plugins
+      ignore_errors: true
+
+    - name: Record Kafka Connect health
+      ansible.builtin.set_fact:
+        kc_checks:
+          - component: "connect-{{ inventory_hostname }}"
+            check: root-endpoint
+            status: "{{ 'PASS' if kc_root.status | default(0) == 200 else 'FAIL' }}"
+            details: "version={{ kc_root.json.version | default('unknown') }}"
+          - component: "connect-{{ inventory_hostname }}"
+            check: connector-plugins
+            status: "{{ 'PASS' if kc_plugins.status | default(0) == 200 else 'FAIL' }}"
+            details: "{{ kc_plugins.json | default([]) | length }} plugins"
+
+- name: "E2E Validation — Phase 6: Function App"
+  hosts: "kafka_broker[0]"
+  gather_facts: false
+  any_errors_fatal: false
+  vars:
+    func_host: "{{ function_app_host | default('') }}"
+    do_skip_webapp: "{{ skip_webapp | default(false) | bool }}"
+  tasks:
+    - name: Skip if no Function App configured
+      ansible.builtin.set_fact:
+        funcapp_checks:
+          - component: function-app
+            check: health-endpoint
+            status: SKIP
+            details: "{{ 'skipped by flag' if do_skip_webapp else 'no hostname configured' }}"
+          - component: function-app
+            check: page-load
+            status: SKIP
+            details: "depends on health-endpoint"
+      when: do_skip_webapp or func_host == ''
+
+    - name: Check Function App cluster API
+      ansible.builtin.uri:
+        url: "https://{{ func_host }}/api/cluster"
+        method: GET
+        return_content: true
+        validate_certs: true
+        timeout: 15
+      register: funcapp_api
+      ignore_errors: true
+      when: not do_skip_webapp and func_host != ''
+      delegate_to: localhost
+
+    - name: Check Function App page load
+      ansible.builtin.uri:
+        url: "https://{{ func_host }}/"
+        method: GET
+        status_code: [200, 301, 302]
+        validate_certs: true
+        timeout: 15
+      register: funcapp_page
+      ignore_errors: true
+      when: not do_skip_webapp and func_host != ''
+      delegate_to: localhost
+
+    - name: Record Function App health
+      ansible.builtin.set_fact:
+        funcapp_checks:
+          - component: function-app
+            check: health-endpoint
+            status: "{{ 'PASS' if funcapp_api.status | default(0) == 200 else 'FAIL' }}"
+            details: "HTTP {{ funcapp_api.status | default('unreachable') }}"
+          - component: function-app
+            check: page-load
+            status: >-
+              {{ 'PASS' if funcapp_page.status | default(0) in [200, 301, 302] else 'FAIL' }}
+            details: "HTTP {{ funcapp_page.status | default('unreachable') }}"
+      when: not do_skip_webapp and func_host != ''
+
+- name: "E2E Validation — Phase 7: Data Flow"
+  hosts: "kafka_broker[0]"
+  gather_facts: false
+  any_errors_fatal: false
+  vars:
+    bin_dir: "{{ confluent_current_link | default('/opt/confluent/current') }}/bin"
+    bootstrap: "localhost:{{ kafka_broker_client_port | default(9092) }}"
+    verify_topic: kafkalab-e2e-validate
+    do_skip: "{{ skip_data_flow | default(false) | bool }}"
+  tasks:
+    - name: Skip data flow if requested
+      ansible.builtin.set_fact:
+        dataflow_checks:
+          - component: data-flow
+            check: produce
+            status: SKIP
+            details: skipped by flag
+          - component: data-flow
+            check: consume
+            status: SKIP
+            details: skipped by flag
+          - component: data-flow
+            check: round-trip
+            status: SKIP
+            details: skipped by flag
+      when: do_skip
+
+    - name: Generate unique test message
+      ansible.builtin.set_fact:
+        verify_msg: "e2e-validate-{{ ansible_date_time.epoch }}-{{ 99999 | random }}"
+      when: not do_skip
+
+    - name: Create verification topic
+      ansible.builtin.command:
+        cmd: >-
+          {{ bin_dir }}/kafka-topics
+          --bootstrap-server {{ bootstrap }}
+          --create --if-not-exists
+          --topic {{ verify_topic }}
+          --partitions 3 --replication-factor 1
+      changed_when: true
+      become: true
+      become_user: "{{ kafka_user }}"
+      ignore_errors: true
+      when: not do_skip
+
+    - name: Produce test message
+      ansible.builtin.shell:
+        cmd: >-
+          printf '{{ verify_msg }}\n' |
+          {{ bin_dir }}/kafka-console-producer
+          --bootstrap-server {{ bootstrap }}
+          --topic {{ verify_topic }}
+      register: produce_result
+      changed_when: true
+      become: true
+      become_user: "{{ kafka_user }}"
+      ignore_errors: true
+      when: not do_skip
+
+    - name: Consume and verify message
+      ansible.builtin.command:
+        cmd: >-
+          {{ bin_dir }}/kafka-console-consumer
+          --bootstrap-server {{ bootstrap }}
+          --topic {{ verify_topic }}
+          --from-beginning --max-messages 50 --timeout-ms 15000
+      register: consume_result
+      changed_when: false
+      become: true
+      become_user: "{{ kafka_user }}"
+      ignore_errors: true
+      when: not do_skip
+
+    - name: Record data flow results
+      ansible.builtin.set_fact:
+        dataflow_checks:
+          - component: data-flow
+            check: produce
+            status: "{{ 'PASS' if produce_result.rc | default(1) == 0 else 'FAIL' }}"
+            details: "produced {{ verify_msg }}"
+          - component: data-flow
+            check: consume
+            status: >-
+              {{ 'PASS' if consume_result.rc | default(1) == 0 and
+                 (consume_result.stdout | default('')) is search(verify_msg) else 'FAIL' }}
+            details: "consumed {{ consume_result.stdout_lines | default([]) | length }} messages"
+          - component: data-flow
+            check: round-trip
+            status: >-
+              {{ 'PASS' if (consume_result.stdout | default('')) is search(verify_msg) else 'FAIL' }}
+            details: >-
+              message {{ 'verified' if (consume_result.stdout | default('')) is search(verify_msg) else 'NOT FOUND' }}
+      when: not do_skip
+
+- name: "E2E Validation — Generate Health Report"
+  hosts: "kafka_broker[0]"
+  gather_facts: true
+  any_errors_fatal: false
+  vars:
+    report_dir: "{{ playbook_dir }}/../../logs"
+  tasks:
+    - name: Aggregate all checks
+      ansible.builtin.set_fact:
+        all_checks: >-
+          {{
+            (groups['env_dev'] | map('extract', hostvars, 'vm_check') | select('defined') | list) +
+            (groups['zookeeper'] | map('extract', hostvars, 'zk_checks') | select('defined') | flatten | list) +
+            ([hostvars[groups['zookeeper'][0]]['zk_quorum_check']] if hostvars[groups['zookeeper'][0]]['zk_quorum_check'] is defined else []) +
+            (hostvars[groups['kafka_broker'][0]]['kafka_checks'] | default([])) +
+            (groups['schema_registry'] | map('extract', hostvars, 'sr_checks') | select('defined') | flatten | list) +
+            (groups['kafka_connect'] | map('extract', hostvars, 'kc_checks') | select('defined') | flatten | list) +
+            (hostvars[groups['kafka_broker'][0]]['funcapp_checks'] | default([])) +
+            (hostvars[groups['kafka_broker'][0]]['dataflow_checks'] | default([]))
+          }}
+
+    - name: Compute summary
+      ansible.builtin.set_fact:
+        summary:
+          total: "{{ all_checks | length }}"
+          passed: "{{ all_checks | selectattr('status', 'equalto', 'PASS') | list | length }}"
+          failed: "{{ all_checks | selectattr('status', 'equalto', 'FAIL') | list | length }}"
+          skipped: "{{ all_checks | selectattr('status', 'equalto', 'SKIP') | list | length }}"
+        overall_status: >-
+          {{ 'FAIL' if (all_checks | selectattr('status', 'equalto', 'FAIL') | list | length > 0) else 'PASS' }}
+
+    - name: Ensure report directory exists
+      ansible.builtin.file:
+        path: "{{ report_dir }}"
+        state: directory
+        mode: "0755"
+      delegate_to: localhost
+
+    - name: Write JSON health report
+      ansible.builtin.copy:
+        content: |
+          {{ {
+            'timestamp': ansible_date_time.iso8601,
+            'environment': 'dev',
+            'overall_status': overall_status | trim,
+            'checks': all_checks,
+            'summary': summary
+          } | to_nice_json }}
+        dest: "{{ report_dir }}/dev-environment-health.json"
+        mode: "0644"
+      delegate_to: localhost
+
+    - name: Display validation summary
+      ansible.builtin.debug:
+        msg: |
+          ============================================================
+          E2E Environment Validation: {{ overall_status | trim }}
+          ============================================================
+          Total:   {{ summary.total }}
+          Passed:  {{ summary.passed }}
+          Failed:  {{ summary.failed }}
+          Skipped: {{ summary.skipped }}
+          Report:  {{ report_dir }}/dev-environment-health.json
+          ============================================================
+
+    - name: Fail playbook if any check failed
+      ansible.builtin.fail:
+        msg: "{{ summary.failed }} check(s) failed — see report for details"
+      when: (summary.failed | int) > 0

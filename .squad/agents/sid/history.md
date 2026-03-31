@@ -124,3 +124,30 @@ The sprint roadmap was restructured. A new SP7 (Dev Environment Deployment & Int
 - Total Playwright suite: 88 tests (22 schema + 33 dashboard + 33 smoke) across 14 files
 
 **Observation:** The current Schema Registry UI is read-only (no compatibility check form, no registration form). ACs 4 and 5 are covered by API-level tests that will automatically exercise the full UI path once those forms are built.
+
+## SP7.008 — E2E Environment Validation Suite (2026-04-01)
+
+**Created two complementary validation tools:**
+
+1. `scripts/validate-dev-environment.sh` — standalone bash script, 8 phases, 25+ checks
+2. `ansible/playbooks/validate-e2e.yml` — Ansible playbook with identical coverage
+
+**Validation phases (dependency order):**
+- Phase 1: VM SSH reachability (8 VMs)
+- Phase 2: ZooKeeper ensemble (ruok, mode, quorum)
+- Phase 3: Kafka cluster (broker API, ISR, controller, under-replicated)
+- Phase 4: Schema Registry (subjects, config endpoints)
+- Phase 5: Kafka Connect (root, plugins, connectors)
+- Phase 6: Function App (health, page load)
+- Phase 7: Web App (dashboard pages)
+- Phase 8: Data Flow (produce → consume round-trip)
+
+**Design decisions:**
+- Both tools output structured JSON to `logs/dev-environment-health.json` for CI/CD consumption
+- Bash script uses SSH to reach VMs (supports `--ssh-opts` for bastion/proxy jump)
+- `--from-terraform` extracts IPs from Terraform outputs automatically
+- Ansible playbook aggregates facts across plays, generates report on localhost
+- Checks are non-fatal (ignore_errors) — report captures all results even when some fail
+- Cascade awareness: VM failures will cause all downstream checks to fail; docs explain fix order
+- Data flow test uses unique message IDs to avoid false positives from previous runs
+- `docs/deploy-dev.md` updated with full Validation section

@@ -125,6 +125,101 @@ Verification checks:
 - Schema Registry: subjects and config endpoints responding
 - Kafka Connect: root and connector-plugins endpoints responding
 
+## E2E Environment Validation
+
+Beyond the basic verification playbook, a comprehensive E2E validation suite checks every layer of the stack and produces a structured health report.
+
+### Quick Validation
+
+```bash
+# Full E2E validation (requires SSH access to VMs)
+./scripts/validate-dev-environment.sh
+
+# Extract IPs from Terraform outputs automatically
+./scripts/validate-dev-environment.sh --from-terraform
+
+# Skip data flow and webapp checks (infra only)
+./scripts/validate-dev-environment.sh --skip-data-flow --skip-webapp
+
+# Custom SSH options (e.g., via bastion)
+./scripts/validate-dev-environment.sh --ssh-opts="-o ProxyJump=bastion"
+```
+
+### Ansible Alternative
+
+```bash
+cd ansible
+ansible-playbook playbooks/validate-e2e.yml \
+  -i inventory/dev-static.ini \
+  -e "@group_vars/env_dev.yml"
+
+# With Function App validation
+ansible-playbook playbooks/validate-e2e.yml \
+  -i inventory/dev-static.ini \
+  -e "@group_vars/env_dev.yml" \
+  -e "function_app_host=klc-func-kafkalab-dev-scus.azurewebsites.net"
+
+# Skip data flow test
+ansible-playbook playbooks/validate-e2e.yml \
+  -i inventory/dev-static.ini \
+  -e "@group_vars/env_dev.yml" \
+  -e "skip_data_flow=true"
+```
+
+### What Gets Checked
+
+The validation runs 8 phases in dependency order:
+
+| Phase | Component | Checks |
+|---|---|---|
+| 1 | VMs | SSH reachability for all 8 VMs |
+| 2 | ZooKeeper | `ruok` response, mode (leader/follower), ensemble quorum |
+| 3 | Kafka | Broker API, ISR count, controller election, under-replicated partitions |
+| 4 | Schema Registry | `/subjects` endpoint, `/config` endpoint |
+| 5 | Kafka Connect | Root endpoint, connector plugins list |
+| 6 | Function App | Health endpoint, page load |
+| 7 | Web App | Dashboard pages (overview, topics, schemas) |
+| 8 | Data Flow | Produce message, consume message, round-trip verification |
+
+### Health Report
+
+Both tools output a JSON report to `logs/dev-environment-health.json`:
+
+```json
+{
+  "timestamp": "2026-03-31T22:30:00Z",
+  "environment": "dev",
+  "overall_status": "PASS",
+  "duration_seconds": 45,
+  "checks": [
+    {"component": "vm-zk-10.1.2.4", "check": "ssh-reachable", "status": "PASS", "duration_ms": 230},
+    {"component": "kafka-cluster", "check": "brokers-in-isr", "status": "PASS", "details": "3/3 brokers"},
+    {"component": "data-flow", "check": "round-trip", "status": "PASS", "details": "message verified"}
+  ],
+  "summary": {"total": 25, "passed": 25, "failed": 0, "skipped": 0}
+}
+```
+
+### Interpreting Results
+
+- **PASS** — All critical checks succeeded. Environment is healthy.
+- **FAIL** — One or more checks failed. Review `logs/dev-environment-health.json` for details. Failures cascade — if VMs are unreachable, all downstream checks will also fail.
+- **SKIP** — Checks skipped by flag or missing configuration (e.g., no Function App hostname).
+
+Fix failures in dependency order: VMs → ZooKeeper → Kafka → Schema Registry → Connect → Function App.
+
+### Environment Variables
+
+Override default IPs when not using `--from-terraform`:
+
+| Variable | Default | Description |
+|---|---|---|
+| `ZK_HOSTS` | `10.1.2.4,10.1.2.5,10.1.2.6` | ZooKeeper IPs |
+| `KB_HOSTS` | `10.1.1.4,10.1.1.5,10.1.1.6` | Kafka broker IPs |
+| `SR_HOSTS` | `10.1.3.4` | Schema Registry IPs |
+| `KC_HOSTS` | `10.1.4.4` | Kafka Connect IPs |
+| `FUNCTION_APP_HOST` | _(empty)_ | Function App hostname |
+
 ## GitHub Actions Deployment
 
 Use the `deploy-all.yml` workflow for CI/CD:

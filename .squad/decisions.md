@@ -437,3 +437,190 @@ Fix the three critical items and this merges clean.
 - All meaningful changes require team consensus
 - Document architectural decisions here
 - Keep history focused on work, decisions focused on direction
+
+---
+
+# Architecture Review: SP6 — CI/CD Pipeline
+
+**Reviewer:** Drexl (Lead/Architect)
+**Date:** 2026-04-01T10:30:00 ET
+**Sprint:** SP6 — CI/CD Pipeline (TASK-33)
+**Files reviewed:** 6 workflows, 4 config files, 2 docs
+
+## Verdict: APPROVE WITH CONDITIONS
+
+Four required changes before these workflows are production-ready. The architectural bones are sound — reusable workflow pattern, OIDC auth, concurrency controls, environment gating — but there are wiring bugs that prevent core workflows from functioning at runtime.
+
+---
+
+## Security Posture
+
+**Grade: B+**
+
+**Strengths:**
+
+- Least-privilege permissions per job (`id-token: write`, `contents: read`). No `write-all` anywhere.
+- OIDC throughout — no long-lived secrets stored. `ARM_USE_OIDC: "true"` set correctly.
+- `azure/login@v2` with explicit `client-id`, `tenant-id`, `subscription-id` on all Azure steps.
+- Ansible workflow masks secrets with `::add-mask::` for both SSH key and Vault password.
+- Ansible cleanup step runs under `if: always()` — sensitive files removed even on failure.
+- Environment-scoped secrets prevent cross-environment credential leakage.
+
+**Concerns:**
+
+- **Action versions pinned by major tag, not SHA.** `actions/checkout@v4`, `hashicorp/setup-terraform@v3`, `azure/login@v2`, etc. Major tags can be force-pushed. For production-grade pipelines, actions should be pinned to commit SHA with version comment. Not blocking for SP6 but must be addressed before prod runs.
+- **webapp-deploy.yml copies `local.settings.json` into deploy package.** This file is gitignored and may contain local secrets. If it accidentally gets committed, it ships to Azure. The copy should be conditional or the file should be generated from a template during build.
+- **Ansible Key Vault name hardcoded** (`klc-kv-kafkalab-scus`). If prod uses a different vault, secrets retrieval fails silently or returns wrong secrets. Should be parameterized via input or env-derived.
+
+---
+
+## Architectural Coherence
+
+**Grade: B**
+
+**Strengths:**
+
+- Clean `workflow_call` signatures on all three reusable workflows. Inputs are well-typed with sensible descriptions.
+- deploy-all.yml correctly chains terraform → ansible → webapp with component selection and dry-run mode.
+- `always() && !failure()` pattern correctly handles skipped upstream jobs (e.g., `ansible-only` skips terraform but ansible still runs).
+- Concurrency group `deploy-${{ github.event.inputs.environment }}` prevents parallel deploys to the same environment.
+- PR validation runs all three checks (terraform validate, webapp build, ansible syntax) in parallel.
+
+**Issues:**
+
+- **Terraform workflows don't use the tfvars files.** `terraform plan` runs without `-var-file` and without `-var` flags. The `subscription_id` and `ssh_public_key` variables in `variables.tf` are required (no defaults) and have no source. Every `terraform plan` invocation across terraform-deploy.yml, drift-detection.yml, and pr-validation.yml will fail at runtime with "No value for required variable." The environment configs (TASK-33.1) were delivered but never wired into the workflows. **This is a CRITICAL bug — the Terraform workflows are non-functional.**
+- **terraform-deploy.yml doesn't declare secrets explicitly.** Uses `${{ secrets.* }}` directly in the workflow-level `env:` block, while ansible-deploy.yml and webapp-deploy.yml properly declare `secrets:` in their `workflow_call` definition. Should be consistent — explicit declarations serve as documentation and enable validation.
+- **Display names inconsistent.** "Terraform Deploy" vs. "Deploy Web Application" vs. "Deploy All". Minor, but use a consistent pattern: either `{Component} Deploy` or `Deploy {Component}`.
+
+---
+
+## Production Readiness
+
+**Grade: B-**
+
+**Strengths:**
+
+- Concurrency control on deploy-all prevents double-deploys.
+- `cancel-in-progress: false` — correct, never cancel a running deployment.
+- Terraform plan artifacts uploaded for audit trail (7-day retention).
+- Terraform apply uses saved plan file — no drift between plan and apply.
+- Ansible output captured and uploaded (30-day retention) for debugging.
+
+**Issues:**
+
+- **drift-detection.yml uses `environment: prod` but checks dev directory.** Two compounding problems:
+  1. `environment: prod` triggers the 2-reviewer approval gate on every scheduled run. Nightly drift detection will sit in "waiting for review" indefinitely. Non-starter.
+  2. The OIDC token subject claim will be `repo:org/kafka-lab:environment:prod`, but the federated credential documented for drift detection uses `repo:org/kafka-lab:ref:refs/heads/main`. Claim mismatch → `AADSTS70021` authentication failure.
+- **webapp-deploy.yml `function_app_name` default is broken.** The default `klc-func-kafkalab-${{ inputs.environment }}-scus` uses `${{ inputs.environment }}` in an input default definition, where other input contexts are not available. Resolves to `klc-func-kafkalab--scus` (empty environment). deploy-all.yml doesn't pass this input explicitly, so it hits the broken default.
+- **webapp-deploy.yml copies gitignored `local.settings.json`.** The file is in `.gitignore` and not tracked in git. In CI (clean checkout), `cp local.settings.json deploy-package/` fails because the file doesn't exist. Deployment broken on first run.
+- **No health check after webapp deployment.** The workflow deploys but never verifies the app is responding. A simple `az functionapp show --query state` or HTTP probe would catch deployment failures.
+- **No path filters on pr-validation.yml.** Every PR to main triggers Azure login and terraform plan, even for docs-only changes. Wastes CI minutes and creates unnecessary OIDC token exchanges.
+
+---
+
+## Cross-Cutting Consistency
+
+**Grade: B+**
+
+**Strengths:**
+
+- Action versions consistent across all 6 workflows: `checkout@v4`, `setup-terraform@v3`, `cache@v4`, `upload-artifact@v4`, `download-artifact@v4`, `azure/login@v2`, `github-script@v7`, `setup-node@v4`.
+- OIDC env var pattern (`ARM_CLIENT_ID`, `ARM_TENANT_ID`, `ARM_SUBSCRIPTION_ID`, `ARM_USE_OIDC`, `ARM_USE_AZUREAD`) consistent across terraform-deploy.yml, drift-detection.yml, and pr-validation.yml.
+- Backend config key pattern `kafka-lab/{env}.tfstate` used consistently.
+- Terraform cache key uses `.terraform.lock.hcl` hash — correct, invalidates when providers change.
+
+**Issues:**
+
+- **terraform-deploy.yml uses implicit secrets; ansible/webapp use explicit.** Different approaches to secret passing in reusable workflows. Not broken, but inconsistent.
+- **Artifact retention varies:** terraform plan 7 days, ansible output 30 days, webapp package 5 days. Should have a documented rationale or use a consistent default.
+
+---
+
+## SP7 Readiness (Multi-Region)
+
+**Grade: C+**
+
+SP7 adds mexicocentral and canadaeast. Current state:
+
+**What works:**
+
+- deploy-all.yml parameterizes `working_directory: terraform/environments/${{ inputs.environment }}` — supports separate environment directories.
+- terraform-deploy.yml accepts arbitrary `working_directory` — can point at per-region directories.
+- Ansible uses dynamic Azure RM inventory — should discover VMs in new regions automatically.
+
+**What blocks SP7:**
+
+- **No region parameter.** None of the workflows accept a region input. The naming convention hardcodes `scus` (southcentralus): `klc-rg-kafkalab-${{ inputs.environment }}-scus`, `klc-kv-kafkalab-scus`, `klc-func-kafkalab-${{ inputs.environment }}-scus`. Multi-region requires either a `region` input or a matrix strategy.
+- **No matrix strategy in deploy-all.yml.** Today it deploys one environment. SP7 needs to deploy one environment across 3 regions (or at minimum primary + secondary).
+- **drift-detection.yml is single-environment, single-directory.** Needs a matrix over environments × regions.
+- **Ansible self-hosted runner labels assume single region.** `[self-hosted, linux, azure, ansible]` — may need region-specific labels if runners are region-local.
+- **terraform-deploy.yml defaults `working_directory` to `terraform/environments/dev`.** Harmless when callers always pass it explicitly, but the default is misleading.
+
+**SP7 recommendation:** Add `region` as an input to all reusable workflows. In deploy-all.yml, either add a matrix strategy or accept comma-separated regions and fan-out. The architecture is extensible — no fundamental redesign needed, just parameterization.
+
+---
+
+## Sid's Warnings Assessment
+
+### 1. webapp-deploy.yml default input cross-referencing another input
+
+**Assessment: CONFIRMED BUG — Severity HIGH**
+
+`${{ inputs.environment }}` in a `workflow_call` input `default` does not resolve. The default evaluates to `klc-func-kafkalab--scus`. Since deploy-all.yml doesn't pass `function_app_name` explicitly, every webapp deployment through the orchestrator hits this broken default. **Required fix.**
+
+### 2. drift-detection using environment:prod but checking dev directory
+
+**Assessment: CONFIRMED BUG — Severity CRITICAL**
+
+Two failures compound: (a) `environment: prod` triggers mandatory 2-reviewer approval on every scheduled run, blocking nightly automation; (b) OIDC subject claim mismatch against the federated credential configured for `ref:refs/heads/main`. **Required fix.**
+
+### 3. drift-detection needs matrix for multi-env
+
+**Assessment: AGREE — Severity MEDIUM (SP7 scope)**
+
+Correct observation. For SP6 with only dev environment, single-directory is acceptable. Must be a matrix when prod directory is created. Track as SP7 requirement.
+
+### 4. terraform.prod.tfvars in dev directory
+
+**Assessment: AGREE — Severity LOW**
+
+The file is a forward placeholder. Since `terraform/environments/prod/` doesn't exist yet, having it in `dev/` is tolerable. Relocate when the prod directory is created in SP7. **Non-blocking.**
+
+---
+
+## Required Changes
+
+These must be addressed before the workflows are considered production-ready:
+
+1. **Wire tfvars files into Terraform commands.** Add `-var-file=terraform.${{ inputs.environment }}.tfvars` to all `terraform plan` invocations in terraform-deploy.yml, drift-detection.yml, and pr-validation.yml. Add `-var="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}"` and `-var="ssh_public_key=${{ secrets.SSH_PUBLIC_KEY }}"` (or equivalent TF_VAR_ env vars) for required variables without defaults. Without this, **every Terraform workflow fails at runtime.**
+
+2. **Fix drift-detection.yml environment.** Remove `environment: prod` and either (a) use `environment: dev` (since it checks the dev directory anyway), or (b) remove the `environment:` key entirely and add a federated credential for `ref:refs/heads/main` (as documented in github-environments.md). Option (a) is simpler for SP6.
+
+3. **Fix webapp-deploy.yml function_app_name default.** Either make `function_app_name` required (`required: true`) and pass it explicitly from deploy-all.yml, or use a static default like `klc-func-kafkalab-dev-scus` with override from callers. Do not cross-reference `inputs.environment` in the default.
+
+4. **Fix webapp-deploy.yml local.settings.json copy.** The file is gitignored and won't exist in CI. Either make the copy conditional (`if [ -f local.settings.json ]; then cp ...`), generate a minimal version during the build step, or remove it entirely (Azure Functions in production reads settings from App Service configuration, not this file).
+
+---
+
+## Recommended Improvements (Non-Blocking)
+
+Address in SP7 or as cleanup:
+
+1. **Pin actions by SHA.** Replace `@v4` tags with `@{sha} # v4.x.x` for all third-party actions. Start with `actions/checkout`, `azure/login`, `hashicorp/setup-terraform`.
+2. **Add path filters to pr-validation.yml.** Run terraform validation only when `terraform/**` changes. Run webapp build only when `webapp/**` changes. Run ansible check only when `ansible/**` changes.
+3. **Parameterize Ansible Key Vault name.** Add a `keyvault_name` input to ansible-deploy.yml instead of hardcoding `klc-kv-kafkalab-scus`.
+4. **Add region input to reusable workflows.** Prepare for SP7 multi-region by adding `region` parameter to terraform-deploy.yml, ansible-deploy.yml, and webapp-deploy.yml.
+5. **Add post-deploy health check** to webapp-deploy.yml — verify Function App state after deployment.
+6. **Standardize artifact retention** across workflows (7 days for ephemeral build artifacts, 30 days for audit-relevant logs).
+7. **Standardize workflow display names** to a consistent pattern (`Terraform Deploy`, `Ansible Deploy`, `Webapp Deploy`, `Deploy All`).
+8. **Add explicit `secrets:` declaration to terraform-deploy.yml** for consistency with the other reusable workflows.
+
+---
+
+## Decision
+
+**APPROVE WITH CONDITIONS.** The CI/CD pipeline architecture is well-designed — reusable workflows, OIDC auth, environment gating, concurrency controls, and clean separation of concerns. The structural decisions are right.
+
+However, there are 4 wiring bugs that prevent the workflows from functioning at runtime, most critically the missing `-var-file`/`-var` flags on Terraform commands (every TF workflow fails) and the drift detection environment/OIDC mismatch (nightly runs blocked). These are straightforward fixes that don't require rearchitecting anything.
+
+**Required:** All 4 items in the Required Changes section must be fixed. Per lockout rules, the fixes should NOT be done by the original author — assign to a different implementor. No re-review needed if fixes are limited to the 4 listed items; Sid can verify.

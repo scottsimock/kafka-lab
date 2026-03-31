@@ -1,0 +1,183 @@
+# Dev Environment Teardown Workflow
+#
+# Destroys all Azure resources in the dev environment via Terraform.
+# Preserves the resource group and Terraform state storage account.
+# Verifies no orphaned resources remain after destroy.
+#
+# Usage: Actions → Dev Teardown → Run workflow
+
+name: Dev Teardown
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_estimation:
+        description: 'Skip cost estimation summary'
+        required: false
+        type: boolean
+        default: false
+      plan_only:
+        description: 'Plan destroy only — do not apply'
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false
+
+env:
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  ARM_USE_OIDC: "true"
+  ARM_USE_AZUREAD: "true"
+  TF_IN_AUTOMATION: "true"
+  WORKING_DIR: terraform/environments/dev
+  RESOURCE_GROUP: klc-rg-kafkalab-scus
+
+jobs:
+  # ── Cost Estimation ──────────────────────────────────────────────────
+  estimate:
+    name: Cost Estimation
+    if: inputs.skip_estimation == false
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Estimate running cost
+        run: |
+          echo "## Dev Environment Cost Estimate" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Running Environment (~\$45–55/day)" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Resource | SKU | Count | Est. $/day |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| ZooKeeper VMs | Standard_D2s_v5 | 3 | \$8.28 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Kafka Broker VMs | Standard_D4s_v5 | 3 | \$16.56 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Schema Registry VM | Standard_D2s_v5 | 1 | \$2.76 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Kafka Connect VM | Standard_D2s_v5 | 1 | \$2.76 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Function App (EP1) | Elastic Premium | 1 | \$5.00 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Managed Disks | Premium SSD P10 | 8 | \$3.28 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Key Vault | Standard | 1 | \$0.30 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Networking (VNet, NSGs, PEs) | — | — | \$2.50 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Total** | | | **~\$41–55** |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Destroyed Environment (~\$0.10/day)" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Resource | SKU | Est. $/day |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Terraform State Storage | Standard LRS | \$0.10 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Savings" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Daily savings:** ~\$45–55" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Weekend savings (Fri 6pm → Mon 8am):** ~\$110–140" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Weekly savings (tear down nightly):** ~\$180–220" >> "$GITHUB_STEP_SUMMARY"
+
+  # ── Terraform Destroy ────────────────────────────────────────────────
+  destroy:
+    name: Terraform Destroy
+    runs-on: ubuntu-latest
+    environment: dev
+    permissions:
+      id-token: write
+      contents: read
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Cache Terraform providers
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.WORKING_DIR }}/.terraform/providers
+          key: terraform-providers-${{ hashFiles(format('{0}/.terraform.lock.hcl', env.WORKING_DIR)) }}
+          restore-keys: |
+            terraform-providers-
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -backend-config="key=kafka-lab/dev.tfstate"
+
+      - name: Terraform Destroy Plan
+        run: |
+          terraform plan -destroy -no-color -input=false \
+            -var-file="terraform.dev.tfvars" \
+            -var="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+            -var="ssh_public_key=${{ secrets.SSH_PUBLIC_KEY }}" \
+            -out=destroy.tfplan \
+            | tee destroy-plan-output.txt
+
+      - name: Upload Destroy Plan
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-destroy-plan-dev
+          path: |
+            ${{ env.WORKING_DIR }}/destroy.tfplan
+            ${{ env.WORKING_DIR }}/destroy-plan-output.txt
+          retention-days: 7
+
+      - name: Terraform Destroy Apply
+        if: inputs.plan_only == false
+        run: terraform apply -no-color -input=false destroy.tfplan
+
+  # ── Verify Cleanup ──────────────────────────────────────────────────
+  verify:
+    name: Verify Resource Cleanup
+    needs: destroy
+    if: inputs.plan_only == false
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Check for orphaned resources
+        run: |
+          echo "## Resource Cleanup Verification" >> "$GITHUB_STEP_SUMMARY"
+
+          REMAINING=$(az resource list \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --query "[?type != 'Microsoft.Storage/storageAccounts']" \
+            --output json)
+
+          COUNT=$(echo "$REMAINING" | jq 'length')
+
+          if [ "$COUNT" -eq 0 ]; then
+            echo "✅ **PASS** — No orphaned resources. Only Terraform state storage account remains." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "⚠️ **WARNING** — $COUNT non-storage resources remain:" >> "$GITHUB_STEP_SUMMARY"
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            echo "$REMAINING" | jq '.[].{name, type, location}' >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::$COUNT orphaned resources detected in ${{ env.RESOURCE_GROUP }}"
+          fi

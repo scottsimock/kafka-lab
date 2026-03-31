@@ -222,3 +222,24 @@ The sprint roadmap was restructured. A new SP7 (Dev Environment Deployment & Int
 - Function App private endpoint in `snet-private-endpoints` with dedicated DNS zone
 - Dev environment relaxes security (no SASL_SSL, no ACLs) for faster iteration
 - Static inventory mirrors exact IPs from Terraform locals (ZK: 10.1.2.4–6, KB: 10.1.1.4–6, SR: 10.1.3.4, KC: 10.1.4.4)
+
+### SP7.010 — Dev Environment Teardown & Cost Management (2026-04-01)
+
+**Key Work Done:**
+
+1. **Teardown script** — `scripts/teardown-dev.sh` runs `terraform destroy` with safety prompts (`--confirm` for non-interactive), verifies no orphaned resources via `az resource list`, and cleans up local artifacts (generated inventory, plan files).
+
+2. **GitHub Actions workflows:**
+   - `.github/workflows/dev-teardown.yml` — `workflow_dispatch` trigger, runs terraform destroy with OIDC auth, verifies resource cleanup, posts cost estimation to step summary. Supports `plan_only` and `skip_estimation` inputs.
+   - `.github/workflows/dev-recreate.yml` — `workflow_dispatch` trigger, full pipeline: terraform apply → ansible site.yml → post-provisioning playbooks (credentials, topics, schemas) → webapp deploy → verification. Supports `skip_ansible`, `skip_verify`, `skip_estimation` inputs.
+
+3. **Cost estimation** — Documented in `docs/deploy-dev.md` and in workflow step summaries. Running env costs ~$45–55/day; destroyed env costs ~$0.10/day (state storage only). Weekend teardown saves ~$110–140, nightly teardown saves ~$270–330/week.
+
+4. **Docs updated** — Added comprehensive teardown/recreate sections to `docs/deploy-dev.md` covering: when to teardown, how (script or workflow), how to recreate, what persists vs. what's destroyed, and cost breakdown.
+
+**Key Patterns:**
+- Both workflows use `concurrency: group: deploy-dev` to prevent parallel runs
+- Teardown workflow uses GitHub environment protection rules (same as terraform-deploy.yml)
+- Recreate workflow chains reusable workflows (ansible-deploy.yml, webapp-deploy.yml) with inline jobs for post-provisioning
+- Resource cleanup verification excludes `Microsoft.Storage/storageAccounts` (state backend)
+- All Kafka state (topics, schemas, offsets) is ephemeral in dev — restored by playbooks on recreate

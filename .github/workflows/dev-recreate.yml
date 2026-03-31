@@ -1,0 +1,312 @@
+# Dev Environment Recreate Workflow
+#
+# Full from-scratch deployment of the dev environment: Terraform → Ansible → Verify.
+# Uses the same pipeline as the initial SP7.001 deployment.
+# Designed for one-click recreation after a teardown.
+#
+# Usage: Actions → Dev Recreate → Run workflow
+
+name: Dev Recreate
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_estimation:
+        description: 'Skip cost estimation summary'
+        required: false
+        type: boolean
+        default: false
+      skip_ansible:
+        description: 'Skip Ansible provisioning (Terraform only)'
+        required: false
+        type: boolean
+        default: false
+      skip_verify:
+        description: 'Skip post-deploy verification'
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false
+
+env:
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  ARM_USE_OIDC: "true"
+  ARM_USE_AZUREAD: "true"
+  TF_IN_AUTOMATION: "true"
+
+jobs:
+  # ── Cost Estimation ──────────────────────────────────────────────────
+  estimate:
+    name: Cost Estimation
+    if: inputs.skip_estimation == false
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Show estimated costs
+        run: |
+          echo "## Dev Environment Cost Estimate (Recreation)" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Recreating will provision resources costing **~\$45–55/day**:" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Resource | SKU | Count | Est. $/day |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| ZooKeeper VMs | Standard_D2s_v5 | 3 | \$8.28 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Kafka Broker VMs | Standard_D4s_v5 | 3 | \$16.56 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Schema Registry VM | Standard_D2s_v5 | 1 | \$2.76 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Kafka Connect VM | Standard_D2s_v5 | 1 | \$2.76 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Function App (EP1) | Elastic Premium | 1 | \$5.00 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Managed Disks | Premium SSD P10 | 8 | \$3.28 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Key Vault + Networking | — | — | \$2.80 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Total** | | | **~\$41–55** |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Tip:** Tear down at end of day to save ~\$45–55/day." >> "$GITHUB_STEP_SUMMARY"
+
+  # ── Terraform Apply ──────────────────────────────────────────────────
+  terraform:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    environment: dev
+    permissions:
+      id-token: write
+      contents: read
+    defaults:
+      run:
+        working-directory: terraform/environments/dev
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Cache Terraform providers
+        uses: actions/cache@v4
+        with:
+          path: terraform/environments/dev/.terraform/providers
+          key: terraform-providers-${{ hashFiles('terraform/environments/dev/.terraform.lock.hcl') }}
+          restore-keys: |
+            terraform-providers-
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -backend-config="key=kafka-lab/dev.tfstate"
+
+      - name: Terraform Plan
+        run: |
+          terraform plan -no-color -input=false -out=tfplan \
+            -var-file="terraform.dev.tfvars" \
+            -var="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+            -var="ssh_public_key=${{ secrets.SSH_PUBLIC_KEY }}" \
+            | tee plan-output.txt
+
+      - name: Terraform Apply
+        run: terraform apply -no-color -input=false tfplan
+
+      - name: Upload Plan Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-recreate-plan-dev
+          path: |
+            terraform/environments/dev/plan-output.txt
+          retention-days: 7
+
+  # ── Ansible Provisioning ─────────────────────────────────────────────
+  ansible:
+    name: Ansible Provisioning
+    needs: terraform
+    if: inputs.skip_ansible == false
+    uses: ./.github/workflows/ansible-deploy.yml
+    with:
+      environment: dev
+      playbook_path: ansible/site.yml
+      inventory_path: ansible/inventory/azure_rm.yml
+    secrets: inherit
+
+  # ── Post-Provisioning Playbooks ──────────────────────────────────────
+  post-provision:
+    name: Post-Provisioning
+    needs: ansible
+    if: inputs.skip_ansible == false
+    runs-on: [self-hosted, linux, azure, ansible]
+    environment: dev
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AZURE_USE_MSI: "true"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install Ansible and Azure collection
+        run: |
+          pip install --quiet --upgrade pip
+          pip install --quiet ansible
+          ansible-galaxy collection install azure.azcollection --force
+          pip install --quiet -r ~/.ansible/collections/ansible_collections/azure/azcollection/requirements.txt
+
+      - name: Retrieve SSH key from Key Vault
+        run: |
+          SSH_KEY=$(az keyvault secret show \
+            --name ansible-ssh-private-key \
+            --vault-name klc-kv-kafkalab-scus \
+            --query value -o tsv)
+          echo "::add-mask::$SSH_KEY"
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/ansible_id_rsa
+          chmod 600 ~/.ssh/ansible_id_rsa
+          echo "ANSIBLE_PRIVATE_KEY_FILE=$HOME/.ssh/ansible_id_rsa" >> "$GITHUB_ENV"
+
+      - name: Retrieve Ansible Vault password from Key Vault
+        run: |
+          VAULT_PASS=$(az keyvault secret show \
+            --name ansible-vault-password \
+            --vault-name klc-kv-kafkalab-scus \
+            --query value -o tsv)
+          echo "::add-mask::$VAULT_PASS"
+          echo "$VAULT_PASS" > ~/.ansible_vault_password
+          chmod 600 ~/.ansible_vault_password
+          echo "ANSIBLE_VAULT_PASSWORD_FILE=$HOME/.ansible_vault_password" >> "$GITHUB_ENV"
+
+      - name: Run client-credentials playbook
+        run: |
+          ansible-playbook ansible/playbooks/client-credentials.yml \
+            -i ansible/inventory/azure_rm.yml \
+            --private-key "$ANSIBLE_PRIVATE_KEY_FILE" \
+            --vault-password-file "$ANSIBLE_VAULT_PASSWORD_FILE"
+
+      - name: Run create-topics playbook
+        run: |
+          ansible-playbook ansible/playbooks/create-topics.yml \
+            -i ansible/inventory/azure_rm.yml \
+            --private-key "$ANSIBLE_PRIVATE_KEY_FILE" \
+            --vault-password-file "$ANSIBLE_VAULT_PASSWORD_FILE"
+
+      - name: Run register-schemas playbook
+        run: |
+          ansible-playbook ansible/playbooks/register-schemas.yml \
+            -i ansible/inventory/azure_rm.yml \
+            --private-key "$ANSIBLE_PRIVATE_KEY_FILE" \
+            --vault-password-file "$ANSIBLE_VAULT_PASSWORD_FILE"
+
+      - name: Clean up secrets
+        if: always()
+        run: |
+          rm -f ~/.ssh/ansible_id_rsa
+          rm -f ~/.ansible_vault_password
+
+  # ── Webapp Deployment ────────────────────────────────────────────────
+  webapp:
+    name: Deploy Web Application
+    needs: post-provision
+    if: inputs.skip_ansible == false
+    uses: ./.github/workflows/webapp-deploy.yml
+    with:
+      environment: dev
+    secrets: inherit
+
+  # ── Verification ─────────────────────────────────────────────────────
+  verify:
+    name: Verify Deployment
+    needs: [terraform, ansible, post-provision, webapp]
+    if: >-
+      always() && !failure() &&
+      inputs.skip_verify == false &&
+      inputs.skip_ansible == false
+    runs-on: [self-hosted, linux, azure, ansible]
+    environment: dev
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AZURE_USE_MSI: "true"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install Ansible and Azure collection
+        run: |
+          pip install --quiet --upgrade pip
+          pip install --quiet ansible
+          ansible-galaxy collection install azure.azcollection --force
+          pip install --quiet -r ~/.ansible/collections/ansible_collections/azure/azcollection/requirements.txt
+
+      - name: Retrieve SSH key from Key Vault
+        run: |
+          SSH_KEY=$(az keyvault secret show \
+            --name ansible-ssh-private-key \
+            --vault-name klc-kv-kafkalab-scus \
+            --query value -o tsv)
+          echo "::add-mask::$SSH_KEY"
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/ansible_id_rsa
+          chmod 600 ~/.ssh/ansible_id_rsa
+          echo "ANSIBLE_PRIVATE_KEY_FILE=$HOME/.ssh/ansible_id_rsa" >> "$GITHUB_ENV"
+
+      - name: Retrieve Ansible Vault password from Key Vault
+        run: |
+          VAULT_PASS=$(az keyvault secret show \
+            --name ansible-vault-password \
+            --vault-name klc-kv-kafkalab-scus \
+            --query value -o tsv)
+          echo "::add-mask::$VAULT_PASS"
+          echo "$VAULT_PASS" > ~/.ansible_vault_password
+          chmod 600 ~/.ansible_vault_password
+          echo "ANSIBLE_VAULT_PASSWORD_FILE=$HOME/.ansible_vault_password" >> "$GITHUB_ENV"
+
+      - name: Run dev verification playbook
+        run: |
+          ansible-playbook ansible/playbooks/verify-dev.yml \
+            -i ansible/inventory/azure_rm.yml \
+            --private-key "$ANSIBLE_PRIVATE_KEY_FILE" \
+            --vault-password-file "$ANSIBLE_VAULT_PASSWORD_FILE"
+
+      - name: Clean up secrets
+        if: always()
+        run: |
+          rm -f ~/.ssh/ansible_id_rsa
+          rm -f ~/.ansible_vault_password
+
+      - name: Summary
+        run: |
+          echo "## Dev Environment Recreation Complete ✅" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "All components deployed and verified:" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Terraform infrastructure provisioned" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Ansible playbooks executed (site, credentials, topics, schemas)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Web application deployed to Function App" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Verification playbook passed" >> "$GITHUB_STEP_SUMMARY"

@@ -195,3 +195,117 @@ ZooKeeper and Kafka must be healthy first. Run verification in order:
 ```bash
 ansible-playbook playbooks/verify-dev.yml -i inventory/dev-static.ini -e "@group_vars/env_dev.yml"
 ```
+
+## Teardown and Recreate
+
+The dev environment can be fully destroyed and recreated to manage Azure costs.
+The infrastructure is 100% reproducible from Terraform state + Ansible playbooks.
+
+### Cost Estimation
+
+| State | Resources | Est. Cost/Day |
+|---|---|---|
+| **Running** | 8 VMs, Function App, Key Vault, VNet, NSGs, PEs, Disks | **~$45–55** |
+| **Destroyed** | Terraform state storage account only | **~$0.10** |
+
+Running cost breakdown:
+
+| Resource | SKU | Count | Est. $/day |
+|---|---|---|---|
+| ZooKeeper VMs | Standard_D2s_v5 | 3 | $8.28 |
+| Kafka Broker VMs | Standard_D4s_v5 | 3 | $16.56 |
+| Schema Registry VM | Standard_D2s_v5 | 1 | $2.76 |
+| Kafka Connect VM | Standard_D2s_v5 | 1 | $2.76 |
+| Function App | EP1 (Elastic Premium) | 1 | $5.00 |
+| Managed Disks | Premium SSD P10 | 8 | $3.28 |
+| Key Vault | Standard | 1 | $0.30 |
+| Networking | VNet, NSGs, Private Endpoints | — | $2.50 |
+
+Savings examples:
+
+- **Weekend teardown** (Fri 6pm → Mon 8am): ~$110–140 saved
+- **Nightly teardown** (6pm → 8am weekdays + weekends): ~$270–330/week saved
+
+### When to Teardown
+
+- **End of day** — no active development overnight
+- **Weekends** — no sprint work planned
+- **Between sprints** — environment not needed during planning
+- **Cost pressure** — reduce Azure spend during low-activity periods
+
+### How to Teardown
+
+**Option 1: GitHub Actions (recommended)**
+
+Go to **Actions → Dev Teardown → Run workflow**. The workflow:
+
+1. Plans and applies `terraform destroy` for all dev resources
+2. Verifies no orphaned resources remain in `klc-rg-kafkalab-scus`
+3. Posts cost estimation summary
+
+Inputs:
+
+- `plan_only` — Preview what will be destroyed without applying
+- `skip_estimation` — Skip the cost summary step
+
+**Option 2: Script**
+
+```bash
+# Interactive — prompts for confirmation
+./scripts/teardown-dev.sh
+
+# Non-interactive (CI/CD)
+./scripts/teardown-dev.sh --confirm
+
+# Preview what will be destroyed
+./scripts/teardown-dev.sh --plan-only
+```
+
+### How to Recreate
+
+**Option 1: GitHub Actions (recommended)**
+
+Go to **Actions → Dev Recreate → Run workflow**. The workflow runs the full pipeline:
+
+1. `terraform apply` — provisions all Azure infrastructure
+2. `ansible site.yml` — configures VMs (ZooKeeper, Kafka, Schema Registry, Connect)
+3. Post-provisioning playbooks (client-credentials, create-topics, register-schemas)
+4. Web application deployment to Function App
+5. Verification playbook confirms all services are healthy
+
+Inputs:
+
+- `skip_ansible` — Terraform only (useful for debugging infra changes)
+- `skip_verify` — Skip post-deploy verification
+- `skip_estimation` — Skip cost summary
+
+**Option 2: Script**
+
+```bash
+# Full deployment from scratch
+./scripts/deploy-dev.sh
+
+# Terraform only
+./scripts/deploy-dev.sh --skip-ansible
+```
+
+### What Persists vs. What's Destroyed
+
+| Component | Teardown Behavior |
+|---|---|
+| Resource Group | **Persists** — container is never deleted |
+| Terraform State Storage | **Persists** — backend for state files |
+| Terraform State | **Persists** — stored in Azure Storage, tracks empty state |
+| VMs (all roles) | **Destroyed** — recreated from scratch |
+| Managed Disks | **Destroyed** — Kafka data, ZK data lost |
+| Function App + Plan | **Destroyed** — redeployed with webapp |
+| Key Vault | **Destroyed** — secrets recreated by Ansible |
+| VNet, Subnets, NSGs | **Destroyed** — recreated by Terraform |
+| Private Endpoints | **Destroyed** — recreated by Terraform |
+| Private DNS Zones | **Destroyed** — recreated by Terraform |
+| Kafka Topics | **Destroyed** — recreated by create-topics playbook |
+| Schema Registry Schemas | **Destroyed** — recreated by register-schemas playbook |
+
+> **Note:** All application state (topics, messages, schemas, consumer offsets) is lost
+> on teardown. This is acceptable for dev — the recreate pipeline restores baseline
+> topics and schemas automatically.

@@ -8,9 +8,9 @@ on:
         type: string
         required: true
       function_app_name:
-        description: Azure Function App name
+        description: Azure Function App name (defaults to klc-func-kafkalab-{environment}-scus)
         type: string
-        default: klc-func-kafkalab-${{ inputs.environment }}-scus
+        required: false
       slot_name:
         description: Deployment slot name for zero-downtime updates
         type: string
@@ -72,7 +72,17 @@ jobs:
 
           # Azure Functions configuration
           cp host.json deploy-package/
-          cp local.settings.json deploy-package/
+
+          # Generate minimal local.settings.json for the custom handler runtime
+          cat > deploy-package/local.settings.json << 'EOF'
+          {
+            "IsEncrypted": false,
+            "Values": {
+              "FUNCTIONS_WORKER_RUNTIME": "custom",
+              "AzureWebJobsStorage": ""
+            }
+          }
+          EOF
 
       - name: Upload deployment artifact
         uses: actions/upload-artifact@v4
@@ -91,7 +101,7 @@ jobs:
       - name: Deploy to Azure Function App
         uses: azure/functions-action@v2
         with:
-          app-name: ${{ inputs.function_app_name }}
+          app-name: ${{ inputs.function_app_name || format('klc-func-kafkalab-{0}-scus', inputs.environment) }}
           package: webapp/deploy-package
           slot-name: ${{ inputs.slot_name || 'production' }}
 
@@ -101,7 +111,7 @@ jobs:
         with:
           inlineScript: |
             az functionapp deployment slot swap \
-              --name "${{ inputs.function_app_name }}" \
+              --name "${{ inputs.function_app_name || format('klc-func-kafkalab-{0}-scus', inputs.environment) }}" \
               --resource-group "klc-rg-kafkalab-${{ inputs.environment }}-scus" \
               --slot "${{ inputs.slot_name }}" \
               --target-slot production

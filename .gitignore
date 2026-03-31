@@ -477,6 +477,8 @@ docs/docusaurus/node_modules/
 *.tfstate.backup
 *.tfvars
 !*.tfvars.example
+!terraform.dev.tfvars
+!terraform.prod.tfvars
 .terraformrc
 terraform.rc
 # Squad: ignore runtime state (logs, inbox, sessions)

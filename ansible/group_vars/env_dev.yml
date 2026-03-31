@@ -1,0 +1,29 @@
+---
+# Dev environment overrides
+# Lower resource values for cost-efficient development workloads
+
+# Kafka broker sizing
+kafka_broker_heap_size: '2g'
+kafka_broker_default_replication_factor: 1
+kafka_broker_min_insync_replicas: 1
+kafka_broker_num_partitions: 3
+kafka_broker_log_retention_hours: 48
+
+# ZooKeeper sizing
+zookeeper_heap_size: '512m'
+
+# Schema Registry sizing
+schema_registry_heap_size: '256m'
+
+# Kafka Connect sizing
+kafka_connect_heap_size: '512m'
+
+# Feature toggles — relaxed for dev
+kafka_broker_tiered_storage_enabled: false
+kafka_broker_self_balancing_enabled: false
+kafka_broker_acl_enabled: false
+kafka_broker_security_enabled: false
+
+# Timeouts — relaxed for dev iteration
+kafka_broker_request_timeout_ms: 60000
+kafka_broker_session_timeout_ms: 30000

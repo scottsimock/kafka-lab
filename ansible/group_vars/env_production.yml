@@ -1,0 +1,29 @@
+---
+# Production environment overrides
+# Full replication, larger heaps, stricter settings
+
+# Kafka broker sizing
+kafka_broker_heap_size: '6g'
+kafka_broker_default_replication_factor: 3
+kafka_broker_min_insync_replicas: 2
+kafka_broker_num_partitions: 6
+kafka_broker_log_retention_hours: 168
+
+# ZooKeeper sizing
+zookeeper_heap_size: '1g'
+
+# Schema Registry sizing
+schema_registry_heap_size: '512m'
+
+# Kafka Connect sizing
+kafka_connect_heap_size: '1g'
+
+# Feature toggles — all enabled for production
+kafka_broker_tiered_storage_enabled: true
+kafka_broker_self_balancing_enabled: true
+kafka_broker_acl_enabled: true
+kafka_broker_security_enabled: true
+
+# Timeouts — strict for production reliability
+kafka_broker_request_timeout_ms: 30000
+kafka_broker_session_timeout_ms: 10000

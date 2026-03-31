@@ -46,3 +46,7 @@ todo:
 
 - why does it take so long for ruby complete the initial step and pass control to the PO. Looking in the logs ruby is taking about 10 minutes even when the human is not in the loop
 - since the entire backlog has been generated, how can we decrease the time the PO and SM spend on the backlog at the beginning of sprints are SP0
+
+- ﻿When starting a new sprint, I'm noticing that its taking a while for ruby to complete the initial step and pass control to the PO. Looking at the Status Update section in the
+backlog/milestone file, appears ruby is taking about 10 minutes even when the human is not in the loop. How can we decrease the time it takes to for ruby to do her work and pass
+control to the PO.

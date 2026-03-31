@@ -107,6 +107,43 @@ Terraform module decisions for Azure Function App hosting Next.js 15 web applica
 
 **Open Questions:** Subnet delegation for Premium plan validation pending (SP5.010). Storage access may need UAMI-based migration in future sprints.
 
+## SP5 Complete — 2026-03-31T15:57:14 EDT
+
+**Sprint:** SP5 — Web Application  
+**Status:** COMPLETE
+
+**Results:**
+- 10/10 tasks Done (100%)
+- Average quality score: ~99%
+- All acceptance criteria met
+
+**Review & Fixes:**
+Ripley reviewed and approved with conditions. Three critical issues identified and fixed by Parker:
+
+1. **Storage authentication:** Replaced broken blob endpoint URL with `AzureWebJobsStorage__accountName` pattern using managed identity + RBAC roles (Storage Blob Data Owner + Storage Queue Data Contributor)
+2. **Schema Registry URL:** Added missing `SCHEMA_REGISTRY_URL` environment variable to Function App appSettings
+3. **Consumer group state badge:** Fixed case mismatch in `formatConsumerGroupState` (title case: Stable, Rebalancing, Empty, Dead)
+
+**Non-blocking warnings deferred:**
+- Tailwind CSS not installed
+- Ephemeral consumer groups (SSE streaming)
+- SSE abort handler (client disconnect edge case)
+- `any` types in shared Kafka module
+
+**Deliverables:**
+- Branch: `sprint/SP5-web-application` (14 commits)
+- Next.js 15 web application with App Router (9 tasks)
+- Azure Function App infrastructure + Terraform module (1 task + 3 review fixes)
+- All views: dashboard, topics, consumer groups, messages, schemas
+- API routes: cluster metadata, topics, consumer groups, message produce/consume/stream, schemas
+- Shared Kafka client library with @confluentinc/kafka-javascript
+
+**Team Effort:**
+- **Dallas:** 9 tasks (frontend, views, API routes, shared client module)
+- **Parker:** 1 task (Function App Terraform) + 3 critical review fixes
+
+---
+
 ## Governance
 
 - All meaningful changes require team consensus

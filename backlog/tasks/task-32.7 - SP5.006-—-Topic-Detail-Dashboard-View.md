@@ -1,11 +1,11 @@
 ---
 id: TASK-32.7
 title: SP5.006 — Topic Detail Dashboard View
-status: In Progress
+status: Done
 assignee:
-  - Dallas
+  - Drexl
 created_date: '2026-03-30 16:46'
-updated_date: '2026-03-31 19:23'
+updated_date: '2026-03-31 19:56'
 labels:
   - story
 milestone: m-5

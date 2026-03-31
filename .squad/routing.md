@@ -6,14 +6,14 @@ How to decide who handles what.
 
 | Work Type | Route To | Examples |
 |-----------|----------|----------|
-| Terraform modules, Azure networking, Ansible roles | Parker | VNet peering, VM provisioning, CI/CD workflows |
-| Next.js, React, Azure Functions, web UI | Dallas | Dashboard views, API routes, Kafka client module |
-| Architecture, scope, design review | Ripley | Module design, cross-domain decisions, code review |
-| Code review | Ripley | Review PRs, check quality, architectural alignment |
-| Testing, validation, QA | Lambert | Write tests, verify AC, edge case analysis |
-| Scope & priorities | Ripley | What to build next, trade-offs, sprint decisions |
-| GitHub Actions, deployment pipelines | Parker | Workflow YAML, environment configs, drift detection |
-| Chaos Studio, resiliency testing | Parker + Lambert | Infrastructure provisioning + test validation |
+| Terraform modules, Azure networking, Ansible roles | Zorg | VNet peering, VM provisioning, CI/CD workflows |
+| Next.js, React, Azure Functions, web UI | Drexl | Dashboard views, API routes, Kafka client module |
+| Architecture, scope, design review | Smiley | Module design, cross-domain decisions, code review |
+| Code review | Smiley | Review PRs, check quality, architectural alignment |
+| Testing, validation, QA | Sid | Write tests, verify AC, edge case analysis |
+| Scope & priorities | Smiley | What to build next, trade-offs, sprint decisions |
+| GitHub Actions, deployment pipelines | Zorg | Workflow YAML, environment configs, drift detection |
+| Chaos Studio, resiliency testing | Zorg + Sid | Infrastructure provisioning + test validation |
 | Session logging | Scribe | Automatic — never needs routing |
 | Work queue monitoring | Ralph | Board status, pipeline momentum |
 

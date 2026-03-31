@@ -1,11 +1,11 @@
 ---
 id: TASK-32.5
 title: SP5.002 — Shared Kafka Client Module
-status: Dev Complete
+status: Done
 assignee:
-  - Dallas
+  - Drexl
 created_date: '2026-03-30 16:46'
-updated_date: '2026-03-31 19:12'
+updated_date: '2026-03-31 19:56'
 labels:
   - story
 milestone: m-5

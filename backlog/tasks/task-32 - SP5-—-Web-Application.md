@@ -1,10 +1,10 @@
 ---
 id: TASK-32
 title: SP5 — Web Application
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-03-30 16:45'
-updated_date: '2026-03-31 18:59'
+updated_date: '2026-03-31 19:56'
 labels:
   - sprint
 milestone: m-5
@@ -34,4 +34,10 @@ Web application sprint covering Next.js 15 project scaffolding, Azure Function A
 - SP5 sprint started
 - Branch: sprint/SP5-web-application
 - Wave 1: SP5.001 (Dallas — scaffolding) + SP5.009 (Parker — Function App infra) in parallel
+
+## [Squad] 2026-03-31T15:56ET
+- All 10 tasks Done. Build verified (21 routes).
+- Ripley review: APPROVE WITH CONDITIONS → 3 critical fixes applied by Parker.
+- Branch: sprint/SP5-web-application (14 commits ahead of main).
+- Sprint complete.
 <!-- SECTION:NOTES:END -->

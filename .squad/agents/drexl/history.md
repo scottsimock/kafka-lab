@@ -168,3 +168,7 @@ The @confluentinc/kafka-javascript library exports via namespaces (`KafkaJS`, `R
 - `webapp/app/dashboard/(views)/schemas/loading.tsx` — loading state
 - `webapp/app/dashboard/(views)/schemas/error.tsx` — error boundary
 
+### SP5 Complete (2026-03-31)
+
+SP5 — Web Application sprint is COMPLETE. Delivered 9/10 tasks (all passed review with flying colors). Average quality score ~99%. All views, API routes, and shared Kafka client finalized. Parker's 3 critical review fixes applied and verified: storage auth (managed identity + RBAC), Schema Registry URL env var, consumer group state badge case mismatch.
+

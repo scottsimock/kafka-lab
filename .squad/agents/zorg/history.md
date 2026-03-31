@@ -42,3 +42,17 @@ Merged `.github/instructions/coding-standards/ansible.instructions.md` (general 
 ### Function App module created (SP5.009, 2026-03-31)
 
 Created `terraform/modules/function-app/` for Azure Function App infrastructure. Module provisions Premium EP1 App Service Plan (required for VNet integration), Standard_LRS storage account with TLS 1.2 minimum and private network access, and Function App configured for Node|20 runtime with Custom worker. Function App integrates with VNet via `web_app_subnet_id` variable and references Kafka secrets from Key Vault using `@Microsoft.KeyVault(VaultName=...;SecretName=...)` pattern in app settings. Module includes RBAC assignment granting the UAMI Key Vault Secrets User role (4633458b-17de-408a-b874-0445c86b69e6) for secret access. All resources use AzAPI provider with 2023-12-01 API versions following established module pattern (main.tf, variables.tf, outputs.tf, versions.tf). Storage account connection string uses property reference syntax for blob endpoint. Module ready for environment wiring in SP5.010.
+
+### SP5 review fixes (2026-03-31)
+
+Fixed three critical issues from Ripley's SP5 review:
+1. Storage authentication: Replaced broken `AzureWebJobsStorage` connection string (was incorrectly using blob endpoint URL) with `AzureWebJobsStorage__accountName` for managed identity authentication. Added Storage Blob Data Owner (b7e6dc6d-f1e8-4753-8033-0f276bb0955b) and Storage Queue Data Contributor (974c5e8b-45b9-4653-ba55-5f855dd0fb88) RBAC roles for UAMI on storage account. This approach is more secure and aligns with Azure Functions best practices for VNet-integrated apps.
+2. Schema Registry URL: Added `schema_registry_url` variable and `SCHEMA_REGISTRY_URL` app setting to Function App. The webapp code references this environment variable but it was missing from Terraform configuration.
+3. Consumer group state badge: Fixed case mismatch in `webapp/lib/api/consumer-groups.ts` by normalizing `formatConsumerGroupState` output to title case (Stable, Rebalancing, Empty, Dead) to match dashboard page comparisons. This was Dallas's code (reviewer lockout scenario).
+
+Key learning: Azure Functions storage connection for VNet-integrated apps should use managed identity pattern (`AzureWebJobsStorage__accountName` + RBAC roles) rather than connection strings with account keys. The blob endpoint URL is not a valid connection string format.
+
+### SP5 Complete (2026-03-31)
+
+SP5 — Web Application sprint is COMPLETE. Delivered SP5.009 (Function App Terraform module) and applied 3 critical fixes from Ripley's review (storage auth managed identity, Schema Registry URL env var, consumer group state badge case). All 10 tasks passed quality review. Average score ~99%. Branch: sprint/SP5-web-application (14 commits).
+

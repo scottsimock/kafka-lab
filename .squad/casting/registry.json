@@ -1,32 +1,36 @@
 {
   "agents": {
     "lead": {
-      "persistent_name": "Ripley",
-      "universe": "Alien",
-      "created_at": "2026-03-31T18:10:00Z",
+      "persistent_name": "Smiley",
+      "universe": "Gary Oldman Filmography",
+      "created_at": "2026-03-31T20:06:00Z",
       "legacy_named": false,
-      "status": "active"
+      "status": "active",
+      "source_film": "Tinker Tailor Soldier Spy"
     },
     "infra-dev": {
-      "persistent_name": "Parker",
-      "universe": "Alien",
-      "created_at": "2026-03-31T18:10:00Z",
+      "persistent_name": "Zorg",
+      "universe": "Gary Oldman Filmography",
+      "created_at": "2026-03-31T20:06:00Z",
       "legacy_named": false,
-      "status": "active"
+      "status": "active",
+      "source_film": "The Fifth Element"
     },
     "frontend-dev": {
-      "persistent_name": "Dallas",
-      "universe": "Alien",
-      "created_at": "2026-03-31T18:10:00Z",
+      "persistent_name": "Drexl",
+      "universe": "Gary Oldman Filmography",
+      "created_at": "2026-03-31T20:06:00Z",
       "legacy_named": false,
-      "status": "active"
+      "status": "active",
+      "source_film": "True Romance"
     },
     "tester": {
-      "persistent_name": "Lambert",
-      "universe": "Alien",
-      "created_at": "2026-03-31T18:10:00Z",
+      "persistent_name": "Sid",
+      "universe": "Gary Oldman Filmography",
+      "created_at": "2026-03-31T20:06:00Z",
       "legacy_named": false,
-      "status": "active"
+      "status": "active",
+      "source_film": "Sid and Nancy"
     }
   }
 }

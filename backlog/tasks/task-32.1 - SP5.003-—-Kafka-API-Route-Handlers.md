@@ -1,11 +1,11 @@
 ---
 id: TASK-32.1
 title: SP5.003 — Kafka API Route Handlers
-status: Dev Complete
+status: Done
 assignee:
-  - Dallas
+  - Drexl
 created_date: '2026-03-30 16:46'
-updated_date: '2026-03-31 19:22'
+updated_date: '2026-03-31 19:56'
 labels:
   - story
 milestone: m-5

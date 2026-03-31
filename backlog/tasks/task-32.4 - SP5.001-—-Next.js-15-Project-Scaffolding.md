@@ -1,11 +1,11 @@
 ---
 id: TASK-32.4
 title: SP5.001 — Next.js 15 Project Scaffolding
-status: Dev Complete
+status: Done
 assignee:
-  - Dallas
+  - Drexl
 created_date: '2026-03-30 16:46'
-updated_date: '2026-03-31 19:06'
+updated_date: '2026-03-31 19:56'
 labels:
   - story
 milestone: m-5

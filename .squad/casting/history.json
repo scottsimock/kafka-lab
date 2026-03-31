@@ -4,6 +4,11 @@
       "universe": "Alien",
       "assignment_id": "kafka-lab-init-001",
       "used_at": "2026-03-31T18:10:00Z"
+    },
+    {
+      "universe": "Gary Oldman Filmography",
+      "assignment_id": "kafka-lab-recast-002",
+      "used_at": "2026-03-31T20:06:00Z"
     }
   ],
   "assignment_cast_snapshots": {
@@ -15,7 +20,18 @@
         "frontend-dev": "Dallas",
         "tester": "Lambert"
       },
-      "created_at": "2026-03-31T18:10:00Z"
+      "created_at": "2026-03-31T18:10:00Z",
+      "retired_at": "2026-03-31T20:06:00Z"
+    },
+    "kafka-lab-recast-002": {
+      "universe": "Gary Oldman Filmography",
+      "agents": {
+        "lead": "Smiley",
+        "infra-dev": "Zorg",
+        "frontend-dev": "Drexl",
+        "tester": "Sid"
+      },
+      "created_at": "2026-03-31T20:06:00Z"
     }
   }
 }

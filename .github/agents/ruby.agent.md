@@ -25,8 +25,8 @@ The human will say one of:
 
 1. **Create milestone** — Use `backlog-milestone_add` to create milestone `SP{N}` if it does not exist.
 2. **Create branch** — Create git branch `sprint/SP{N}-{description}` from `main`. Push the branch.
-3. **Invoke PO** — Call the Product Owner to create the sprint task and all story/research tasks as children for this sprint.
-4. **Invoke SM** — Call the Scrum Master to review all tasks in the milestone. PO and SM iterate up to 3 times until SM is satisfied.
+3. **Invoke PO** — Query `backlog-task_list` for the sprint milestone first. If child tasks already exist (created during SP0P2), invoke the PO in **refinement mode** — tell it tasks already exist and it should review and update them, not create new ones. If no child tasks exist, invoke the PO in **creation mode** to create the sprint task and all children from scratch.
+4. **Invoke SM** — Call the Scrum Master to review all tasks in the milestone. If the PO performed refinement only, tell the SM to run a **refinement review** (lighter pass focused on what changed). PO and SM iterate up to 3 times until SM is satisfied.
 5. **Invoke TL** — Call the Tech Lead to execute all tasks in the sprint (assign to coders/testers, manage the retry loop).
 6. **Invoke SM for Sprint Report** — When the TL returns, re-invoke the Scrum Master to update the cumulative Sprint Report document. Pass the sprint number and tell the SM to generate the report from final task data. This MUST happen before creating the PR.
 7. **Sprint End** — After the SM finishes the sprint report:

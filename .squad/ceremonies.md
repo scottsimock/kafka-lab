@@ -42,6 +42,29 @@
 
 ---
 
+## Sprint Closeout
+
+| Field | Value |
+|-------|-------|
+| **Trigger** | auto |
+| **When** | after |
+| **Condition** | all tasks in a sprint reach Done status |
+| **Facilitator** | lead |
+| **Participants** | lead-only |
+| **Time budget** | focused |
+| **Enabled** | ✅ yes |
+
+**Agenda:**
+1. Verify all sprint tasks are Done and acceptance criteria met
+2. Stage and commit all sprint work on the sprint branch (`sprint/SP{N}-{description}`)
+3. Push the branch to origin
+4. Create a pull request via `gh pr create` targeting `main` with title `SP{N} — {Sprint Goal}`
+5. Include sprint summary (task count, highlights, key decisions) in the PR body
+
+**Runs before:** Sprint Report (closeout packages the code; report documents the sprint)
+
+---
+
 ## Sprint Report
 
 | Field | Value |

@@ -32,9 +32,20 @@ export interface ConsumerGroupDetail {
 }
 
 export function formatConsumerGroupState(state: string | number): string {
-  // Convert numeric state to uppercase string for display
   const stateStr = String(state).toUpperCase();
-  return stateStr;
+  // Normalize to title case for UI consistency
+  switch (stateStr) {
+    case 'STABLE':
+      return 'Stable';
+    case 'REBALANCING':
+      return 'Rebalancing';
+    case 'EMPTY':
+      return 'Empty';
+    case 'DEAD':
+      return 'Dead';
+    default:
+      return stateStr.charAt(0) + stateStr.slice(1).toLowerCase();
+  }
 }
 
 export async function fetchConsumerGroups(): Promise<ConsumerGroupSummary[]> {

@@ -56,7 +56,7 @@ resource "azapi_resource" "app_service_plan" {
 }
 
 // =====================================================
-// UAMI Role Assignment — Key Vault Secrets User
+// UAMI Role Assignments
 // =====================================================
 
 resource "random_uuid" "kv_secrets_user" {}
@@ -69,6 +69,38 @@ resource "azapi_resource" "kv_role_assignment" {
   body = {
     properties = {
       roleDefinitionId = "/subscriptions/${split("/", var.resource_group_id)[2]}/providers/Microsoft.Authorization/roleDefinitions/4633458b-17de-408a-b874-0445c86b69e6"
+      principalId      = var.user_assigned_identity_principal_id
+      principalType    = "ServicePrincipal"
+    }
+  }
+}
+
+resource "random_uuid" "storage_blob_owner" {}
+
+resource "azapi_resource" "storage_blob_role" {
+  type      = "Microsoft.Authorization/roleAssignments@2022-04-01"
+  name      = random_uuid.storage_blob_owner.result
+  parent_id = azapi_resource.storage.id
+
+  body = {
+    properties = {
+      roleDefinitionId = "/subscriptions/${split("/", var.resource_group_id)[2]}/providers/Microsoft.Authorization/roleDefinitions/b7e6dc6d-f1e8-4753-8033-0f276bb0955b"
+      principalId      = var.user_assigned_identity_principal_id
+      principalType    = "ServicePrincipal"
+    }
+  }
+}
+
+resource "random_uuid" "storage_queue_contributor" {}
+
+resource "azapi_resource" "storage_queue_role" {
+  type      = "Microsoft.Authorization/roleAssignments@2022-04-01"
+  name      = random_uuid.storage_queue_contributor.result
+  parent_id = azapi_resource.storage.id
+
+  body = {
+    properties = {
+      roleDefinitionId = "/subscriptions/${split("/", var.resource_group_id)[2]}/providers/Microsoft.Authorization/roleDefinitions/974c5e8b-45b9-4653-ba55-5f855dd0fb88"
       principalId      = var.user_assigned_identity_principal_id
       principalType    = "ServicePrincipal"
     }
@@ -115,8 +147,8 @@ resource "azapi_resource" "function_app" {
             value = "~4"
           },
           {
-            name  = "AzureWebJobsStorage"
-            value = "DefaultEndpointsProtocol=https;AccountName=${azapi_resource.storage.name};AccountKey=${azapi_resource.storage.output.properties.primaryEndpoints.blob}"
+            name  = "AzureWebJobsStorage__accountName"
+            value = azapi_resource.storage.name
           },
           {
             name  = "WEBSITE_VNET_ROUTE_ALL"
@@ -143,6 +175,10 @@ resource "azapi_resource" "function_app" {
             value = "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=kafka-ssl-ca)"
           },
           {
+            name  = "SCHEMA_REGISTRY_URL"
+            value = var.schema_registry_url
+          },
+          {
             name  = "WEBSITE_RUN_FROM_PACKAGE"
             value = "1"
           }
@@ -151,5 +187,9 @@ resource "azapi_resource" "function_app" {
     }
   }
 
-  depends_on = [azapi_resource.kv_role_assignment]
+  depends_on = [
+    azapi_resource.kv_role_assignment,
+    azapi_resource.storage_blob_role,
+    azapi_resource.storage_queue_role
+  ]
 }

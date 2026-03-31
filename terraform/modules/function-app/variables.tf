@@ -49,6 +49,11 @@ variable "storage_account_name" {
   default     = null
 }
 
+variable "schema_registry_url" {
+  description = "Schema Registry URL (e.g., http://schema-registry:8081)"
+  type        = string
+}
+
 variable "tags" {
   description = "Tags to apply to all resources"
   type        = map(string)

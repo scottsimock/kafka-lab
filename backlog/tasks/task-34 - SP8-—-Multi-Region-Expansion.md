@@ -1,10 +1,10 @@
 ---
 id: TASK-34
-title: SP7 — Multi-Region Expansion
+title: SP8 — Multi-Region Expansion
 status: To Do
 assignee: []
 created_date: '2026-03-30 16:48'
-updated_date: '2026-03-30 17:09'
+updated_date: '2026-03-31 21:59'
 labels:
   - sprint
 milestone: m-7

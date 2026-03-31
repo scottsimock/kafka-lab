@@ -1,9 +1,10 @@
 ---
 id: TASK-35.4
-title: SP8.004 — Azure Front Door Configuration
+title: SP9.004 — Azure Front Door Configuration
 status: To Do
 assignee: []
 created_date: '2026-03-30 16:51'
+updated_date: '2026-03-31 21:58'
 labels:
   - story
 milestone: m-8

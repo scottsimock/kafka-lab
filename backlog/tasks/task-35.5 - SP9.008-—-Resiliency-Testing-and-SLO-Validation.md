@@ -1,10 +1,10 @@
 ---
 id: TASK-35.5
-title: SP8.008 — Resiliency Testing and SLO Validation
+title: SP9.008 — Resiliency Testing and SLO Validation
 status: To Do
 assignee: []
 created_date: '2026-03-30 16:51'
-updated_date: '2026-03-30 16:51'
+updated_date: '2026-03-31 21:58'
 labels:
   - story
 milestone: m-8

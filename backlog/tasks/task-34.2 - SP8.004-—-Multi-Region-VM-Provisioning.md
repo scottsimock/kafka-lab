@@ -1,10 +1,10 @@
 ---
 id: TASK-34.2
-title: SP7.004 — Multi-Region VM Provisioning
+title: SP8.004 — Multi-Region VM Provisioning
 status: To Do
 assignee: []
 created_date: '2026-03-30 16:50'
-updated_date: '2026-03-30 16:50'
+updated_date: '2026-03-31 21:59'
 labels:
   - story
 milestone: m-7

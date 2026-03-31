@@ -56,3 +56,9 @@ Key learning: Azure Functions storage connection for VNet-integrated apps should
 
 SP5 — Web Application sprint is COMPLETE. Delivered SP5.009 (Function App Terraform module) and applied 3 critical fixes from Ripley's review (storage auth managed identity, Schema Registry URL env var, consumer group state badge case). All 10 tasks passed quality review. Average score ~99%. Branch: sprint/SP5-web-application (14 commits).
 
+### SP7 backlog injection (2026-03-31)
+
+Injected new SP7 — Dev Environment Deployment & Integration Testing between SP6 (CI/CD) and the former SP7 (Multi-Region). Renamed old SP7 → SP8, old SP8 → SP9. Created 10 stories covering: Azure deployment, Playwright framework setup, Playwright MCP integration, smoke tests, integration tests (dashboard, operations, schema registry), E2E validation, CI/CD for tests, and teardown/cost management. Sprint parent: TASK-36. Milestone: SP7 (m-9). Decision documented in `.squad/decisions/inbox/zorg-sp7-backlog-refactor.md`.
+
+Key pattern: when renaming sprint numbers, process in reverse order (highest number first) to avoid milestone name conflicts. Backlog MCP `milestone_rename` with `updateTasks: true` handles milestone references on tasks automatically, but task titles must be updated individually via `task_edit`. Dependencies use internal task IDs (TASK-N) which are stable across renames — only titles and milestone display names shift.
+

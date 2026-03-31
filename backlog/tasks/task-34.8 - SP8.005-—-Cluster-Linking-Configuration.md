@@ -1,10 +1,10 @@
 ---
 id: TASK-34.8
-title: SP7.005 — Cluster Linking Configuration
+title: SP8.005 — Cluster Linking Configuration
 status: To Do
 assignee: []
 created_date: '2026-03-30 16:50'
-updated_date: '2026-03-30 16:50'
+updated_date: '2026-03-31 21:59'
 labels:
   - story
 milestone: m-7

@@ -25,5 +25,5 @@
 - **User:** simock
 - **Stack:** Terraform (AzAPI), Ansible, Next.js 15, GitHub Actions, Azure VMs
 - **Progress:** SP0–SP6 complete (foundation, compute, Kafka platform, ecosystem, web app, CI/CD)
-- **Remaining:** SP7 (Multi-Region), SP8 (Resiliency)
+- **Remaining:** SP7 (Dev Environment & Integration Testing), SP8 (Multi-Region), SP9 (Resiliency)
 - **Created:** 2026-03-31

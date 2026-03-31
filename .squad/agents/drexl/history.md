@@ -172,3 +172,18 @@ The @confluentinc/kafka-javascript library exports via namespaces (`KafkaJS`, `R
 
 SP5 — Web Application sprint is COMPLETE. Delivered 9/10 tasks (all passed review with flying colors). Average quality score ~99%. All views, API routes, and shared Kafka client finalized. Parker's 3 critical review fixes applied and verified: storage auth (managed identity + RBAC), Schema Registry URL env var, consumer group state badge case mismatch.
 
+
+## Sprint Update: SP7 Injection (2026-03-31T17:56-04:00)
+
+**By:** Zorg (Sprint Orchestrator)
+
+The sprint roadmap was restructured. A new SP7 (Dev Environment Deployment & Integration Testing) was injected between CI/CD (SP6) and multi-region expansion. Former SP7 (Multi-Region) renamed to SP8. Former SP8 (Resiliency) renamed to SP9.
+
+**New Sprints:**
+- SP7: Dev Environment Deployment & Integration Testing (10 stories)
+- SP8: Multi-Region Expansion (was SP7)
+- SP9: Resiliency and Production Hardening (was SP8)
+
+**Rationale:** Validate single-region dev environment before multi-region complexity. Aligns with REQUIREMENTS.md strategy.
+
+**Impact on Drexl:** Your upcoming work (multi-region) is now SP8. No scope changes — only sprint numbers shifted. Ready to start when SP7 env validation is complete.

@@ -1,10 +1,10 @@
 ---
 id: TASK-35
-title: SP8 — Resiliency and Production Hardening
+title: SP9 — Resiliency and Production Hardening
 status: To Do
 assignee: []
 created_date: '2026-03-30 16:50'
-updated_date: '2026-03-30 17:09'
+updated_date: '2026-03-31 21:58'
 labels:
   - sprint
 milestone: m-8

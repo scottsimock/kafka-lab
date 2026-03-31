@@ -1,9 +1,10 @@
 ---
 id: TASK-35.6
-title: SP8.005 — Monitoring and Alerting Configuration
+title: SP9.005 — Monitoring and Alerting Configuration
 status: To Do
 assignee: []
 created_date: '2026-03-30 16:51'
+updated_date: '2026-03-31 21:58'
 labels:
   - story
 milestone: m-8

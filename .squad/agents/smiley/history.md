@@ -137,3 +137,18 @@ Formalized this pattern in `.squad/templates/task-documentation.md` (12KB, 400+ 
 
 **Implementation:**
 Created `.squad/templates/task-documentation.md` and decision record in `.squad/decisions/inbox/smiley-task-documentation-standard.md`. All squad agents now have a single reference for backlog documentation conventions. Existing SP0–SP4 tasks already follow this pattern — standard codifies observed practice.
+
+## Sprint Update: SP7 Injection (2026-03-31T17:56-04:00)
+
+**By:** Zorg (Sprint Orchestrator)
+
+The sprint roadmap was restructured. A new SP7 (Dev Environment Deployment & Integration Testing) was injected between CI/CD (SP6) and multi-region expansion. Former SP7 (Multi-Region) renamed to SP8. Former SP8 (Resiliency) renamed to SP9.
+
+**New Sprints:**
+- SP7: Dev Environment Deployment & Integration Testing (10 stories)
+- SP8: Multi-Region Expansion (was SP7)
+- SP9: Resiliency and Production Hardening (was SP8)
+
+**Rationale:** Validate single-region dev environment before multi-region complexity. Aligns with REQUIREMENTS.md strategy.
+
+**Impact on Smiley:** Your resiliency work is now SP9. No scope changes — only sprint numbers shifted. Ready to start after multi-region (SP8) validation is complete.

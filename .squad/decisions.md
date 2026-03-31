@@ -624,3 +624,80 @@ Address in SP7 or as cleanup:
 However, there are 4 wiring bugs that prevent the workflows from functioning at runtime, most critically the missing `-var-file`/`-var` flags on Terraform commands (every TF workflow fails) and the drift detection environment/OIDC mismatch (nightly runs blocked). These are straightforward fixes that don't require rearchitecting anything.
 
 **Required:** All 4 items in the Required Changes section must be fixed. Per lockout rules, the fixes should NOT be done by the original author — assign to a different implementor. No re-review needed if fixes are limited to the 4 listed items; Sid can verify.
+
+---
+
+## Decision: Inject SP7 — Dev Environment Deployment & Integration Testing
+
+**Author:** Zorg  
+**Date:** 2026-03-31  
+**Status:** Accepted  
+
+### Context
+
+SP0–SP6 are complete (foundation through CI/CD). The original roadmap went straight from CI/CD (SP6) to multi-region expansion (SP7). The user identified a gap: we should deploy and validate the single-region dev environment before adding multi-region complexity. This is sound engineering — prove it works in dev, then scale.
+
+### Decision
+
+Inject a new SP7 between the existing sprints. Rename the former SP7 (Multi-Region) to SP8, and the former SP8 (Resiliency) to SP9.
+
+#### New Sprint Structure
+
+| Sprint | Name | Status |
+|--------|------|--------|
+| SP0–SP6 | Foundation through CI/CD | Done |
+| **SP7** | **Dev Environment Deployment & Integration Testing** | **New — To Do** |
+| SP8 | Multi-Region Expansion (was SP7) | To Do |
+| SP9 | Resiliency and Production Hardening (was SP8) | To Do |
+
+#### SP7 Scope (10 stories)
+
+1. **SP7.001** — Deploy Dev Environment to Azure (Terraform apply + Ansible provisioning)
+2. **SP7.002** — Configure Playwright Test Framework
+3. **SP7.003** — Configure Playwright MCP Integration (AI-assisted testing)
+4. **SP7.004** — Write Smoke Tests for Web Application
+5. **SP7.005** — Write Integration Tests for Kafka Dashboard
+6. **SP7.006** — Write Integration Tests for Kafka Operations
+7. **SP7.007** — Write Integration Tests for Schema Registry UI
+8. **SP7.008** — End-to-End Environment Validation
+9. **SP7.009** — CI/CD Pipeline for Integration Tests
+10. **SP7.010** — Dev Environment Teardown & Cost Management
+
+### Rationale
+
+- Validates the full stack works before adding multi-region (reduces debugging surface)
+- Playwright + Playwright MCP gives us automated and AI-assisted testing capabilities
+- Integration tests against a live environment catch issues that unit tests miss
+- Teardown/recreate scripts manage Azure costs during development
+- Aligns with REQUIREMENTS.md: "start with a single region and single AZ for development"
+
+### Impact
+
+- All SP7 task titles and milestone references renamed to SP8
+- All SP8 task titles and milestone references renamed to SP9
+- Milestone files renamed accordingly
+- team.md updated to reflect new sprint structure
+- No code changes — this is a backlog restructuring only
+- Internal task IDs (TASK-34, TASK-35) unchanged — only titles and milestones shifted
+
+### Alternatives Considered
+
+1. **Add testing to SP6 scope** — Rejected. SP6 is Done and focused on CI/CD pipeline, not environment deployment.
+2. **Test in SP8 alongside multi-region** — Rejected. Testing multi-region without validating single-region first is reckless.
+3. **Skip formal integration tests** — Rejected. Manual testing doesn't scale and won't survive team changes.
+
+---
+
+## Directive: Sprint Closeout Process
+
+**Author:** simock (via Copilot)  
+**Date:** 2026-03-31T17:40:04-04:00 (ET)  
+**Status:** Captured  
+
+### Content
+
+At the end of every sprint, commit the code and create a git pull request. This ensures sprint work is packaged into a reviewable PR before moving on.
+
+### Rationale
+
+User request — maintains ceremony enforcement and ensures sprint completeness before moving to the next phase.

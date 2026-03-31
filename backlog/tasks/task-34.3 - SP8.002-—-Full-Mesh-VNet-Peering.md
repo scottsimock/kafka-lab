@@ -1,10 +1,10 @@
 ---
 id: TASK-34.3
-title: SP7.002 — Full Mesh VNet Peering
+title: SP8.002 — Full Mesh VNet Peering
 status: To Do
 assignee: []
 created_date: '2026-03-30 16:50'
-updated_date: '2026-03-30 16:50'
+updated_date: '2026-03-31 21:59'
 labels:
   - story
 milestone: m-7

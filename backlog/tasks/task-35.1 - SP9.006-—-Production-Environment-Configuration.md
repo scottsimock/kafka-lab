@@ -1,9 +1,10 @@
 ---
 id: TASK-35.1
-title: SP8.006 — Production Environment Configuration
+title: SP9.006 — Production Environment Configuration
 status: To Do
 assignee: []
 created_date: '2026-03-30 16:51'
+updated_date: '2026-03-31 21:58'
 labels:
   - story
 milestone: m-8

@@ -1,10 +1,10 @@
 ---
 id: TASK-35.3
-title: SP8.002 — Single-Region Chaos Experiments
+title: SP9.002 — Single-Region Chaos Experiments
 status: To Do
 assignee: []
 created_date: '2026-03-30 16:51'
-updated_date: '2026-03-30 16:51'
+updated_date: '2026-03-31 21:58'
 labels:
   - story
 milestone: m-8

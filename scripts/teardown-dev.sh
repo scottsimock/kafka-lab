@@ -9,6 +9,11 @@ ANSIBLE_DIR="${REPO_ROOT}/ansible"
 TFVARS_FILE="${TF_DIR}/terraform.dev.tfvars"
 RESOURCE_GROUP="klc-rg-kafkalab-scus"
 
+# Backend config — override via env vars if needed
+BACKEND_RESOURCE_GROUP="${BACKEND_RESOURCE_GROUP:-klc-rg-kafkalab-scus}"
+BACKEND_STORAGE_ACCOUNT="${BACKEND_STORAGE_ACCOUNT:-klcstgtfstatescus}"
+BACKEND_CONTAINER="${BACKEND_CONTAINER:-tfstate}"
+
 CONFIRMED=false
 SKIP_VERIFY=false
 PLAN_ONLY=false
@@ -64,8 +69,13 @@ if [[ ! -d .terraform ]]; then
   if [[ -f backend.tfvars ]]; then
     terraform init -backend-config=backend.tfvars
   else
-    log "WARN: backend.tfvars not found, using default backend"
-    terraform init
+    log "Using inline backend config (storage_account=${BACKEND_STORAGE_ACCOUNT})"
+    terraform init \
+      -backend-config="resource_group_name=${BACKEND_RESOURCE_GROUP}" \
+      -backend-config="storage_account_name=${BACKEND_STORAGE_ACCOUNT}" \
+      -backend-config="container_name=${BACKEND_CONTAINER}" \
+      -backend-config="key=kafka-lab/dev.tfstate" \
+      -backend-config="use_azuread_auth=true"
   fi
 fi
 

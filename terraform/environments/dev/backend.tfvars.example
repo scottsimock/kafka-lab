@@ -2,9 +2,9 @@
 // Copy this file to backend.tfvars and fill in your values.
 // Do NOT commit backend.tfvars to version control.
 
-resource_group_name  = "klc-rg-tfstate-scus"
-storage_account_name = "klctfstatescus"
+resource_group_name  = "klc-rg-kafkalab-scus"
+storage_account_name = "klcstgtfstatescus"
 container_name       = "tfstate"
-key                  = "dev/terraform.tfstate"
+key                  = "kafka-lab/dev.tfstate"
 use_oidc             = true
 subscription_id      = "YOUR_SUBSCRIPTION_ID"

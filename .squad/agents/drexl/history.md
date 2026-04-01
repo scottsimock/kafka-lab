@@ -209,3 +209,18 @@ SP5 — Web Application sprint is COMPLETE. Delivered 9/10 tasks (all passed rev
 - Setup script: `--dry-run` replaces PowerShell `-WhatIf`; `--skip-*` flags, `--environments` (comma-separated)
 - Verify script: exits with failure count; `--environments` (comma-separated)
 - PowerShell originals deleted — bash is the standard for this project's scripts
+
+### Terraform Backend Storage — tfstate in klc-rg-kafkalab-scus (2026-04-01)
+
+**Problem:** All Terraform `init` calls (scripts + workflows) only passed the `key` backend-config flag but omitted `storage_account_name`, `container_name`, and `resource_group_name`. The `backend.tfvars.example` referenced `klc-rg-tfstate-scus` / `klctfstatescus`, but no such RG exists within our permissions boundary.
+
+**Resolution:**
+- Created `scripts/bootstrap-tfstate.sh` to create storage account `klcstgtfstatescus` in `klc-rg-kafkalab-scus` (our only accessible RG)
+- Storage account uses `--allow-shared-key-access false` (Azure Policy enforces this); all access via Azure AD auth
+- Assigned `Storage Blob Data Contributor` to the current SP on the storage account
+- Updated all 4 bash scripts (`deploy-dev-shared.sh`, `deploy-dev.sh`, `teardown-dev.sh` + the fallback in each) to pass full backend-config inline with `use_azuread_auth=true`
+- Updated all 6 workflows (`dev-shared-deploy`, `dev-recreate`, `dev-teardown`, `terraform-deploy`, `drift-detection`, `pr-validation`) with `TF_BACKEND_*` env vars and full `-backend-config` flags
+- Updated `backend.tfvars.example` files to reference the actual storage account location
+- Workflows rely on `ARM_USE_AZUREAD=true` (already set) for Azure AD auth to the backend
+
+**Key detail:** Azure Policy in this subscription blocks shared key access on storage accounts. The azurerm backend must use `use_azuread_auth=true` (scripts) or `ARM_USE_AZUREAD=true` env var (workflows).

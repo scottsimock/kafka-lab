@@ -43,6 +43,9 @@ env:
   ARM_USE_OIDC: "true"
   ARM_USE_AZUREAD: "true"
   TF_IN_AUTOMATION: "true"
+  TF_BACKEND_RESOURCE_GROUP: klc-rg-kafkalab-scus
+  TF_BACKEND_STORAGE_ACCOUNT: klcstgtfstatescus
+  TF_BACKEND_CONTAINER: tfstate
 
 jobs:
   # ── Plan ────────────────────────────────────────────────────────────
@@ -80,6 +83,9 @@ jobs:
       - name: Terraform Init
         run: |
           terraform init \
+            -backend-config="resource_group_name=${{ env.TF_BACKEND_RESOURCE_GROUP }}" \
+            -backend-config="storage_account_name=${{ env.TF_BACKEND_STORAGE_ACCOUNT }}" \
+            -backend-config="container_name=${{ env.TF_BACKEND_CONTAINER }}" \
             -backend-config="key=kafka-lab/${{ inputs.environment }}.tfstate"
 
       - name: Terraform Format Check
@@ -146,6 +152,9 @@ jobs:
       - name: Terraform Init
         run: |
           terraform init \
+            -backend-config="resource_group_name=${{ env.TF_BACKEND_RESOURCE_GROUP }}" \
+            -backend-config="storage_account_name=${{ env.TF_BACKEND_STORAGE_ACCOUNT }}" \
+            -backend-config="container_name=${{ env.TF_BACKEND_CONTAINER }}" \
             -backend-config="key=kafka-lab/${{ inputs.environment }}.tfstate"
 
       - name: Download Plan Artifact

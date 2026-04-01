@@ -720,3 +720,59 @@ At the end of every sprint, commit the code and create a git pull request. This 
 ### Rationale
 
 User request — maintains ceremony enforcement and ensures sprint completeness before moving to the next phase.
+
+---
+
+### Terraform Backend Storage in klcstgtfstatescus
+
+**Author:** Drexl  
+**Date:** 2026-04-01  
+**Status:** Implemented
+
+All Terraform `init` calls across scripts and workflows only passed the state `key` but omitted storage account, container, and resource group. The `backend.tfvars.example` referenced a separate `klc-rg-tfstate-scus` resource group that either doesn't exist or is inaccessible to our service principal.
+
+**Decision:** Created the tfstate storage account `klcstgtfstatescus` inside `klc-rg-kafkalab-scus` (the only RG we have permissions on). All scripts and workflows now pass full inline backend-config flags instead of relying on a `backend.tfvars` file.
+
+**Key Properties:**
+- Storage account: `klcstgtfstatescus` in `klc-rg-kafkalab-scus`
+- Container: `tfstate`
+- Auth: Azure AD only (`use_azuread_auth=true`). Shared key access is blocked by Azure Policy.
+- State keys: `kafka-lab/dev-shared.tfstate`, `kafka-lab/dev.tfstate`
+
+**Impact:**
+- All terraform init calls now work without a local `backend.tfvars` file
+- CI/CD workflows use `TF_BACKEND_*` env vars at the workflow level
+- Local scripts use `BACKEND_*` env vars with sensible defaults (overridable)
+- `scripts/bootstrap-tfstate.sh` bootstraps the storage account for new environments
+- The OIDC service principal needs `Storage Blob Data Contributor` on the storage account
+
+**Files Changed:** `scripts/bootstrap-tfstate.sh` (new), `scripts/deploy-dev-shared.sh`, `scripts/deploy-dev.sh`, `scripts/teardown-dev.sh`, 6 GitHub Actions workflows, 2 backend.tfvars.example files
+
+---
+
+### Sprint Branch Lifecycle (User Directive)
+
+**Author:** simock (via Copilot)  
+**Date:** 2026-03-31T19:19:00-04:00  
+**Status:** User Directive
+
+Every sprint MUST create a `sprint/SP{N}-{description}` branch from main at start, and open a PR to main at sprint close. No direct commits to main during sprint work.
+
+**Rationale:** User request — SP7 work was committed directly to the current branch without a sprint branch. This ensures proper branch isolation going forward.
+
+---
+
+### Bash over PowerShell for Automation Scripts
+
+**Author:** Drexl (Infrastructure Dev)  
+**Date:** 2026-04-01  
+**Status:** Accepted
+
+The kafka-lab project had two PowerShell scripts (`setup-azure-oidc.ps1`, `verify-azure-oidc.ps1`) for Azure OIDC setup and verification. The user is on Linux and prefers bash.
+
+**Decision:** All project automation scripts use bash, not PowerShell. The OIDC scripts were converted to bash equivalents with full feature parity and the PowerShell originals were deleted.
+
+**Implications:**
+- New scripts should be written in bash
+- Prerequisites for OIDC scripts: `az`, `gh`, `jq`
+- `--dry-run` is the bash convention replacing PowerShell's `-WhatIf`

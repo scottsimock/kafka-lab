@@ -19,12 +19,12 @@ output "subnet_ids" {
 
 output "key_vault_id" {
   description = "Resource ID of the key vault"
-  value       = module.key_vault.key_vault_id
+  value       = data.azapi_resource.key_vault.id
 }
 
 output "cmk_key_id" {
   description = "Resource ID of the CMEK encryption key"
-  value       = module.key_vault.cmk_key_id
+  value       = data.azapi_resource.cmk_key.id
 }
 
 output "private_dns_zone_ids" {

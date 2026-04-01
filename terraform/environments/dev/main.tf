@@ -15,33 +15,35 @@ data "azapi_resource" "resource_group" {
 }
 
 // =====================================================
-// Managed Identity
+// Managed Identity (managed by dev-shared layer)
 // =====================================================
 
-module "uami_kafkalab" {
-  source = "../../modules/managed-identity"
+data "azapi_resource" "uami_kafkalab" {
+  type      = "Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31"
+  name      = "klc-id-kafkalab-scus"
+  parent_id = data.azapi_resource.resource_group.id
 
-  name              = "klc-id-kafkalab-scus"
-  location          = var.primary_location
-  resource_group_id = data.azapi_resource.resource_group.id
-  tags              = local.common_tags
+  response_export_values = ["properties.principalId", "properties.clientId"]
 }
 
 // =====================================================
-// Key Vault
+// Key Vault (managed by dev-shared layer)
 // =====================================================
 
-data "azapi_client_config" "current" {}
+data "azapi_resource" "key_vault" {
+  type      = "Microsoft.KeyVault/vaults@2023-07-01"
+  name      = "klc-kv-kafkalab-scus"
+  parent_id = data.azapi_resource.resource_group.id
 
-module "key_vault" {
-  source = "../../modules/key-vault"
+  response_export_values = ["properties.vaultUri"]
+}
 
-  name              = "klc-kv-kafkalab-scus"
-  location          = var.primary_location
-  resource_group_id = data.azapi_resource.resource_group.id
-  tenant_id         = data.azapi_client_config.current.tenant_id
-  uami_principal_id = module.uami_kafkalab.uami_principal_id
-  tags              = local.common_tags
+data "azapi_resource" "cmk_key" {
+  type      = "Microsoft.KeyVault/vaults/keys@2023-07-01"
+  name      = "klc-kv-kafkalab-scus-cmk"
+  parent_id = data.azapi_resource.key_vault.id
+
+  response_export_values = ["properties.keyUriWithVersion", "properties.keyUri"]
 }
 
 // =====================================================
@@ -609,7 +611,7 @@ resource "azapi_resource" "storage_account" {
 
   identity {
     type         = "UserAssigned"
-    identity_ids = [module.uami_kafkalab.uami_id]
+    identity_ids = [data.azapi_resource.uami_kafkalab.id]
   }
 
   body = {
@@ -622,11 +624,11 @@ resource "azapi_resource" "storage_account" {
       encryption = {
         keySource = "Microsoft.Keyvault"
         keyvaultproperties = {
-          keyname     = "${module.key_vault.key_vault_name}-cmk"
-          keyvaulturi = module.key_vault.key_vault_uri
+          keyname     = "${data.azapi_resource.key_vault.name}-cmk"
+          keyvaulturi = data.azapi_resource.key_vault.output.properties.vaultUri
         }
         identity = {
-          userAssignedIdentity = module.uami_kafkalab.uami_id
+          userAssignedIdentity = data.azapi_resource.uami_kafkalab.id
         }
         services = {
           blob = { enabled = true, keyType = "Account" }
@@ -681,7 +683,7 @@ module "pe_key_vault" {
   location           = var.primary_location
   resource_group_id  = data.azapi_resource.resource_group.id
   subnet_id          = module.vnet_scus.subnet_ids["snet-private-endpoints"]
-  target_resource_id = module.key_vault.key_vault_id
+  target_resource_id = data.azapi_resource.key_vault.id
   group_ids          = ["vault"]
   dns_zone_ids = {
     "vault" = module.private_dns_zones["vault"].dns_zone_id
@@ -700,11 +702,11 @@ module "function_app" {
   location                            = var.primary_location
   resource_group_id                   = data.azapi_resource.resource_group.id
   web_app_subnet_id                   = module.vnet_scus.subnet_ids["snet-web-app"]
-  user_assigned_identity_id           = module.uami_kafkalab.uami_id
-  user_assigned_identity_principal_id = module.uami_kafkalab.uami_principal_id
-  user_assigned_identity_client_id    = module.uami_kafkalab.uami_client_id
-  key_vault_name                      = module.key_vault.key_vault_name
-  key_vault_id                        = module.key_vault.key_vault_id
+  user_assigned_identity_id           = data.azapi_resource.uami_kafkalab.id
+  user_assigned_identity_principal_id = data.azapi_resource.uami_kafkalab.output.properties.principalId
+  user_assigned_identity_client_id    = data.azapi_resource.uami_kafkalab.output.properties.clientId
+  key_vault_name                      = data.azapi_resource.key_vault.name
+  key_vault_id                        = data.azapi_resource.key_vault.id
   schema_registry_url                 = "http://sr-01.kafkalab.internal:8081"
   tags                                = merge(local.common_tags, { component = "webapp" })
 }
@@ -751,7 +753,7 @@ module "zookeeper_vms" {
   data_disk_size_gb  = 64
   admin_username     = "azureuser"
   ssh_public_key     = var.ssh_public_key
-  uami_id            = module.uami_kafkalab.uami_id
+  uami_id            = data.azapi_resource.uami_kafkalab.id
   dns_zone_id        = module.private_dns_zones["internal"].dns_zone_id
   dns_record_name    = each.value.dns_name
   tags               = merge(local.common_tags, { component = "zookeeper" })
@@ -784,7 +786,7 @@ module "kafka_broker_vms" {
   data_disk_size_gb  = 256
   admin_username     = "azureuser"
   ssh_public_key     = var.ssh_public_key
-  uami_id            = module.uami_kafkalab.uami_id
+  uami_id            = data.azapi_resource.uami_kafkalab.id
   dns_zone_id        = module.private_dns_zones["internal"].dns_zone_id
   dns_record_name    = each.value.dns_name
   tags               = merge(local.common_tags, { component = "kafka_broker" })
@@ -815,7 +817,7 @@ module "schema_registry_vms" {
   data_disk_size_gb  = 0
   admin_username     = "azureuser"
   ssh_public_key     = var.ssh_public_key
-  uami_id            = module.uami_kafkalab.uami_id
+  uami_id            = data.azapi_resource.uami_kafkalab.id
   dns_zone_id        = module.private_dns_zones["internal"].dns_zone_id
   dns_record_name    = each.value.dns_name
   tags               = merge(local.common_tags, { component = "schema_registry" })
@@ -846,7 +848,7 @@ module "kafka_connect_vms" {
   data_disk_size_gb  = 0
   admin_username     = "azureuser"
   ssh_public_key     = var.ssh_public_key
-  uami_id            = module.uami_kafkalab.uami_id
+  uami_id            = data.azapi_resource.uami_kafkalab.id
   dns_zone_id        = module.private_dns_zones["internal"].dns_zone_id
   dns_record_name    = each.value.dns_name
   tags               = merge(local.common_tags, { component = "kafka_connect" })

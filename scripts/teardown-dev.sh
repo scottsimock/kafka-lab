@@ -42,8 +42,8 @@ fi
 # =====================================================
 if [[ "${CONFIRMED}" == "false" && "${PLAN_ONLY}" == "false" ]]; then
   log "WARNING: This will DESTROY all dev environment resources in ${RESOURCE_GROUP}."
-  log "Resources destroyed: VMs, NICs, disks, Function App, private endpoints, DNS records, NSGs, VNet."
-  log "Resources preserved: Resource group, Terraform state storage account."
+  log "Resources destroyed: VMs, NICs, disks, Function App, private endpoints, DNS records, NSGs, VNet, storage account."
+  log "Resources preserved: Resource group, UAMI, Key Vault (managed by dev-shared layer)."
   echo ""
   read -r -p "Type 'destroy' to confirm: " RESPONSE
   if [[ "${RESPONSE}" != "destroy" ]]; then
@@ -114,24 +114,25 @@ if [[ "${SKIP_VERIFY}" == "false" ]]; then
   cd "${REPO_ROOT}"
 
   # Count resources remaining in the resource group
-  # Expected survivors: the resource group itself, the Terraform state storage account,
-  # and its blob container. Everything else should be gone.
+  # Expected survivors: the resource group itself, the shared-layer resources
+  # (UAMI, Key Vault, CMEK key, role assignment). Everything else should be gone.
+  EXPECTED_TYPES="Microsoft.ManagedIdentity/userAssignedIdentities|Microsoft.KeyVault/vaults"
   RESOURCE_COUNT=$(az resource list \
     --resource-group "${RESOURCE_GROUP}" \
-    --query "length([?type != 'Microsoft.Storage/storageAccounts'])" \
+    --query "length([?!(contains('${EXPECTED_TYPES}', type))])" \
     --output tsv 2>/dev/null || echo "UNKNOWN")
 
   if [[ "${RESOURCE_COUNT}" == "0" ]]; then
-    log "PASS: No orphaned resources found (only storage account remains)."
+    log "PASS: No orphaned resources found (only shared-layer resources remain: UAMI, Key Vault)."
   elif [[ "${RESOURCE_COUNT}" == "UNKNOWN" ]]; then
     log "WARN: Could not verify resource cleanup (az CLI auth may be required)."
     log "Run manually: az resource list --resource-group ${RESOURCE_GROUP} -o table"
   else
-    log "WARN: ${RESOURCE_COUNT} non-storage resources remain in ${RESOURCE_GROUP}."
-    log "Listing remaining resources:"
+    log "WARN: ${RESOURCE_COUNT} unexpected resources remain in ${RESOURCE_GROUP}."
+    log "Listing remaining resources (excluding expected UAMI and Key Vault):"
     az resource list \
       --resource-group "${RESOURCE_GROUP}" \
-      --query "[?type != 'Microsoft.Storage/storageAccounts'].{Name:name, Type:type}" \
+      --query "[?!(contains('Microsoft.ManagedIdentity/userAssignedIdentities|Microsoft.KeyVault/vaults', type))].{Name:name, Type:type}" \
       --output table 2>/dev/null || true
     log "These may be orphaned. Investigate and remove manually if needed."
   fi

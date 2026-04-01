@@ -73,10 +73,11 @@ jobs:
           echo "| Networking (VNet, NSGs, PEs) | — | — | \$2.50 |" >> "$GITHUB_STEP_SUMMARY"
           echo "| **Total** | | | **~\$41–55** |" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "### Destroyed Environment (~\$0.10/day)" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Destroyed Environment (~\$0.40/day)" >> "$GITHUB_STEP_SUMMARY"
           echo "| Resource | SKU | Est. $/day |" >> "$GITHUB_STEP_SUMMARY"
           echo "|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Terraform State Storage | Standard LRS | \$0.10 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Key Vault (shared) | Standard | \$0.30 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| UAMI (shared) | — | \$0.00 |" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "### Savings" >> "$GITHUB_STEP_SUMMARY"
           echo "- **Daily savings:** ~\$45–55" >> "$GITHUB_STEP_SUMMARY"
@@ -165,17 +166,18 @@ jobs:
         run: |
           echo "## Resource Cleanup Verification" >> "$GITHUB_STEP_SUMMARY"
 
+          # Shared-layer resources (UAMI, Key Vault) are expected to survive teardown
           REMAINING=$(az resource list \
             --resource-group "${{ env.RESOURCE_GROUP }}" \
-            --query "[?type != 'Microsoft.Storage/storageAccounts']" \
+            --query "[?type != 'Microsoft.ManagedIdentity/userAssignedIdentities' && type != 'Microsoft.KeyVault/vaults']" \
             --output json)
 
           COUNT=$(echo "$REMAINING" | jq 'length')
 
           if [ "$COUNT" -eq 0 ]; then
-            echo "✅ **PASS** — No orphaned resources. Only Terraform state storage account remains." >> "$GITHUB_STEP_SUMMARY"
+            echo "✅ **PASS** — No orphaned resources. Only shared-layer resources remain (UAMI, Key Vault)." >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "⚠️ **WARNING** — $COUNT non-storage resources remain:" >> "$GITHUB_STEP_SUMMARY"
+            echo "⚠️ **WARNING** — $COUNT unexpected resources remain:" >> "$GITHUB_STEP_SUMMARY"
             echo '```json' >> "$GITHUB_STEP_SUMMARY"
             echo "$REMAINING" | jq '.[].{name, type, location}' >> "$GITHUB_STEP_SUMMARY"
             echo '```' >> "$GITHUB_STEP_SUMMARY"

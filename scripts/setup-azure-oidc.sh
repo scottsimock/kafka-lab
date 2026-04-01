@@ -20,8 +20,7 @@ set -euo pipefail
 
 GITHUB_REPO="scottsimock/kafka-lab"
 LOCATION="southcentralus"
-SHARED_RESOURCE_GROUP="rg-kafkalab-shared-scus"
-TARGET_RESOURCE_GROUP="klc-rg-kafkalab-scus"
+RESOURCE_GROUP="klc-rg-kafkalab-scus"
 KEYVAULT_NAME="klc-kv-kafkalab-scus"
 FUNCTION_APP_NAME="klc-func-kafkalab-dev-scus"
 ENVIRONMENTS="dev,staging,prod"
@@ -51,8 +50,7 @@ Usage: setup-azure-oidc.sh [OPTIONS]
 Options:
   --github-repo REPO           GitHub repo (default: scottsimock/kafka-lab)
   --location LOCATION          Azure region (default: southcentralus)
-  --shared-rg NAME             Shared resource group (default: rg-kafkalab-shared-scus)
-  --target-rg NAME             Target resource group (default: klc-rg-kafkalab-scus)
+  --resource-group NAME        Resource group (default: klc-rg-kafkalab-scus)
   --keyvault NAME              Key Vault name (default: klc-kv-kafkalab-scus)
   --function-app NAME          Function App name (default: klc-func-kafkalab-dev-scus)
   --environments ENVS          Comma-separated environments (default: dev,staging,prod)
@@ -72,8 +70,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --github-repo)      GITHUB_REPO="$2"; shift 2 ;;
         --location)         LOCATION="$2"; shift 2 ;;
-        --shared-rg)        SHARED_RESOURCE_GROUP="$2"; shift 2 ;;
-        --target-rg)        TARGET_RESOURCE_GROUP="$2"; shift 2 ;;
+        --resource-group)   RESOURCE_GROUP="$2"; shift 2 ;;
         --keyvault)         KEYVAULT_NAME="$2"; shift 2 ;;
         --function-app)     FUNCTION_APP_NAME="$2"; shift 2 ;;
         --environments)     ENVIRONMENTS="$2"; shift 2 ;;
@@ -125,17 +122,7 @@ echo "   Azure subscription: ${AZ_NAME} (${SUBSCRIPTION_ID})"
 # Verify GitHub auth
 gh auth status &>/dev/null || die "Not logged into GitHub. Run: gh auth login"
 
-# ── Step 1: Create shared resource group ─────────────────────────────────
-
-write_step "Creating shared resource group: ${SHARED_RESOURCE_GROUP}"
-if $DRY_RUN; then
-    write_skip "DRY RUN: Would create resource group ${SHARED_RESOURCE_GROUP}"
-else
-    az group create --name "$SHARED_RESOURCE_GROUP" --location "$LOCATION" -o none 2>/dev/null
-    write_ok "Resource group ready"
-fi
-
-# ── Step 2: Create UAMIs ────────────────────────────────────────────────
+# ── Step 1: Create UAMIs ────────────────────────────────────────────────
 
 create_or_get_uami() {
     local name="$1"
@@ -145,25 +132,25 @@ create_or_get_uami() {
 
     if $SKIP_UAMI; then
         write_skip "Skipping creation (reading existing)"
-        identity_json=$(az identity show --name "$name" --resource-group "$SHARED_RESOURCE_GROUP" -o json 2>/dev/null) \
+        identity_json=$(az identity show --name "$name" --resource-group "$RESOURCE_GROUP" -o json 2>/dev/null) \
             || die "UAMI ${name} not found. Remove --skip-uami to create it."
     elif $DRY_RUN; then
         write_skip "DRY RUN: Would create UAMI ${name}"
         # Try to read existing for display; not fatal if missing in dry-run
-        identity_json=$(az identity show --name "$name" --resource-group "$SHARED_RESOURCE_GROUP" -o json 2>/dev/null) || true
+        identity_json=$(az identity show --name "$name" --resource-group "$RESOURCE_GROUP" -o json 2>/dev/null) || true
         if [[ -z "$identity_json" ]]; then
             echo "    clientId:    (would be created)"
             echo "    principalId: (would be created)"
             return
         fi
     else
-        identity_json=$(az identity show --name "$name" --resource-group "$SHARED_RESOURCE_GROUP" -o json 2>/dev/null) || true
+        identity_json=$(az identity show --name "$name" --resource-group "$RESOURCE_GROUP" -o json 2>/dev/null) || true
         if [[ -n "$identity_json" ]]; then
             write_ok "Already exists"
         else
             identity_json=$(az identity create \
                 --name "$name" \
-                --resource-group "$SHARED_RESOURCE_GROUP" \
+                --resource-group "$RESOURCE_GROUP" \
                 --location "$LOCATION" \
                 -o json)
             write_ok "Created"
@@ -180,7 +167,7 @@ for uami_name in "${UAMI_NAMES[@]}"; do
     create_or_get_uami "$uami_name"
 done
 
-# ── Step 3: Assign RBAC roles ───────────────────────────────────────────
+# ── Step 2: Assign RBAC roles ───────────────────────────────────────────
 
 assign_role() {
     local uami_name="$1" role="$2" scope="$3"
@@ -214,37 +201,39 @@ assign_role() {
 }
 
 if ! $SKIP_RBAC; then
-    # terraform-deploy roles
-    assign_role "uami-gha-terraform-deploy" "Contributor" \
-        "/subscriptions/${SUBSCRIPTION_ID}"
-    assign_role "uami-gha-terraform-deploy" "Storage Blob Data Contributor" \
-        "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${SHARED_RESOURCE_GROUP}"
+    RG_SCOPE="/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}"
+
+    # terraform-deploy roles (scoped to resource group)
+    assign_role "uami-gha-terraform-deploy" "Contributor" "$RG_SCOPE"
+    assign_role "uami-gha-terraform-deploy" "Storage Blob Data Contributor" "$RG_SCOPE"
 
     # ansible-config roles
-    assign_role "uami-gha-ansible-config" "Reader" \
-        "/subscriptions/${SUBSCRIPTION_ID}"
+    assign_role "uami-gha-ansible-config" "Reader" "$RG_SCOPE"
 
     # Key Vault access policy for ansible-config
     write_step "Key Vault policy: uami-gha-ansible-config → ${KEYVAULT_NAME}"
     if $DRY_RUN; then
         write_skip "DRY RUN: Would set Key Vault access policy"
     else
-        az keyvault set-policy \
+        if az keyvault set-policy \
             --name "$KEYVAULT_NAME" \
             --object-id "${UAMI_PRINCIPAL_ID[uami-gha-ansible-config]}" \
             --secret-permissions get list \
-            -o none
-        write_ok "Key Vault policy set"
+            -o none 2>/dev/null; then
+            write_ok "Key Vault policy set"
+        else
+            write_skip "Key Vault '${KEYVAULT_NAME}' not found (will configure after Terraform creates it)"
+        fi
     fi
 
     # app-deploy roles
     assign_role "uami-gha-app-deploy" "Website Contributor" \
-        "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${TARGET_RESOURCE_GROUP}"
+        "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}"
 else
     write_skip "Skipping RBAC assignments"
 fi
 
-# ── Step 4: Create federated credentials ─────────────────────────────────
+# ── Step 3: Create federated credentials ─────────────────────────────────
 
 create_federated_credential() {
     local uami_name="$1" cred_name="$2" subject="$3"
@@ -260,7 +249,7 @@ create_federated_credential() {
     existing=$(az identity federated-credential show \
         --name "$cred_name" \
         --identity-name "$uami_name" \
-        --resource-group "$SHARED_RESOURCE_GROUP" \
+        --resource-group "$RESOURCE_GROUP" \
         -o json 2>/dev/null) || true
 
     if [[ -n "$existing" ]]; then
@@ -269,7 +258,7 @@ create_federated_credential() {
         az identity federated-credential create \
             --name "$cred_name" \
             --identity-name "$uami_name" \
-            --resource-group "$SHARED_RESOURCE_GROUP" \
+            --resource-group "$RESOURCE_GROUP" \
             --issuer 'https://token.actions.githubusercontent.com' \
             --subject "$subject" \
             --audiences 'api://AzureADTokenExchange' \
@@ -294,7 +283,7 @@ else
     write_skip "Skipping federated credentials"
 fi
 
-# ── Step 5: Set GitHub environment secrets ───────────────────────────────
+# ── Step 4: Set GitHub environment secrets ───────────────────────────────
 
 if ! $SKIP_SECRETS; then
     # Use the terraform UAMI's clientId as the primary identity for workflows.
@@ -332,7 +321,7 @@ printf '\033[32m═════════════════════�
 printf '\033[32m  ✅ OIDC Setup Complete\033[0m\n'
 printf '\033[32m═══════════════════════════════════════════════════════\033[0m\n'
 echo ""
-echo "  UAMIs created in: ${SHARED_RESOURCE_GROUP}"
+echo "  UAMIs created in: ${RESOURCE_GROUP}"
 echo ""
 
 for uami_name in "${UAMI_NAMES[@]}"; do

@@ -53,3 +53,23 @@ control to the PO.
 
 
 ﻿ hi squad, we need to refactor our sprint work to inject a new sprint 7 (SP7) to actually deploy the code into our azure subscription and do so integration testing. 
+
+
+
+﻿# Full setup (all environments)
+ ./scripts/setup-azure-oidc.sh
+
+ # Dev only
+ ./scripts/setup-azure-oidc.sh --environments dev
+
+ # Dry run
+ ./scripts/setup-azure-oidc.sh --dry-run
+
+ # Skip steps
+ ./scripts/setup-azure-oidc.sh --skip-uami --skip-rbac
+
+ # Verify
+ ./scripts/verify-azure-oidc.sh
+
+ # Then add SSH key
+ gh secret set SSH_PUBLIC_KEY --env dev --body "$(cat ~/.ssh/id_rsa_kafkalab.pub)"

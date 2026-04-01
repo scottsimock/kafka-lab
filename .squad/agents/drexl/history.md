@@ -199,3 +199,13 @@ SP5 — Web Application sprint is COMPLETE. Delivered 9/10 tasks (all passed rev
 **Session Log:** `.squad/log/2026-03-31T18-13-sp7-sprint-execution.md`
 
 **Next Sprint (SP8):** Multi-region expansion — secondary/DR VNets, cross-region peering, multi-region cluster linking
+
+### PowerShell → Bash Script Conversion
+
+- **User preference:** Linux user, prefers bash over PowerShell for automation scripts
+- Converted `scripts/setup-azure-oidc.ps1` → `scripts/setup-azure-oidc.sh`
+- Converted `scripts/verify-azure-oidc.ps1` → `scripts/verify-azure-oidc.sh`
+- Both use `set -euo pipefail`, `jq` for JSON parsing, colored output with emoji
+- Setup script: `--dry-run` replaces PowerShell `-WhatIf`; `--skip-*` flags, `--environments` (comma-separated)
+- Verify script: exits with failure count; `--environments` (comma-separated)
+- PowerShell originals deleted — bash is the standard for this project's scripts

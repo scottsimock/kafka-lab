@@ -109,3 +109,7 @@ Key pattern: when renaming sprint numbers, process in reverse order (highest num
 - SP9: Resiliency (chaos experiments, failover, production hardening)
 
 **Next Sprint (SP8):** Multi-region expansion — secondary/DR VNets, full mesh peering, cross-region DNS, multi-region cluster linking
+
+### Multi-zone/multi-region producer failover risk analysis (2026-03-31)
+
+User requested thorough analysis of risks beyond offset gaps when moving producer apps from single-deployment (westus) to 3-deployment HA (westus2 AZ1 primary, westus2 AZ2 HA, westus HA). Enumerated 13 risk categories: producer ID/epoch fencing, duplicate messages on failover, consumer group offset sync lag, Schema Registry divergence, mirror topic promotion ordering, split-brain/dual-write, DNS/endpoint switching latency, transaction semantics breakage, ordering guarantees across clusters, config drift between deployments, monitoring blind spots, tiered storage cross-cluster access, and operational runbook gaps. Decision documented in `.squad/decisions/inbox/zorg-failover-risk-analysis.md`.

@@ -224,3 +224,30 @@ SP5 — Web Application sprint is COMPLETE. Delivered 9/10 tasks (all passed rev
 - Workflows rely on `ARM_USE_AZUREAD=true` (already set) for Azure AD auth to the backend
 
 **Key detail:** Azure Policy in this subscription blocks shared key access on storage accounts. The azurerm backend must use `use_azuread_auth=true` (scripts) or `ARM_USE_AZUREAD=true` env var (workflows).
+
+### SP8/SP9 Failover Risk Analysis — Multi-Zone/Multi-Region Producer HA (2026-04-02)
+
+Zorg completed comprehensive risk analysis for multi-zone/multi-region producer failover deployment. This directly impacts SP8 (cluster linking) and SP9 (chaos testing) acceptance criteria.
+
+**13 Risk Categories Identified:**
+1. **Producer ID/epoch fencing** — New PIDs reset idempotency. Mitigation: Re-enable after fence timeout.
+2. **Duplicate messages** — In-flight acks lost. Mitigation: Consumer-side deduplication.
+3. **Consumer offset sync lag** — 30s default allows re-reads/skips. Mitigation: Adjust sync interval.
+4. **Schema Registry divergence** — Promotion timing causes schema-not-found errors. **Action:** Promote `_schemas` first.
+5. **Mirror topic promotion ordering** — Dependent topics need sequencing. **Action:** Document promotion sequence.
+6. **Split-brain** — Old primary recovers during failover. **CRITICAL:** Prevent old primary recovery window.
+7. **DNS/endpoint switching** — TTL delays cause stale connections. Mitigation: Connection pool refresh.
+8. **Transaction semantics** — transactional.id cluster-scoped. Downgrade to at-least-once.
+9. **Ordering guarantees** — Per-partition reset; cross-partition lost. Document per-partition only.
+10. **Config drift** — ACLs/quotas diverge. **Action:** Pre-failover sync, post-promotion validation.
+11. **Monitoring blind spots** — Lag metrics reset, false positives. Reset metrics on promotion.
+12. **Tiered storage** — Remote segments inaccessible cross-cluster. Ensure cache/local replication.
+13. **Operational runbooks** — Manual steps needed. **Action:** TASK-34.4 (failover playbook) encodes all steps.
+
+**Impact on SP8/SP9:**
+- TASK-34.8 (cluster linking), TASK-34.5 (mirror clusters) AC must incorporate risk mitigations
+- SP9 chaos tests must validate each risk category
+- TASK-34.4 (failover playbooks) must encode promotion ordering and split-brain prevention
+- Two critical findings: split-brain prevention window and three-deployment coordination
+
+**Decision:** No architectural changes required yet. Risks documented for implementation planning. Full decision in `.squad/decisions.md`.

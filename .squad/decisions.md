@@ -776,3 +776,37 @@ The kafka-lab project had two PowerShell scripts (`setup-azure-oidc.ps1`, `verif
 - New scripts should be written in bash
 - Prerequisites for OIDC scripts: `az`, `gh`, `jq`
 - `--dry-run` is the bash convention replacing PowerShell's `-WhatIf`
+
+---
+
+### Multi-Zone/Multi-Region Producer HA Failover Risk Analysis
+
+**Author:** Zorg (Lead)  
+**Date:** 2026-04-02  
+**Status:** Analysis Complete  
+**Scope:** Producer app moving from single-deployment (westus) to 3-deployment HA (westus2 AZ1 primary, westus2 AZ2 HA, westus HA)
+
+**Context:** User identified offset gaps from incomplete replication as a known risk. Zorg enumerated all additional architectural risks and operational concerns for multi-zone/multi-region failover.
+
+**Risks Identified (13 categories):**
+
+1. **Producer ID/epoch fencing** — New producer instances on failover cluster get new PIDs; idempotency guarantees reset. Mitigation: Re-enable fencing after fence timeout.
+2. **Duplicate messages** — In-flight acks lost during failover; producers retry on new cluster producing duplicates. Mitigation: Implement deduplication on consumer side.
+3. **Consumer offset sync lag** — 30s default sync window means consumers may re-read or skip messages. Mitigation: Increase sync interval or rebalance timeout.
+4. **Schema Registry divergence** — `_schemas` topic promotion timing can cause schema-not-found errors. Mitigation: Promote `_schemas` topic first.
+5. **Mirror topic promotion ordering** — Dependent topics must be promoted in correct sequence. Mitigation: Document and enforce promotion sequence.
+6. **Split-brain** — Old primary recovers while new primary is active; both accept writes. CRITICAL: Prevent old primary recovery during failover window.
+7. **DNS/endpoint switching** — TTL propagation delay; stale connections in connection pools. Mitigation: Implement connection pool refresh.
+8. **Transaction semantics** — transactional.id is cluster-scoped; exactly-once breaks across clusters. Mitigation: Document semantic downgrade; use at-least-once.
+9. **Ordering guarantees** — Per-partition ordering resets on failover; cross-partition ordering lost. Mitigation: Document per-partition guarantees only.
+10. **Config drift** — Topic configs, ACLs, quotas may diverge between clusters. Mitigation: Sync configs pre-failover; validate post-promotion.
+11. **Monitoring blind spots** — Lag metrics reset; alerts fire false positives during promotion. Mitigation: Reset lag metrics on promotion; update alerting rules.
+12. **Tiered storage** — Remote segments on failed cluster's storage account are inaccessible from failover cluster. Mitigation: Ensure segment cache or local replication.
+13. **Operational runbooks** — Manual promotion steps, validation, and rollback procedures needed. Mitigation: Failover playbook (TASK-34.4) encodes all steps.
+
+**Impact on Backlog:**
+- SP8 cluster linking tasks (TASK-34.8, TASK-34.5) must account for these risks in AC
+- SP9 resiliency testing (Chaos Studio) should validate each risk category
+- Failover playbooks (TASK-34.4) need to encode promotion ordering and split-brain prevention
+
+**Decision:** No architectural changes required at this stage. Risks are documented for SP8/SP9 implementation planning. Mitigation strategies provided for each risk category. Two critical findings: split-brain prevention and three-deployment coordination requirements.

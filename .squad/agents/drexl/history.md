@@ -251,3 +251,22 @@ Zorg completed comprehensive risk analysis for multi-zone/multi-region producer 
 - Two critical findings: split-brain prevention window and three-deployment coordination
 
 **Decision:** No architectural changes required yet. Risks documented for implementation planning. Full decision in `.squad/decisions.md`.
+
+## Update: Component Promotion Runbook (2026-04-02T14:39Z)
+
+**Source:** Zorg component promotion analysis  
+**Relevance:** SP8 cluster linking implementation
+
+Zorg completed comprehensive component promotion runbook documenting state inventory and promotion ordering for all Confluent Platform components during AZ/region failover.
+
+**Key Findings for Cluster Linking Implementation:**
+- Cluster link creation/validation procedures documented in Part 4
+- Promotion sequence: `_schemas` topic (Schema Registry dependency) → Connect internal topics → application topics
+- `kafka-mirrors promote` is irreversible; track promotion state carefully
+- Pre-promotion validation: fence old cluster, verify lag <1000 messages
+- Cross-region deployment must run independent ZooKeeper ensembles per region (not replicated across regions)
+
+**Action:** SP8 cluster linking tasks should reference promotion procedures in runbook. Consider whether Terraform provisioning should include idempotent promotion checks.
+
+**Runbook Location:** `.squad/decisions/archive/zorg-component-promotion-runbook.md` (1084 lines, full command examples, Ansible framework, monitoring metrics)
+

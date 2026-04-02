@@ -810,3 +810,73 @@ The kafka-lab project had two PowerShell scripts (`setup-azure-oidc.ps1`, `verif
 - Failover playbooks (TASK-34.4) need to encode promotion ordering and split-brain prevention
 
 **Decision:** No architectural changes required at this stage. Risks are documented for SP8/SP9 implementation planning. Mitigation strategies provided for each risk category. Two critical findings: split-brain prevention and three-deployment coordination requirements.
+
+---
+
+### Confluent Platform Component Promotion Runbook for AZ/Region Failover
+
+**Author:** Zorg (Lead)  
+**Date:** 2026-04-02  
+**Status:** Documented  
+**Scope:** Multi-zone and cross-region failover procedures for Schema Registry, Kafka Connect, ZooKeeper, and Kafka brokers
+
+**Decision Summary:**
+
+This decision encodes concrete operational procedures for promoting Confluent Platform components during failures. The full runbook (1084 lines) is stored at `.squad/decisions/archive/zorg-component-promotion-runbook.md` and covers:
+
+**Key Findings:**
+
+1. **Intra-AZ Failover (Zone 1 → Zone 2):**
+   - Kafka brokers, Schema Registry, and Kafka Connect fail over automatically (0-30s downtime)
+   - ZooKeeper quorum loss is the critical failure mode (requires manual restoration)
+   - Action required: Monitor ISR, replace dead broker VMs, reassign partitions
+
+2. **Cross-Region Failover (southcentralus → mexicocentral):**
+   - All components require manual promotion orchestration
+   - Six-phase sequence: pre-validation → Schema Registry → Connect internal topics → application topics → cutover → validation
+   - `kafka-mirrors promote` is irreversible; failback requires reverse cluster linking
+
+3. **Component State Inventory:**
+   - **ZooKeeper:** Holds broker metadata, topic metadata, controller state; quorum = floor(N/2) + 1
+   - **Kafka brokers:** Hold partition replicas and ISR membership; auto-elect new controller (1-5s) on failure
+   - **Schema Registry:** Holds schemas in `_schemas` topic; elects leader via consumer group protocol
+   - **Kafka Connect:** Holds connector configs in internal topics; workers coordinate via consumer group
+
+4. **Promotion Ordering (Critical Dependency):**
+   - `_schemas` topic must be promoted FIRST (Schema Registry dependency)
+   - Connect internal topics promoted before application topics (if using Connect)
+   - Application topics promoted last
+   - Pre-promotion validation: fence old cluster, verify replication lag <1000 messages
+
+5. **ZooKeeper Quorum Math:**
+   - 3-node ensemble: quorum = 2 (tolerates 1 failure)
+   - 5-node ensemble: quorum = 3 (tolerates 2 failures)
+   - Recommendation: Deploy across 3+ AZs or run independent ensembles per region
+   - Dev environment (2 AZs): Accepts quorum-loss risk from single-zone failure
+
+6. **Automation:**
+   - Proposed Ansible playbook: `failover-promote.yml` with idempotency checks
+   - Must check topic state before promoting (kafka-mirrors promote is not idempotent)
+   - SP9 Chaos Studio will validate each promotion step and failure scenario
+
+7. **Monitoring:**
+   - Pre-failover: zk_quorum_size, zk_live_nodes, UnderReplicatedPartitions, ReplicationLag
+   - During failover: producer request-latency spike, consumer fetch-latency spike
+   - Post-failover: MessagesInPerSec, Schema Registry master_slave_role, Connect task state
+
+**Impact:**
+- SP8 cluster linking tasks (TASK-34.8, TASK-34.5) now have concrete procedures and dependency ordering
+- SP9 Chaos testing can validate each component's promotion and failover behavior
+- Operational incidents can follow encoded procedures instead of ad-hoc decisions
+- Split-brain prevention procedures documented (fence old cluster before promotion)
+
+**Rationale:**
+Risk analysis (doc-19) identified promotion ordering and split-brain as critical unknowns. This runbook transforms abstract risks into step-by-step procedures with command examples, quorum math, and monitoring guidance. Enables SP8/SP9 implementation and operationalization.
+
+**Decisions Required:**
+- [ ] Approve ZooKeeper ensemble topology for production (3 nodes per region vs cross-region quorum)
+- [ ] Set acceptable replication lag threshold for manual vs automated promotion decision
+- [ ] Choose failback strategy: keep new primary, or reverse cluster link at next maintenance window
+
+**Full Runbook:** See `.squad/decisions/archive/zorg-component-promotion-runbook.md` (1084 lines, covers state inventory, failure scenarios, rollback procedures, Ansible automation framework, monitoring metrics)
+

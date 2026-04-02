@@ -113,3 +113,47 @@ Key pattern: when renaming sprint numbers, process in reverse order (highest num
 ### Multi-zone/multi-region producer failover risk analysis (2026-03-31)
 
 User requested thorough analysis of risks beyond offset gaps when moving producer apps from single-deployment (westus) to 3-deployment HA (westus2 AZ1 primary, westus2 AZ2 HA, westus HA). Enumerated 13 risk categories: producer ID/epoch fencing, duplicate messages on failover, consumer group offset sync lag, Schema Registry divergence, mirror topic promotion ordering, split-brain/dual-write, DNS/endpoint switching latency, transaction semantics breakage, ordering guarantees across clusters, config drift between deployments, monitoring blind spots, tiered storage cross-cluster access, and operational runbook gaps. Decision documented in `.squad/decisions/inbox/zorg-failover-risk-analysis.md`.
+
+### Confluent Platform component promotion runbook (2026-04-02)
+
+User requested concrete operational analysis for promoting each Confluent Platform component during AZ or region failover. Comprehensive runbook covers state inventory (what each component holds), failure impact (intra-AZ vs cross-region), exact promotion steps with commands, component dependency ordering, and ZooKeeper-specific concerns. Key findings:
+
+**State inventory:**
+- ZooKeeper: Broker metadata, topic metadata, controller state, ACLs, quotas. Quorum = floor(N/2)+1. 3-node ensemble tolerates 1 failure, 5-node tolerates 2.
+- Kafka brokers: Partition replicas on disk, ISR membership, controller role, producer state (PIDs/epochs), transaction state, consumer group coordinator state. Controller handles leader election.
+- Schema Registry: Schemas in `_schemas` topic (compacted), schema IDs, leader/follower via Kafka group protocol. Leader = writable, followers = read-only.
+- Kafka Connect: Connector configs in `connect-configs`, task offsets in `connect-offsets`, task status in `connect-status`. All state in Kafka topics (no local state in distributed mode).
+
+**Promotion order (cross-region):**
+1. Pre-validation: Fence old cluster (NSG/DNS/broker shutdown), verify replication lag, verify consumer offset sync lag
+2. Schema Registry: Promote `_schemas` topic FIRST (producers need schema registration), restart SR
+3. Kafka Connect: Promote internal topics (`connect-configs`, `connect-offsets`, `connect-status`), start workers
+4. Application topics: Promote all application topics
+5. Cutover: Update `KAFKA_BOOTSTRAP_SERVERS` and `SCHEMA_REGISTRY_URL`, restart applications
+6. Validation: Verify producer health, consumer lag, SR writability, Connect status
+
+**Critical patterns:**
+- Intra-AZ failover is mostly automatic (Kafka controller election, SR leader election, Connect rebalance) — 0-30s downtime
+- Cross-region failover requires manual orchestration — 2-5 minutes downtime (mostly DNS propagation)
+- Split-brain prevention is CRITICAL: must fence old cluster before promoting mirrors
+- Promotion is irreversible per topic — cannot un-promote and resume replication
+- ZooKeeper quorum loss (e.g., losing 2/3 nodes) freezes cluster metadata — requires manual recovery
+
+**Architecture decisions for production:**
+- Deploy ZK ensemble across ≥3 AZs within region (OR 2 AZs + 1 cross-region for quorum preservation)
+- Run independent ZK ensembles per region (do NOT span ZK across regions)
+- Treat failover as one-way operation — reverse replication in next maintenance window, not during live incident
+- Tune `zookeeper.session.timeout.ms` (default 18s broker death detection), `metadata.max.age.ms` (default 5min producer metadata staleness), DNS TTL (30-60s)
+
+**Ansible automation:**
+- Proposed playbook: `ansible/playbooks/failover-promote.yml` with phases for SR, Connect, application topics
+- Idempotency: Check topic `mirror.state` before promoting (command fails on already-promoted topics)
+- Chaos Studio testing (SP9): AZ failure simulation, ZK quorum loss, cross-region failover end-to-end, split-brain prevention
+
+**File paths:**
+- ZK config: `ansible/roles/zookeeper/defaults/main.yml`, `ansible/roles/zookeeper/templates/zookeeper.properties.j2`
+- Kafka config: `ansible/roles/kafka-broker/defaults/main.yml`, `ansible/roles/kafka-broker/templates/server.properties.j2`
+- SR config: `ansible/roles/schema-registry/defaults/main.yml`, `ansible/roles/schema-registry/templates/schema-registry.properties.j2`
+- Connect config: `ansible/roles/kafka-connect/defaults/main.yml`, `ansible/roles/kafka-connect/templates/connect-distributed.properties.j2`
+
+Runbook documented in `.squad/decisions/inbox/zorg-component-promotion-runbook.md`. Ready for SP8 (cluster linking implementation) and SP9 (chaos testing).

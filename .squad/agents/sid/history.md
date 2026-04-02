@@ -79,3 +79,26 @@ Initial setup complete. Replacing Ruby sprint orchestrator with Squad workflow.
 - E2E validation checks infrastructure health (VNet, DNS, Function App, Kafka connectivity)
 
 **Next Steps (SP8):** Multi-region testing — cross-region failover, cluster linking validation, disaster recovery scenarios
+
+## Update: Component Promotion Runbook (2026-04-02T14:39Z)
+
+**Source:** Zorg component promotion analysis  
+**Relevance:** SP9 Chaos testing framework
+
+Zorg completed comprehensive component promotion runbook documenting failure scenarios, promotion procedures, and monitoring metrics for all Confluent Platform components.
+
+**Key Findings for Chaos Testing:**
+- Intra-AZ failures have automatic recovery paths (0-30s downtime for Kafka/SR/Connect; manual for ZK quorum)
+- Cross-region failures require manual orchestration via 6-phase promotion sequence
+- Critical tests: ZK quorum loss recovery, promotion irreversibility, split-brain prevention, producer/consumer cutover
+- Monitoring guidance: Track zk_quorum_size, ReplicationLag, request-latency spikes, Schema Registry master_slave_role
+- Proposed Ansible automation (`failover-promote.yml`) needs validation in Chaos Studio
+
+**Action:** SP9 chaos experiments should validate:
+1. AZ failure → automatic controller/partition leader election (target: <5s)
+2. ZK quorum loss → cluster enters read-only, broker health monitoring detects
+3. Cross-region promotion sequence → all 6 phases succeed in <2 min
+4. Producer/consumer cutover → message flow resumes with <30s lag
+
+**Runbook Location:** `.squad/decisions/archive/zorg-component-promotion-runbook.md` (Part 7 covers Ansible automation; Part 8 covers monitoring metrics)
+

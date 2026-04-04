@@ -270,3 +270,38 @@ Zorg completed comprehensive component promotion runbook documenting state inven
 
 **Runbook Location:** `.squad/decisions/archive/zorg-component-promotion-runbook.md` (1084 lines, full command examples, Ansible framework, monitoring metrics)
 
+### Removed Private Endpoints from dev-shared Layer (2026-04-05)
+
+Removed private endpoints from dev-shared layer. GitHub-hosted runners can't reach resources behind PEs. If PEs are needed later, they require self-hosted runners or VNet-integrated GitHub Actions.
+
+**Changes:**
+- Removed `shared_dns_zones` module and locals from `terraform/environments/dev-shared/main.tf`
+- Removed `pe_key_vault` module from `terraform/environments/dev-shared/main.tf`
+- Removed `private_dns_zone_ids` and `pe_key_vault_id` outputs from `terraform/environments/dev-shared/outputs.tf`
+- Removed `pe_storage_blob` module and shared DNS zone reference from `terraform/environments/dev/main.tf`
+- Removed `private_dns_zone_ids`, `pe_storage_blob_id`, `pe_function_app_id` outputs from `terraform/environments/dev/outputs.tf`
+- Updated `.github/workflows/dev-shared-deploy.yml` summary step
+- VNet, Key Vault, Log Analytics, UAMI, diagnostic settings all preserved
+
+**What was done:**
+Implemented Zorg's architecture plan (`.squad/decisions/inbox/zorg-shared-layer-expansion.md`) to expand `dev-shared` from 2 resources (UAMI, KV) to 8 resource groups. This is the foundational infra move that enables private endpoints on shared PaaS resources.
+
+**Resources moved dev → dev-shared:**
+- VNet `klc-vnet-scus` (10.1.0.0/16, 7 subnets)
+- Private DNS Zones: `privatelink.vaultcore.azure.net`, `privatelink.blob.core.windows.net`
+- Key Vault Private Endpoint `klc-pe-keyvault-scus`
+
+**New resources in dev-shared:**
+- Log Analytics Workspace `klc-law-kafkalab-scus` (new module at `terraform/modules/log-analytics/`)
+- Diagnostic Settings on Key Vault → Log Analytics
+
+**Dev layer refactor:**
+- Added `terraform_remote_state` data source to read shared outputs
+- All `module.vnet_scus.*` references replaced with `data.terraform_remote_state.shared.outputs.*`
+- Storage blob PE now uses shared DNS zone via remote state
+- Dev-only DNS zones (`sites`, `internal`) link to shared VNet via remote state
+- Backend config variables added (`backend_resource_group`, `backend_storage_account`, `backend_container`)
+- `pe_key_vault_id` output removed from dev (now in shared outputs)
+
+**Key pattern:** `terraform_remote_state` with `use_azuread_auth = true` bridges the two state files. Deploy order: dev-shared first, then dev.
+

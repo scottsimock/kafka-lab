@@ -87,7 +87,8 @@ jobs:
             -backend-config="storage_account_name=${{ env.TF_BACKEND_STORAGE_ACCOUNT }}" \
             -backend-config="container_name=${{ env.TF_BACKEND_CONTAINER }}" \
             -backend-config="key=kafka-lab/${{ inputs.environment }}.tfstate" \
-            -backend-config="use_azuread_auth=true"
+            -backend-config="use_azuread_auth=true" \
+            -backend-config="use_oidc=true"
 
       - name: Terraform Format Check
         run: terraform fmt -check -recursive
@@ -157,7 +158,8 @@ jobs:
             -backend-config="storage_account_name=${{ env.TF_BACKEND_STORAGE_ACCOUNT }}" \
             -backend-config="container_name=${{ env.TF_BACKEND_CONTAINER }}" \
             -backend-config="key=kafka-lab/${{ inputs.environment }}.tfstate" \
-            -backend-config="use_azuread_auth=true"
+            -backend-config="use_azuread_auth=true" \
+            -backend-config="use_oidc=true"
 
       - name: Download Plan Artifact
         uses: actions/download-artifact@v4

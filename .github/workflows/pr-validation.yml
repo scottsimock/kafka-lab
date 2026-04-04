@@ -63,7 +63,8 @@ jobs:
             -backend-config="resource_group_name=${{ env.TF_BACKEND_RESOURCE_GROUP }}" \
             -backend-config="storage_account_name=${{ env.TF_BACKEND_STORAGE_ACCOUNT }}" \
             -backend-config="container_name=${{ env.TF_BACKEND_CONTAINER }}" \
-            -backend-config="key=kafka-lab/dev.tfstate"
+            -backend-config="key=kafka-lab/dev.tfstate" \
+            -backend-config="use_azuread_auth=true"
 
       - name: Terraform Format Check
         run: terraform fmt -check -recursive

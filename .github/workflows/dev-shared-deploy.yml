@@ -105,8 +105,6 @@ jobs:
           echo "- ✅ UAMI: \`klc-id-kafkalab-scus\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- ✅ Key Vault: \`klc-kv-kafkalab-scus\` (with CMEK key)" >> "$GITHUB_STEP_SUMMARY"
           echo "- ✅ VNet: \`klc-vnet-scus\` (10.1.0.0/16, 7 subnets)" >> "$GITHUB_STEP_SUMMARY"
-          echo "- ✅ Private DNS: \`privatelink.vaultcore.azure.net\`, \`privatelink.blob.core.windows.net\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- ✅ Private Endpoint: \`klc-pe-keyvault-scus\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- ✅ Log Analytics: \`klc-law-kafkalab-scus\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- ✅ Diagnostic Settings: Key Vault → Log Analytics" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"

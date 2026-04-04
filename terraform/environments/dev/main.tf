@@ -633,25 +633,6 @@ resource "azapi_resource" "tfstate_container" {
 }
 
 // =====================================================
-// Private Endpoints
-// =====================================================
-
-module "pe_storage_blob" {
-  source = "../../modules/private-endpoint"
-
-  name               = "klc-pe-storage-blob-scus"
-  location           = var.primary_location
-  resource_group_id  = data.azapi_resource.resource_group.id
-  subnet_id          = data.terraform_remote_state.shared.outputs.subnet_ids["snet-private-endpoints"]
-  target_resource_id = azapi_resource.storage_account.id
-  group_ids          = ["blob"]
-  dns_zone_ids = {
-    "blob" = data.terraform_remote_state.shared.outputs.private_dns_zone_ids["blob"]
-  }
-  tags = local.common_tags
-}
-
-// =====================================================
 // Function App (Web Application)
 // =====================================================
 

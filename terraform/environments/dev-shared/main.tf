@@ -84,48 +84,6 @@ module "vnet_scus" {
 }
 
 // =====================================================
-// Shared Private DNS Zones
-// =====================================================
-
-locals {
-  shared_dns_zones = {
-    "vault" = "privatelink.vaultcore.azure.net"
-    "blob"  = "privatelink.blob.core.windows.net"
-  }
-}
-
-module "shared_dns_zones" {
-  source   = "../../modules/private-dns-zone"
-  for_each = local.shared_dns_zones
-
-  zone_name         = each.value
-  resource_group_id = data.azapi_resource.resource_group.id
-  vnet_links = {
-    "link-scus" = module.vnet_scus.vnet_id
-  }
-  tags = local.common_tags
-}
-
-// =====================================================
-// Private Endpoint — Key Vault
-// =====================================================
-
-module "pe_key_vault" {
-  source = "../../modules/private-endpoint"
-
-  name               = "klc-pe-keyvault-scus"
-  location           = var.primary_location
-  resource_group_id  = data.azapi_resource.resource_group.id
-  subnet_id          = module.vnet_scus.subnet_ids["snet-private-endpoints"]
-  target_resource_id = module.key_vault.key_vault_id
-  group_ids          = ["vault"]
-  dns_zone_ids = {
-    "vault" = module.shared_dns_zones["vault"].dns_zone_id
-  }
-  tags = local.common_tags
-}
-
-// =====================================================
 // Log Analytics Workspace
 // =====================================================
 

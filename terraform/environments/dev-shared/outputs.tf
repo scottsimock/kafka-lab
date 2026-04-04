@@ -68,13 +68,6 @@ output "subnet_ids" {
   value       = module.vnet_scus.subnet_ids
 }
 
-// ── Private DNS Zones ───────────────────────────────
-
-output "private_dns_zone_ids" {
-  description = "Map of DNS zone key to resource ID for shared private DNS zones"
-  value       = { for k, v in module.shared_dns_zones : k => v.dns_zone_id }
-}
-
 // ── Log Analytics ───────────────────────────────────
 
 output "log_analytics_workspace_id" {
@@ -85,11 +78,4 @@ output "log_analytics_workspace_id" {
 output "log_analytics_customer_id" {
   description = "Customer ID of the Log Analytics workspace"
   value       = module.log_analytics.workspace_customer_id
-}
-
-// ── Private Endpoints ───────────────────────────────
-
-output "pe_key_vault_id" {
-  description = "Resource ID of the key vault private endpoint"
-  value       = module.pe_key_vault.private_endpoint_id
 }

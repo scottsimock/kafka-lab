@@ -27,19 +27,9 @@ output "cmk_key_id" {
   value       = data.azapi_resource.cmk_key.id
 }
 
-output "private_dns_zone_ids" {
-  description = "Map of DNS zone key to resource ID for each private DNS zone"
-  value       = { for k, v in module.private_dns_zones : k => v.dns_zone_id }
-}
-
 output "storage_account_id" {
   description = "Resource ID of the Terraform state storage account"
   value       = azapi_resource.storage_account.id
-}
-
-output "pe_storage_blob_id" {
-  description = "Resource ID of the storage account blob private endpoint"
-  value       = module.pe_storage_blob.private_endpoint_id
 }
 
 output "zookeeper_vm_ids" {
@@ -100,9 +90,4 @@ output "function_app_hostname" {
 output "app_service_plan_id" {
   description = "Resource ID of the App Service Plan"
   value       = module.function_app.app_service_plan_id
-}
-
-output "pe_function_app_id" {
-  description = "Resource ID of the Function App private endpoint"
-  value       = module.pe_function_app.private_endpoint_id
 }

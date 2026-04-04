@@ -171,3 +171,19 @@ Also clarified for user that VNet, Log Analytics, and diagnostic settings live i
 Actions taken: Pushed 4 commits to origin/main, triggered workflow run 23978200282. The init hang is fixed (backend config values now passed correctly), but run 23978200282 hit a **403 RBAC error** — the OIDC identity lacks `Storage Blob Data Contributor` on the tfstate storage account `klcstgtfstatescus`. This is an Azure IAM configuration issue: `scripts/setup-azure-oidc.sh` assigns the right role but may not have been run, or the `AZURE_CLIENT_ID` secret may not match the expected UAMI. Decision documented in `.squad/decisions/inbox/zorg-deploy-diagnosis.md`.
 
 Key learning: the two-layer split (`dev-shared` vs `dev`) is the intended architecture but no `dev-deploy.yml` workflow exists yet — that's SP6 scope. When using `ARM_USE_AZUREAD=true` with `--allow-shared-key-access false`, the OIDC identity MUST have `Storage Blob Data Contributor` at the RG or storage account scope — `Contributor` alone is insufficient for data-plane blob operations.
+
+### RBAC diagnosis and shared layer expansion plan (2026-04-04)
+
+Investigated the 403 AuthorizationFailure on run 23978200282. Root cause: `uami-gha-terraform-deploy` lacks `Storage Blob Data Contributor` on `klc-rg-kafkalab-scus`. The `setup-azure-oidc.sh` script assigns this role (line 208) but was likely not run or run with `--skip-rbac`. Fix: re-run the script or manually assign the role.
+
+Produced comprehensive architecture decision for shared layer expansion (`.squad/decisions/inbox/zorg-shared-layer-expansion.md`). Key decisions:
+
+**Moves to dev-shared:** VNet (`klc-vnet-scus` with all 7 subnets), Private DNS Zones for blob/vault, Key Vault PE, NEW Log Analytics Workspace, NEW Diagnostic Settings on Key Vault.
+
+**Stays in dev:** NSGs (7), app storage account, storage/func PEs, `azurewebsites.net` and `kafkalab.internal` DNS zones, Function App, all VMs.
+
+**Dev layer refactor:** Replace `module.vnet_scus` with `terraform_remote_state` data source for shared outputs. All subnet_id references updated to `data.terraform_remote_state.shared.outputs.subnet_ids[...]`.
+
+**New module needed:** `terraform/modules/log-analytics/` (AzAPI, `Microsoft.OperationalInsights/workspaces@2023-09-01`).
+
+Key architectural insight: NSG-to-subnet association uses `azapi_update_resource` which operates on existing resource IDs — NSGs can stay in dev and reference shared VNet subnets via remote state without circular dependencies. Deployment order is strictly one-way: dev-shared first, then dev.

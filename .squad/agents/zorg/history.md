@@ -157,3 +157,17 @@ User requested concrete operational analysis for promoting each Confluent Platfo
 - Connect config: `ansible/roles/kafka-connect/defaults/main.yml`, `ansible/roles/kafka-connect/templates/connect-distributed.properties.j2`
 
 Runbook documented in `.squad/decisions/inbox/zorg-component-promotion-runbook.md`. Ready for SP8 (cluster linking implementation) and SP9 (chaos testing).
+
+### doc-19 offset gaps expansion (2026-04-02)
+
+Expanded risk #1 (offset gaps) in doc-19 from a summary-table-only entry to a full Mechanism/Impact/Mitigation section under a new `## 0. Replication` category. Covers async replication lag as root cause, message-level data loss impact, and mitigations including `acks=all`, cluster link lag monitoring (`ReplicationLag` JMX metric), aggressive `consumer.offset.sync.ms`, pre-promotion lag verification (cross-referenced doc-20 Phase 1), application-level WAL replay, and designing for at-least-once across clusters. Updated summary table row to link to the new section heading.
+
+### Deploy diagnosis and workflow trigger (2026-04-04)
+
+Diagnosed two failed `dev-shared-deploy.yml` runs (23978088060, 23869421783) hanging on `terraform init`. Root cause: commit `2be2659` (backend config fix adding `resource_group_name`, `storage_account_name`, `container_name` as `-backend-config` flags) was local-only, not pushed to origin. Terraform prompted interactively for missing backend values, stalling the CI runner.
+
+Also clarified for user that VNet, Log Analytics, and diagnostic settings live in `terraform/environments/dev/` (the `dev` layer), not `dev-shared`. The `dev-shared` layer only provisions UAMI and Key Vault — long-lived resources that survive teardown cycles.
+
+Actions taken: Pushed 4 commits to origin/main, triggered workflow run 23978200282. The init hang is fixed (backend config values now passed correctly), but run 23978200282 hit a **403 RBAC error** — the OIDC identity lacks `Storage Blob Data Contributor` on the tfstate storage account `klcstgtfstatescus`. This is an Azure IAM configuration issue: `scripts/setup-azure-oidc.sh` assigns the right role but may not have been run, or the `AZURE_CLIENT_ID` secret may not match the expected UAMI. Decision documented in `.squad/decisions/inbox/zorg-deploy-diagnosis.md`.
+
+Key learning: the two-layer split (`dev-shared` vs `dev`) is the intended architecture but no `dev-deploy.yml` workflow exists yet — that's SP6 scope. When using `ARM_USE_AZUREAD=true` with `--allow-shared-key-access false`, the OIDC identity MUST have `Storage Blob Data Contributor` at the RG or storage account scope — `Contributor` alone is insufficient for data-plane blob operations.

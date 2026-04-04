@@ -880,3 +880,63 @@ Risk analysis (doc-19) identified promotion ordering and split-brain as critical
 
 **Full Runbook:** See `.squad/decisions/archive/zorg-component-promotion-runbook.md` (1084 lines, covers state inventory, failure scenarios, rollback procedures, Ansible automation framework, monitoring metrics)
 
+---
+
+### Deploy Shared Diagnosis: Terraform Init Hang + RBAC 403
+
+**Author:** Zorg (Lead/Architect)  
+**Date:** 2026-04-04  
+**Status:** Decided
+
+#### Root Causes
+
+**1. Terraform init hanging (backend config)**
+
+Workflow runs 23978088060, 23869421783 hung on `terraform init` because the workflow at `origin/main` was missing `-backend-config` flags for `resource_group_name`, `storage_account_name`, and `container_name`. Terraform prompted interactively → CI hang.
+
+Fix: Commit `2be2659` adds env vars (`TF_BACKEND_RESOURCE_GROUP`, `TF_BACKEND_STORAGE_ACCOUNT`, `TF_BACKEND_CONTAINER`) passed as `-backend-config` flags. Resolution: Pushed 4 commits, triggered run 23978200282.
+
+**2. Missing VNet/Log Analytics in dev-shared (wrong layer)**
+
+User expected these resources in `dev-shared-deploy` but they live in `terraform/environments/dev/`:
+
+| Layer | Path | Resources |
+|---|---|---|
+| `dev-shared` | `terraform/environments/dev-shared/` | UAMI, Key Vault |
+| `dev` | `terraform/environments/dev/` | VNet, NSGs, DNS zones, VMs, Function App, private endpoints |
+
+`dev-shared` is intentionally minimal (long-lived resources). VNet, Log Analytics, compute = `dev` layer. No `dev-deploy.yml` workflow yet (SP6 scope).
+
+**3. New blocker: 403 RBAC on tfstate storage (run 23978200282)**
+
+Init fix works, but hit: `Error: Failed to get existing workspaces: listing blobs: unexpected status 403`. OIDC identity (`AZURE_CLIENT_ID`) lacks `Storage Blob Data Contributor` on `klcstgtfstatescus`. Required because `ARM_USE_AZUREAD=true` + shared keys blocked (`--allow-shared-key-access false`).
+
+Fix: Run `scripts/setup-azure-oidc.sh` or manually assign `Storage Blob Data Contributor` to OIDC identity at RG scope.
+
+#### Decisions
+
+1. Backend config fix validated (init works).
+2. RBAC fix required before re-triggering workflow.
+3. VNet/LA deployment is separate, manual or SP6 workflow scope.
+4. Key learning: `Contributor` role is insufficient for blob operations with Azure AD auth — must also assign `Storage Blob Data Contributor`.
+
+#### Next Steps
+
+1. Fix RBAC on tfstate storage (assign `Storage Blob Data Contributor` to OIDC identity)
+2. Re-trigger `dev-shared-deploy.yml`
+3. Deploy `dev` layer separately (manual or SP6 workflow)
+4. Add `dev-deploy.yml` to SP6 backlog
+
+---
+
+### 2026-04-04T11:43:00Z: User Directive — Shared Layer VNet Requirement
+
+**By:** simock (via Copilot)  
+**Decision:** The shared layer (dev-shared) MUST contain the VNet and Log Analytics workspace in addition to UAMI and Key Vault.
+
+**Rationale:** Private endpoints on storage and Key Vault require a VNet in the same layer. Diagnostic settings require Log Analytics.
+
+**Impact:** Conflicts with current two-layer architecture where VNet is in `dev` layer. Requires architecture refactor: move VNet + Log Analytics from `dev` to `dev-shared` layer to support private endpoints on shared-layer resources.
+
+**Status:** Pending implementation (new work, affects SP6/later sprints)
+

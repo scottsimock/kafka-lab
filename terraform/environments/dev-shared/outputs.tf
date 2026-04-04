@@ -50,3 +50,46 @@ output "cmk_key_versionless_id" {
   description = "Versionless URI of the CMEK encryption key"
   value       = module.key_vault.cmk_key_versionless_id
 }
+
+// ── Virtual Network ─────────────────────────────────
+
+output "vnet_id" {
+  description = "Resource ID of the primary virtual network"
+  value       = module.vnet_scus.vnet_id
+}
+
+output "vnet_name" {
+  description = "Name of the primary virtual network"
+  value       = module.vnet_scus.vnet_name
+}
+
+output "subnet_ids" {
+  description = "Map of subnet names to resource IDs"
+  value       = module.vnet_scus.subnet_ids
+}
+
+// ── Private DNS Zones ───────────────────────────────
+
+output "private_dns_zone_ids" {
+  description = "Map of DNS zone key to resource ID for shared private DNS zones"
+  value       = { for k, v in module.shared_dns_zones : k => v.dns_zone_id }
+}
+
+// ── Log Analytics ───────────────────────────────────
+
+output "log_analytics_workspace_id" {
+  description = "Resource ID of the Log Analytics workspace"
+  value       = module.log_analytics.workspace_id
+}
+
+output "log_analytics_customer_id" {
+  description = "Customer ID of the Log Analytics workspace"
+  value       = module.log_analytics.workspace_customer_id
+}
+
+// ── Private Endpoints ───────────────────────────────
+
+output "pe_key_vault_id" {
+  description = "Resource ID of the key vault private endpoint"
+  value       = module.pe_key_vault.private_endpoint_id
+}

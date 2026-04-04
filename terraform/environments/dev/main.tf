@@ -5,6 +5,21 @@
 provider "azapi" {}
 
 // =====================================================
+// Shared Layer Remote State
+// =====================================================
+
+data "terraform_remote_state" "shared" {
+  backend = "azurerm"
+  config = {
+    resource_group_name  = var.backend_resource_group
+    storage_account_name = var.backend_storage_account
+    container_name       = var.backend_container
+    key                  = "kafka-lab/dev-shared.tfstate"
+    use_azuread_auth     = true
+  }
+}
+
+// =====================================================
 // Existing Resource Group Reference
 // =====================================================
 
@@ -46,44 +61,6 @@ data "azapi_resource" "cmk_key" {
   response_export_values = ["properties.keyUriWithVersion", "properties.keyUri"]
 }
 
-// =====================================================
-// Virtual Network
-// =====================================================
-
-module "vnet_scus" {
-  source = "../../modules/virtual-network"
-
-  name              = "klc-vnet-scus"
-  location          = var.primary_location
-  resource_group_id = data.azapi_resource.resource_group.id
-  address_space     = ["10.1.0.0/16"]
-  tags              = local.common_tags
-
-  subnets = {
-    "snet-kafka-brokers" = {
-      address_prefix = "10.1.1.0/24"
-    }
-    "snet-zookeeper" = {
-      address_prefix = "10.1.2.0/24"
-    }
-    "snet-schema-registry" = {
-      address_prefix = "10.1.3.0/24"
-    }
-    "snet-connect" = {
-      address_prefix = "10.1.4.0/24"
-    }
-    "snet-web-app" = {
-      address_prefix = "10.1.5.0/24"
-    }
-    "snet-private-endpoints" = {
-      address_prefix                    = "10.1.6.0/24"
-      private_endpoint_network_policies = "NetworkSecurityGroupEnabled"
-    }
-    "snet-management" = {
-      address_prefix = "10.1.7.0/24"
-    }
-  }
-}
 
 // =====================================================
 // NSG Instances
@@ -569,7 +546,7 @@ module "nsgs" {
   location          = var.primary_location
   resource_group_id = data.azapi_resource.resource_group.id
   security_rules    = each.value.security_rules
-  subnet_id         = module.vnet_scus.subnet_ids[each.value.subnet_name]
+  subnet_id         = data.terraform_remote_state.shared.outputs.subnet_ids[each.value.subnet_name]
   tags              = local.common_tags
 }
 
@@ -579,8 +556,6 @@ module "nsgs" {
 
 locals {
   private_dns_zones = {
-    "blob"     = "privatelink.blob.core.windows.net"
-    "vault"    = "privatelink.vaultcore.azure.net"
     "sites"    = "privatelink.azurewebsites.net"
     "internal" = "kafkalab.internal"
   }
@@ -593,7 +568,7 @@ module "private_dns_zones" {
   zone_name         = each.value
   resource_group_id = data.azapi_resource.resource_group.id
   vnet_links = {
-    "link-scus" = module.vnet_scus.vnet_id
+    "link-scus" = data.terraform_remote_state.shared.outputs.vnet_id
   }
   tags = local.common_tags
 }
@@ -667,26 +642,11 @@ module "pe_storage_blob" {
   name               = "klc-pe-storage-blob-scus"
   location           = var.primary_location
   resource_group_id  = data.azapi_resource.resource_group.id
-  subnet_id          = module.vnet_scus.subnet_ids["snet-private-endpoints"]
+  subnet_id          = data.terraform_remote_state.shared.outputs.subnet_ids["snet-private-endpoints"]
   target_resource_id = azapi_resource.storage_account.id
   group_ids          = ["blob"]
   dns_zone_ids = {
-    "blob" = module.private_dns_zones["blob"].dns_zone_id
-  }
-  tags = local.common_tags
-}
-
-module "pe_key_vault" {
-  source = "../../modules/private-endpoint"
-
-  name               = "klc-pe-keyvault-scus"
-  location           = var.primary_location
-  resource_group_id  = data.azapi_resource.resource_group.id
-  subnet_id          = module.vnet_scus.subnet_ids["snet-private-endpoints"]
-  target_resource_id = data.azapi_resource.key_vault.id
-  group_ids          = ["vault"]
-  dns_zone_ids = {
-    "vault" = module.private_dns_zones["vault"].dns_zone_id
+    "blob" = data.terraform_remote_state.shared.outputs.private_dns_zone_ids["blob"]
   }
   tags = local.common_tags
 }
@@ -701,7 +661,7 @@ module "function_app" {
   name                                = "klc-func-kafkalab-scus"
   location                            = var.primary_location
   resource_group_id                   = data.azapi_resource.resource_group.id
-  web_app_subnet_id                   = module.vnet_scus.subnet_ids["snet-web-app"]
+  web_app_subnet_id                   = data.terraform_remote_state.shared.outputs.subnet_ids["snet-web-app"]
   user_assigned_identity_id           = data.azapi_resource.uami_kafkalab.id
   user_assigned_identity_principal_id = data.azapi_resource.uami_kafkalab.output.properties.principalId
   user_assigned_identity_client_id    = data.azapi_resource.uami_kafkalab.output.properties.clientId
@@ -717,7 +677,7 @@ module "pe_function_app" {
   name               = "klc-pe-func-scus"
   location           = var.primary_location
   resource_group_id  = data.azapi_resource.resource_group.id
-  subnet_id          = module.vnet_scus.subnet_ids["snet-private-endpoints"]
+  subnet_id          = data.terraform_remote_state.shared.outputs.subnet_ids["snet-private-endpoints"]
   target_resource_id = module.function_app.function_app_id
   group_ids          = ["sites"]
   dns_zone_ids = {
@@ -745,7 +705,7 @@ module "zookeeper_vms" {
   name               = each.key
   location           = var.primary_location
   resource_group_id  = data.azapi_resource.resource_group.id
-  subnet_id          = module.vnet_scus.subnet_ids["snet-zookeeper"]
+  subnet_id          = data.terraform_remote_state.shared.outputs.subnet_ids["snet-zookeeper"]
   private_ip_address = each.value.private_ip
   vm_size            = "Standard_D2s_v5"
   zone               = "1"
@@ -778,7 +738,7 @@ module "kafka_broker_vms" {
   name               = each.key
   location           = var.primary_location
   resource_group_id  = data.azapi_resource.resource_group.id
-  subnet_id          = module.vnet_scus.subnet_ids["snet-kafka-brokers"]
+  subnet_id          = data.terraform_remote_state.shared.outputs.subnet_ids["snet-kafka-brokers"]
   private_ip_address = each.value.private_ip
   vm_size            = "Standard_D4s_v5"
   zone               = "1"
@@ -809,7 +769,7 @@ module "schema_registry_vms" {
   name               = each.key
   location           = var.primary_location
   resource_group_id  = data.azapi_resource.resource_group.id
-  subnet_id          = module.vnet_scus.subnet_ids["snet-schema-registry"]
+  subnet_id          = data.terraform_remote_state.shared.outputs.subnet_ids["snet-schema-registry"]
   private_ip_address = each.value.private_ip
   vm_size            = "Standard_D2s_v5"
   zone               = "1"
@@ -840,7 +800,7 @@ module "kafka_connect_vms" {
   name               = each.key
   location           = var.primary_location
   resource_group_id  = data.azapi_resource.resource_group.id
-  subnet_id          = module.vnet_scus.subnet_ids["snet-connect"]
+  subnet_id          = data.terraform_remote_state.shared.outputs.subnet_ids["snet-connect"]
   private_ip_address = each.value.private_ip
   vm_size            = "Standard_D2s_v5"
   zone               = "1"

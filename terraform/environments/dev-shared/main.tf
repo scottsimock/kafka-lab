@@ -43,3 +43,127 @@ module "key_vault" {
   uami_principal_id = module.uami_kafkalab.uami_principal_id
   tags              = local.common_tags
 }
+
+// =====================================================
+// Virtual Network
+// =====================================================
+
+module "vnet_scus" {
+  source = "../../modules/virtual-network"
+
+  name              = "klc-vnet-scus"
+  location          = var.primary_location
+  resource_group_id = data.azapi_resource.resource_group.id
+  address_space     = ["10.1.0.0/16"]
+  tags              = local.common_tags
+
+  subnets = {
+    "snet-kafka-brokers" = {
+      address_prefix = "10.1.1.0/24"
+    }
+    "snet-zookeeper" = {
+      address_prefix = "10.1.2.0/24"
+    }
+    "snet-schema-registry" = {
+      address_prefix = "10.1.3.0/24"
+    }
+    "snet-connect" = {
+      address_prefix = "10.1.4.0/24"
+    }
+    "snet-web-app" = {
+      address_prefix = "10.1.5.0/24"
+    }
+    "snet-private-endpoints" = {
+      address_prefix                    = "10.1.6.0/24"
+      private_endpoint_network_policies = "NetworkSecurityGroupEnabled"
+    }
+    "snet-management" = {
+      address_prefix = "10.1.7.0/24"
+    }
+  }
+}
+
+// =====================================================
+// Shared Private DNS Zones
+// =====================================================
+
+locals {
+  shared_dns_zones = {
+    "vault" = "privatelink.vaultcore.azure.net"
+    "blob"  = "privatelink.blob.core.windows.net"
+  }
+}
+
+module "shared_dns_zones" {
+  source   = "../../modules/private-dns-zone"
+  for_each = local.shared_dns_zones
+
+  zone_name         = each.value
+  resource_group_id = data.azapi_resource.resource_group.id
+  vnet_links = {
+    "link-scus" = module.vnet_scus.vnet_id
+  }
+  tags = local.common_tags
+}
+
+// =====================================================
+// Private Endpoint — Key Vault
+// =====================================================
+
+module "pe_key_vault" {
+  source = "../../modules/private-endpoint"
+
+  name               = "klc-pe-keyvault-scus"
+  location           = var.primary_location
+  resource_group_id  = data.azapi_resource.resource_group.id
+  subnet_id          = module.vnet_scus.subnet_ids["snet-private-endpoints"]
+  target_resource_id = module.key_vault.key_vault_id
+  group_ids          = ["vault"]
+  dns_zone_ids = {
+    "vault" = module.shared_dns_zones["vault"].dns_zone_id
+  }
+  tags = local.common_tags
+}
+
+// =====================================================
+// Log Analytics Workspace
+// =====================================================
+
+module "log_analytics" {
+  source = "../../modules/log-analytics"
+
+  name              = "klc-law-kafkalab-scus"
+  location          = var.primary_location
+  resource_group_id = data.azapi_resource.resource_group.id
+  sku               = "PerGB2018"
+  retention_in_days = 30
+  tags              = local.common_tags
+}
+
+// =====================================================
+// Diagnostic Settings — Key Vault → Log Analytics
+// =====================================================
+
+resource "azapi_resource" "kv_diagnostics" {
+  type      = "Microsoft.Insights/diagnosticSettings@2021-05-01-preview"
+  name      = "klc-diag-keyvault-scus"
+  parent_id = module.key_vault.key_vault_id
+
+  body = {
+    properties = {
+      workspaceId = module.log_analytics.workspace_id
+      logs = [
+        {
+          categoryGroup = "allLogs"
+          enabled       = true
+        }
+      ]
+      metrics = [
+        {
+          category = "AllMetrics"
+          enabled  = true
+        }
+      ]
+    }
+  }
+}

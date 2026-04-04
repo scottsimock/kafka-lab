@@ -8,13 +8,13 @@ output "resource_group_id" {
 }
 
 output "vnet_id" {
-  description = "Resource ID of the primary virtual network"
-  value       = module.vnet_scus.vnet_id
+  description = "Resource ID of the primary virtual network (from shared layer)"
+  value       = data.terraform_remote_state.shared.outputs.vnet_id
 }
 
 output "subnet_ids" {
-  description = "Map of subnet names to resource IDs"
-  value       = module.vnet_scus.subnet_ids
+  description = "Map of subnet names to resource IDs (from shared layer)"
+  value       = data.terraform_remote_state.shared.outputs.subnet_ids
 }
 
 output "key_vault_id" {
@@ -40,11 +40,6 @@ output "storage_account_id" {
 output "pe_storage_blob_id" {
   description = "Resource ID of the storage account blob private endpoint"
   value       = module.pe_storage_blob.private_endpoint_id
-}
-
-output "pe_key_vault_id" {
-  description = "Resource ID of the key vault private endpoint"
-  value       = module.pe_key_vault.private_endpoint_id
 }
 
 output "zookeeper_vm_ids" {

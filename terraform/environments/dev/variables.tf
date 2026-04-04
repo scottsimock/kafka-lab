@@ -30,3 +30,25 @@ variable "ssh_public_key" {
   type        = string
   sensitive   = true
 }
+
+// =====================================================
+// Remote State Backend Configuration
+// =====================================================
+
+variable "backend_resource_group" {
+  description = "Resource group containing the Terraform state storage account"
+  type        = string
+  default     = "klc-rg-kafkalab-scus"
+}
+
+variable "backend_storage_account" {
+  description = "Storage account name for Terraform remote state"
+  type        = string
+  default     = "klcstgtfstatescus"
+}
+
+variable "backend_container" {
+  description = "Blob container name for Terraform remote state"
+  type        = string
+  default     = "tfstate"
+}
